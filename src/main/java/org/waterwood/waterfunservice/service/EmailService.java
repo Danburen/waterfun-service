@@ -5,14 +5,17 @@ import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
+import org.waterwood.waterfunservice.DTO.common.result.EmailCodeSendResult;
 
 
 import java.util.Map;
 
+@Slf4j
 @Service
 public class EmailService {
     @Value("${mail.resend.api-key}")
@@ -30,8 +33,8 @@ public class EmailService {
      * @param type type of email
      * @param data inject data to template context
      */
-    public void sendHtmlEmail(String to, EmailTemplateType type, Map<String,Object> data) {
-       sendHtmlEmail(to,type.defaultFrom,type.subject,"email_base",type.templateKey,data);
+    public EmailCodeSendResult sendHtmlEmail(String to, EmailTemplateType type, Map<String,Object> data) {
+       return sendHtmlEmail(to,type.defaultFrom,type.subject,"email_base",type.templateKey,data);
     }
 
     /**
@@ -44,7 +47,7 @@ public class EmailService {
      * @param contentTemplate content Template
      * @param data data to inject into context
      */
-    public void sendHtmlEmail(String to, String from,String subject,String baseTemplate,String contentTemplate,Map<String,Object> data) {
+    public EmailCodeSendResult sendHtmlEmail(String to, String from, String subject, String baseTemplate, String contentTemplate, Map<String,Object> data) {
         Context context = new Context();
         String contentPart = templateEngine.process("email/" + contentTemplate, context);
         data.put("content", contentPart);
@@ -60,10 +63,19 @@ public class EmailService {
                 .build();
         try{
             CreateEmailResponse res = resend.emails().send(params);
-            System.out.println(res.getId());
+            return EmailCodeSendResult.builder()
+                    .sendSuccess(true)
+                    .email(to)
+                    .responseRaw(res.getId())
+                    .build();
         } catch (ResendException e) {
-            System.err.println("Email send fail,Please check the email provider & params!");
-            System.err.println(e.getMessage());
+            EmailCodeSendResult result = EmailCodeSendResult.builder()
+                    .sendSuccess(false)
+                    .email(to)
+                    .message("Email send fail,Please check the email provider & params.")
+                    .build();
+            log.error(result.getMessage(), e);
+            return result;
         }
     }
 

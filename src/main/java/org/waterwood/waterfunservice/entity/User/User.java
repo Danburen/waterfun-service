@@ -4,9 +4,11 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import org.bouncycastle.crypto.generators.BCrypt;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.waterwood.waterfunservice.utils.PasswordUtil;
 
 
 import java.time.Instant;
@@ -50,6 +52,9 @@ public class User {
     @UpdateTimestamp
     private Instant updatedAt;
 
+    public boolean checkPassword(String password) {
+        return PasswordUtil.matchPassword(password, passwordHash);
+    }
 }
 
 

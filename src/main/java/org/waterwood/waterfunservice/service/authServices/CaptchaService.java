@@ -2,30 +2,27 @@ package org.waterwood.waterfunservice.service.authServices;
 
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.LineCaptcha;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.repository.RedisRepository;
+import org.waterwood.waterfunservice.service.RedisServiceBase;
 
-import java.util.UUID;
+import java.time.Duration;
 
 @Service
 @Getter
-public class CaptchaService extends VerifyCodeServiceBase{
-    private final RedisRepository<String> redisRepository;
+public class CaptchaService extends RedisServiceBase<String> implements VerifyServiceBase{
     private static final String redisKeyPrefix = "verify:captcha";
 
     protected CaptchaService(RedisRepository<String> redisRepository) {
         super(redisKeyPrefix,redisRepository);
-        this.redisRepository = redisRepository;
     }
 
     public LineCaptchaResult generateCaptcha(){
         LineCaptcha lineCaptcha = generateVerifyCode();
-        String uuid = getNewUUID();
+        String uuid = generateKey();
         String code = lineCaptcha.getCode();
-        saveCode(uuid,code);
+        saveValue(uuid,code, Duration.ofMinutes(2));
         return new LineCaptchaResult(uuid,lineCaptcha);
     }
 

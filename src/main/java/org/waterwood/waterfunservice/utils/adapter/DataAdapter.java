@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.utils;
+package org.waterwood.waterfunservice.utils.adapter;
 
 import java.util.List;
 

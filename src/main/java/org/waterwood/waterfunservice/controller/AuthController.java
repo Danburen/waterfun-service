@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.waterwood.waterfunservice.DTO.enums.ErrorCode;
+import org.waterwood.waterfunservice.DTO.common.ErrorCode;
 import org.waterwood.waterfunservice.DTO.request.EmailLoginRequestBody;
 import org.waterwood.waterfunservice.DTO.request.LoginRequestBody;
 import org.waterwood.waterfunservice.DTO.request.PwdLoginRequestBody;
@@ -60,10 +60,9 @@ public class AuthController {
                 .map(Cookie::getValue)
                 .orElse(null);
             if (uuid == null) {
-                return ResponseEntity.badRequest().body("can't get uuid");
-    //            return ErrorCode.CAPTCHA_EXPIRED.toResponseEntity();
+                return ErrorCode.CAPTCHA_EXPIRED.toResponseEntity();
             }
-            if(!captchaService.validateCode(uuid, body.getCaptcha())){
+            if(!captchaService.validate(uuid, body.getCaptcha())){
                 return ErrorCode.CAPTCHA_INCORRECT.toResponseEntity();
             }
             if (!"admin".equals(body.getUsername()) || !"123456".equals(body.getPassword())) {
@@ -75,38 +74,6 @@ public class AuthController {
         } else if (loginRequestBody instanceof EmailLoginRequestBody body) {
 
         }
-//        if (loginRequestBody.getUsername() == null) {
-//            return ErrorCode.USERNAME_EMPTY.toResponseEntity();
-//        }else if (loginRequestBody.getPassword() == null) {
-//            return ErrorCode.PASSWORD_EMPTY.toResponseEntity();
-//        }else if(loginRequestBody.getVerifyCode() == null || loginRequestBody.getVerifyCode().isEmpty()) {
-//            return ErrorCode.CAPTCHA_EMPTY.toResponseEntity();
-//        }
-//        // get captcha key(uuid) from cookie from frontend
-//        String uuid = Arrays.stream(request.getCookies())
-//                .filter(c->"CAPTCHA_KEY".equals(c.getName()))
-//                .findFirst()
-//                .map(Cookie::getValue)
-//                .orElse(null);
-//        if (uuid == null) {
-//            return ResponseEntity.badRequest().body("can't get uuid");
-////            return ErrorCode.CAPTCHA_EXPIRED.toResponseEntity();
-//        }
-//        // get captcha code from redis
-//        String correctCode = captchaService.getCode(uuid);
-//        if(correctCode == null){
-//            return ResponseEntity.badRequest().body("redis can't get captcha key");
-//            //return ErrorCode.CAPTCHA_EXPIRED.toResponseEntity();
-//        }
-//        // verify the captcha code from user and redis
-//        if(!correctCode.equals(loginRequestBody.getVerifyCode())){
-//            return ErrorCode.CAPTCHA_INCORRECT.toResponseEntity();
-//        }
-//        if (!"admin".equals(loginRequestBody.getUsername()) ||
-//                !"123456".equals(loginRequestBody.getPassword())) {
-//            return ErrorCode.USERNAME_OR_PASSWORD_INCORRECT.toResponseEntity();
-//        }
-//        captchaService.removeCode(uuid);
         return ResponseEntity.ok("Successfully Login!");
     }
 }

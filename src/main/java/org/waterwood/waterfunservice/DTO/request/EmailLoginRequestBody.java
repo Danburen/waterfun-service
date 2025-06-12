@@ -2,7 +2,7 @@ package org.waterwood.waterfunservice.DTO.request;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.waterwood.waterfunservice.DTO.enums.LoginType;
+import org.waterwood.waterfunservice.DTO.common.LoginType;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
