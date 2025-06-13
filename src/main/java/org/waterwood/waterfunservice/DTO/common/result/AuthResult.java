@@ -1,35 +1,28 @@
 package org.waterwood.waterfunservice.DTO.common.result;
 
 import jakarta.annotation.Nullable;
-import org.waterwood.waterfunservice.DTO.common.ErrorCode;
-import org.waterwood.waterfunservice.DTO.common.response.LoginResponse;
+import lombok.NonNull;
+import org.waterwood.waterfunservice.DTO.common.ResponseCode;
+import org.waterwood.waterfunservice.DTO.common.response.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.response.LoginResponseData;
 
-public record AuthResult(Boolean success, @Nullable ErrorCode code) {
+public record AuthResult(Boolean success, @NonNull ResponseCode code) {
     public AuthResult(Boolean success) {
-        this(success, null);
-    }
-    public LoginResponse toLoginResponse(LoginResponse loginResponse) {
-        if (code != null) {
-            return code.toLoginResponseBuilder(loginResponse).success(success).build();
-        }
-        return LoginResponse.builder()
-                .success(success)
-                .code(null)
-                .message(null)
-                .accessToken(loginResponse.getAccessToken())
-                .userId(loginResponse.getUserId())
-                .username(loginResponse.getUsername())
-                .build();
+        this(success, success ? ResponseCode.SUCCESS : ResponseCode.BAD_REQUEST);
     }
 
-    public LoginResponse toLoginResponse() {
-        if (code != null) {
-            return code.toLoginResponseBuilder().success(success).build();
-        }
-        return LoginResponse.builder()
-                .success(success)
-                .code(null)
-                .message(null)
-                .build();
+    public ApiResponse<LoginResponseData> toApiResponse(@Nullable LoginResponseData loginResponseData) {
+        return ApiResponse.<LoginResponseData>builder()
+                .code(code.getCode())
+                .message(code.getMsg())
+                .data(loginResponseData).build();
+
+    }
+
+    public ApiResponse<LoginResponseData> toLoginResponse() {
+        return ApiResponse.<LoginResponseData>builder()
+                .code(code.getCode())
+                .message(code.getMsg())
+                .data(null).build();
     }
 }

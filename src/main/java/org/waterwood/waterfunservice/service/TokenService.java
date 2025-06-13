@@ -1,13 +1,22 @@
 package org.waterwood.waterfunservice.service;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.stereotype.Service;
+import org.waterwood.waterfunservice.entity.User.Role;
 import org.waterwood.waterfunservice.repository.RedisRepository;
+import org.waterwood.waterfunservice.service.common.TokenResult;
 import org.waterwood.waterfunservice.utils.RsaJwtUtil;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class TokenService extends RedisServiceBase<String> {
@@ -23,13 +32,16 @@ public class TokenService extends RedisServiceBase<String> {
         this.rsaJwtUtil = rsaJwtUtil;
     }
 
-    public String generateAccessToken(String userId) {
-        return rsaJwtUtil.generateToken(userId);
+    public TokenResult generateAccessToken(Long userId, Role role) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(Claims.SUBJECT, userId);
+        claims.put("role",role.name().toLowerCase());
+        return rsaJwtUtil.generateToken(claims);
     }
 
-    public String generateAndStoreRefreshToken(String userId) {
+    public String generateAndStoreRefreshToken(Long userId) {
         String refreshToken = generateNewUUID();
-        saveValue(buildRawRedisKey("ref",refreshToken), userId, Duration.ofSeconds(accessTokenExpire));
+        saveValue(buildRawRedisKey("ref",refreshToken), userId.toString(), Duration.ofSeconds(accessTokenExpire));
         return refreshToken;
     }
 
@@ -39,7 +51,7 @@ public class TokenService extends RedisServiceBase<String> {
      * @param refreshToken the refresh token to validate
      * @return String of <b>UserID</b> if the token is valid, null otherwise
      */
-    public @Nullable String validateRefreshToken(String refreshToken) {
+    public @Nullable Long validateRefreshToken(String refreshToken) {
         String key = buildRawRedisKey("ref", refreshToken);
         String userId = getValue(key);
         if (userId == null) {
@@ -49,28 +61,31 @@ public class TokenService extends RedisServiceBase<String> {
         if (expireTime == null || expireTime <= 0) {
             return null;
         }
-        // Remove the token after validation
-        removeValue(key);
-        return userId;
+//        removeValue(key);
+        return Long.valueOf(userId);
     }
 
-    public @Nullable String validateAccessToken(String accessToken) {
+    public boolean validateAccessToken(String accessToken) {
         try {
-            if(!rsaJwtUtil.validateToken(accessToken)) {
-                return null; // Token is invalid
-            }
-            Claims claims = rsaJwtUtil.parseToken(accessToken);
-            return claims.getSubject(); // No userId in the token
+            return rsaJwtUtil.validateToken(accessToken); // Token is invalid
         } catch (Exception e) {
-            return null; // Token is invalid or expired
+            return false; // Token is invalid or expired
         }
     }
 
-    public @Nullable String refreshAccessToken(String userId) {
-        userId = validateRefreshToken(userId);
+    public TokenResult refreshAccessToken(String refreshToken,Role role) {
+        Long userId = validateRefreshToken(refreshToken);
         if(userId == null) {
             return null; // Refresh token is invalid
         }
-        return generateAccessToken(userId);
+        return generateAccessToken(userId,role);
+    }
+
+    public Claims parseToken(String ValidatedAccessToken) {
+        return rsaJwtUtil.parseToken(ValidatedAccessToken);
+    }
+
+    public void removeRefreshToken(String refreshToken) {
+        removeValue(buildRawRedisKey("ref", refreshToken));
     }
 }

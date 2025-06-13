@@ -1,14 +1,15 @@
 package org.waterwood.waterfunservice.utils.validator;
 
-import org.waterwood.waterfunservice.DTO.common.ErrorCode;
+import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.common.result.AuthResult;
 import org.waterwood.waterfunservice.service.RedisServiceBase;
 
 import java.util.function.Supplier;
 
 /**
- * AuthValidator is a utility class for validating authentication-related data.
- * It provides a fluent interface for chaining validation checks and returning results.
+ * A utility class for validating authentication-related data.
+ * <p>It provides a fluent interface for chaining validation checks and returning results.</p>
+ * <p>Will construct a result where the first condition is not met</p>
  */
 public class AuthValidator {
     /**
@@ -24,33 +25,33 @@ public class AuthValidator {
     /**
      * Checks a condition and sets the result if the condition is false.
      * @param condition condition to check.
-     * @param errorCode Error Code if the condition is false.
+     * @param responseCode Error Code if the condition is false.
      * @return the current AuthValidator instance for method chaining.
      */
-    public AuthValidator check(boolean condition, ErrorCode errorCode) {
+    public AuthValidator check(boolean condition, ResponseCode responseCode) {
         if(result == null && !condition){
-            result = new AuthResult(false, errorCode);
+            result = new AuthResult(false, responseCode);
         }
         return this;
     }
 
     public AuthValidator ifValidThen(Supplier<AuthResult> supplier) {
-        if (result == null) {
-            AuthResult r = supplier.get();
-            if (!r.success()) {
-                result = r;
-            }
+        AuthResult r = supplier.get();
+        if (r.success()) {
+            result = r;
+        } else {
+            result = new AuthResult(false, r.code());
         }
         return this;
     }
     /**
      * Checks if the provided value is not null or empty.
      * @param value the value to check.
-     * @param errorCode Error Code if the value is null or empty.
+     * @param responseCode Error Code if the value is null or empty.
      * @return current AuthValidator instance for method chaining.
      */
-    public AuthValidator checkEmpty(String value, ErrorCode errorCode) {
-        return check(value != null && !value.isEmpty(), errorCode);
+    public AuthValidator checkEmpty(String value, ResponseCode responseCode) {
+        return check(value != null && !value.isEmpty(), responseCode);
     }
 
     /**
@@ -59,18 +60,18 @@ public class AuthValidator {
      * @return the current AuthValidator instance for method chaining.
      */
     public AuthValidator validateUsername(String username) {
-        return checkEmpty(username, ErrorCode.USERNAME_EMPTY);
+        return checkEmpty(username, ResponseCode.USERNAME_EMPTY);
     }
 
     /**
      * Validates the provided code against the saved ID in Redis using the specified service.
      * @param redisSavedID the ID under which the code is saved in Redis.
      * @param code the code to validate.
-     * @param errorCode the error code to return if validation fails.
+     * @param responseCode the error code to return if validation fails.
      * @return current AuthValidator instance for method chaining.
      */
-    public AuthValidator validateCode(String redisSavedID, String code, RedisServiceBase<String> storeService, ErrorCode errorCode) {
-        return check(storeService.validate(redisSavedID, code), errorCode);
+    public AuthValidator validateCode(String redisSavedID, String code, RedisServiceBase<String> storeService, ResponseCode responseCode) {
+        return check(storeService.validate(redisSavedID, code), responseCode);
     }
 
     /**
@@ -88,6 +89,6 @@ public class AuthValidator {
      * @return result of the validation
      */
     public AuthResult buildResult() {
-        return result == null ? new AuthResult(false,null) : result;
+        return result == null ? new AuthResult(false,ResponseCode.BAD_REQUEST) : result;
     }
 }

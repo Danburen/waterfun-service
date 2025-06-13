@@ -15,4 +15,6 @@ import org.waterwood.waterfunservice.DTO.common.LoginType;
 public class LoginRequestBody {
     private String username;
     private LoginType loginType;
+    private String accessToken;
+    private String refreshToken;
 }

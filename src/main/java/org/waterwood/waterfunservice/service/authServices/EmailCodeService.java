@@ -2,12 +2,12 @@ package org.waterwood.waterfunservice.service.authServices;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisAccessor;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.DTO.common.result.EmailCodeResult;
 import org.waterwood.waterfunservice.repository.RedisRepository;
 import org.waterwood.waterfunservice.service.EmailService;
 import org.waterwood.waterfunservice.service.RedisServiceBase;
+import org.waterwood.waterfunservice.service.common.ServiceErrorCode;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -31,7 +31,7 @@ public class EmailCodeService extends RedisServiceBase<String> implements Verify
         if(emailService == null) {
             return EmailCodeResult.builder()
                     .trySendSuccess(false)
-                    .authErrorCode(AuthErrorCode.EMAIL_SERVICE_NOT_AVAILABLE)
+                    .serviceErrorCode(ServiceErrorCode.EMAIL_SERVICE_NOT_AVAILABLE)
                     .build();
         }
         String code = generateVerifyCode();

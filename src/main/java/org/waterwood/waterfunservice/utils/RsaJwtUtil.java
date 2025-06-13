@@ -5,6 +5,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.waterwood.waterfunservice.service.common.TokenResult;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -27,24 +28,29 @@ public class RsaJwtUtil {
         this.expiration = expiration;
     }
 
-    public String generateToken(String subject, Duration dur){
-        Map<String,Object> claims = new HashMap<>();
-        claims.put(Claims.SUBJECT,subject);
+    public TokenResult generateToken(Map<String,Object> claims, Duration dur){
         claims.put(Claims.ISSUER,JWT_ISSUER);
+        Date expDate = new Date(System.currentTimeMillis() + dur.toMillis());
 
-        return Jwts.builder()
+        return new TokenResult(Jwts.builder()
                 .claims(claims)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + dur.toMillis()))
+                .expiration(expDate)
                 .signWith(privateKey,Jwts.SIG.RS256)
-                .compact();
+                .compact(), dur.toSeconds());
     }
 
-    public String generateToken(String subject) {
-        return generateToken(subject, Duration.ofMillis(expiration));
+    public TokenResult generateToken(Map<String,Object> claims) {
+        return generateToken(claims, Duration.ofMillis(expiration));
     }
 
-    public Claims parseToken(String JwToken) {
+    /**
+     * Parses the JWT token and returns the claims.
+     * Must after the token is verified with the public key.
+     * @param JwToken the JWT token to parse
+     * @return Claims Instance
+     */
+    public Claims parseToken(String JwToken) throws JwtException {
         return Jwts.parser()
                 .verifyWith(publicKey)
                 .build()

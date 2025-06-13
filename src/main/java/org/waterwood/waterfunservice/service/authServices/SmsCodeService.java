@@ -8,6 +8,7 @@ import org.waterwood.waterfunservice.DTO.common.result.SmsCodeSendResult;
 import org.waterwood.waterfunservice.repository.RedisRepository;
 import org.waterwood.waterfunservice.service.RedisServiceBase;
 import org.waterwood.waterfunservice.service.SmsService;
+import org.waterwood.waterfunservice.service.common.ServiceErrorCode;
 
 import java.time.Duration;
 import java.util.Map;
@@ -32,7 +33,7 @@ public class SmsCodeService extends RedisServiceBase<String> implements VerifySe
         if (smsService == null) {
             return SmsCodeResult.builder()
                     .trySendSuccess(false)
-                    .authErrorCode(AuthErrorCode.SMS_SERVICE_NOT_AVAILABLE)
+                    .serviceErrorCode(ServiceErrorCode.SMS_SERVICE_NOT_AVAILABLE)
                     .build();
         }
         String code = generateVerifyCode();

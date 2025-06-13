@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.waterwood.waterfunservice.DTO.common.ErrorCode;
+import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.request.EmailLoginRequestBody;
 import org.waterwood.waterfunservice.DTO.request.LoginRequestBody;
 import org.waterwood.waterfunservice.DTO.request.PwdLoginRequestBody;
@@ -47,12 +47,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestBody loginRequestBody, HttpServletRequest request) {
         if(loginRequestBody.getUsername() == null || loginRequestBody.getUsername().isEmpty()) {
-            return ErrorCode.USERNAME_EMPTY.toResponseEntity();
+            return ResponseCode.USERNAME_EMPTY.toResponseEntity();
         }
 
         if(loginRequestBody instanceof PwdLoginRequestBody body){
             if(body.getPassword() == null || body.getPassword().isEmpty()) {
-                return ErrorCode.PASSWORD_EMPTY.toResponseEntity();
+                return ResponseCode.PASSWORD_EMPTY.toResponseEntity();
             }
             String uuid = Arrays.stream(request.getCookies())
                 .filter(c->"CAPTCHA_KEY".equals(c.getName()))
@@ -60,13 +60,13 @@ public class AuthController {
                 .map(Cookie::getValue)
                 .orElse(null);
             if (uuid == null) {
-                return ErrorCode.CAPTCHA_EXPIRED.toResponseEntity();
+                return ResponseCode.CAPTCHA_EXPIRED.toResponseEntity();
             }
             if(!captchaService.validate(uuid, body.getCaptcha())){
-                return ErrorCode.CAPTCHA_INCORRECT.toResponseEntity();
+                return ResponseCode.CAPTCHA_INCORRECT.toResponseEntity();
             }
             if (!"admin".equals(body.getUsername()) || !"123456".equals(body.getPassword())) {
-                return ErrorCode.USERNAME_OR_PASSWORD_INCORRECT.toResponseEntity();
+                return ResponseCode.USERNAME_OR_PASSWORD_INCORRECT.toResponseEntity();
             }
 
         }else if(loginRequestBody instanceof SmsLoginRequestBody body){
