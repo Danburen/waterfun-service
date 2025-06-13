@@ -12,7 +12,11 @@ import org.waterwood.waterfunservice.DTO.request.EmailLoginRequestBody;
 import org.waterwood.waterfunservice.DTO.request.LoginRequestBody;
 import org.waterwood.waterfunservice.DTO.request.PwdLoginRequestBody;
 import org.waterwood.waterfunservice.DTO.request.SmsLoginRequestBody;
+import org.waterwood.waterfunservice.service.EmailService;
+import org.waterwood.waterfunservice.service.SmsService;
+import org.waterwood.waterfunservice.service.authServices.AuthService;
 import org.waterwood.waterfunservice.service.authServices.CaptchaService;
+import org.waterwood.waterfunservice.utils.CookieParser;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -23,7 +27,13 @@ import java.util.Arrays;
 public class AuthController {
     @Autowired
     private CaptchaService captchaService;
+    @Autowired
+    private EmailService emailService;
+    @Autowired
+    private SmsService smsService;
 
+    @Autowired
+    private AuthService authService;
     /** redis + cookie(HttpOnly) save captcha
      * Generate the captcha
      */
@@ -51,29 +61,16 @@ public class AuthController {
         }
 
         if(loginRequestBody instanceof PwdLoginRequestBody body){
-            if(body.getPassword() == null || body.getPassword().isEmpty()) {
-                return ResponseCode.PASSWORD_EMPTY.toResponseEntity();
-            }
-            String uuid = Arrays.stream(request.getCookies())
-                .filter(c->"CAPTCHA_KEY".equals(c.getName()))
-                .findFirst()
-                .map(Cookie::getValue)
-                .orElse(null);
-            if (uuid == null) {
-                return ResponseCode.CAPTCHA_EXPIRED.toResponseEntity();
-            }
-            if(!captchaService.validate(uuid, body.getCaptcha())){
-                return ResponseCode.CAPTCHA_INCORRECT.toResponseEntity();
-            }
-            if (!"admin".equals(body.getUsername()) || !"123456".equals(body.getPassword())) {
-                return ResponseCode.USERNAME_OR_PASSWORD_INCORRECT.toResponseEntity();
-            }
-
+            return authService.loginByPassword(body,
+                    CookieParser.getCookieValue(request.getCookies(),"CAPTCHA_KEY")).toResponseEntity();
         }else if(loginRequestBody instanceof SmsLoginRequestBody body){
-
+            return authService.loginBySmsCode(body,
+                    CookieParser.getCookieValue(request.getCookies(),"SMS_CODE_KEY")).toResponseEntity();
         } else if (loginRequestBody instanceof EmailLoginRequestBody body) {
-
+            return authService.loginByEmail(body,
+                    CookieParser.getCookieValue(request.getCookies(),"EMAIL_CODE_KEY")).toResponseEntity();
         }
-        return ResponseEntity.ok("Successfully Login!");
+
+        return ResponseCode.INTERNAL_SERVER_ERROR.toResponseEntity();
     }
 }

@@ -16,6 +16,7 @@ public enum ResponseCode {
     FORBIDDEN(403, "FORBIDDEN"),
     NOT_FOUND(404, "NOT_FOUND"),
     INTERNAL_SERVER_ERROR(500, "INTERNAL_SERVER_ERROR"),
+
     UNKNOWN_ERROR(50000, "UNKNOWN_ERROR"),
 
     // User-info-related Errors
@@ -42,19 +43,20 @@ public enum ResponseCode {
     REFRESH_TOKEN_INVALID(40105, "REFRESH_TOKEN_INVALID"),
     REFRESH_TOKEN_MISSING(40106, "REFRESH_TOKEN_MISSING"),;
 
-    private static int BASE_CODE = 40012; // Starting code for auto-generated values
-
     private final int code;    // error code
     private final String msg; // error message
-
-    private static int nextCode() {
-        return BASE_CODE++;
-    }
-
     public ResponseEntity<?> toResponseEntity() {
         Map<String,Object> body = new HashMap<>();
         body.put("code", this.code);
         body.put("message", this.msg);
-        return ResponseEntity.badRequest().body(body);
+        return ResponseEntity.status(getHttpStatus()).body(body);
     }
+
+    public static int toHttpStatus(int code) {
+        return (code >= 200 && code < 600) ? code : code / 100;
+    }
+
+    public int getHttpStatus() {
+        return toHttpStatus(this.code);
+        }
 }

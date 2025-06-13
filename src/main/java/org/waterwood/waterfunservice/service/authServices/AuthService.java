@@ -14,7 +14,6 @@ import org.waterwood.waterfunservice.entity.User.User;
 import org.waterwood.waterfunservice.repository.UserRepository;
 import org.waterwood.waterfunservice.service.TokenService;
 import org.waterwood.waterfunservice.service.common.TokenResult;
-import org.waterwood.waterfunservice.utils.RsaJwtUtil;
 import org.waterwood.waterfunservice.utils.validator.AuthValidator;
 
 @Service
@@ -86,7 +85,6 @@ public class AuthService {
             return authResult.toLoginResponse();
         }
         ApiResponse<LoginResponseData> res =  authResult.toLoginResponse();
-        String stringUserId = String.valueOf(user.getId());
         //First time login in
         if(accessToken == null && refreshToken == null) {
             TokenResult newAccessToken = tokenService.generateAccessToken(user.getId(),user.getRole());
@@ -99,18 +97,23 @@ public class AuthService {
 
         if(accessToken != null){
             // validate the content of the access token
-            if(tokenService.validateAccessToken(accessToken)){
+            if(isTokenValid(accessToken, user)){
                 Claims claims = tokenService.parseToken(accessToken);
-                if(stringUserId.equals(claims.getSubject()) && user.getRole().name().toLowerCase().equals(claims.get("role"))){
-                    res.getData().setExpiresIn((claims.getExpiration().getTime() - System.currentTimeMillis())/1000);
-                    res.getData().setUsername(user.getUsername());
-                    res.getData().setUserId(user.getId());
-                } else {
-                    // Access token is invalid, return error response
-                    return new AuthResult(false, ResponseCode.ACCESS_TOKEN_INVALID).toLoginResponse();
-                }
+                res.getData().setExpiresIn((claims.getExpiration().getTime() - System.currentTimeMillis())/1000);
+                res.getData().setUsername(user.getUsername());
+                res.getData().setUserId(user.getId());
+            } else {
+                // Access token is invalid, return error response
+                return new AuthResult(false, ResponseCode.ACCESS_TOKEN_INVALID).toLoginResponse();
             }
         }
         return res;
+    }
+
+    private boolean isTokenValid(String accessToken, User user) {
+        if (!tokenService.validateAccessToken(accessToken)) return false;
+        Claims claims = tokenService.parseToken(accessToken);
+        return String.valueOf(user.getId()).equals(claims.getSubject())
+                && user.getRole().name().toLowerCase().equals(claims.get("role"));
     }
 }

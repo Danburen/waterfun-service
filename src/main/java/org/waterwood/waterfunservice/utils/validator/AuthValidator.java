@@ -29,7 +29,7 @@ public class AuthValidator {
      * @return the current AuthValidator instance for method chaining.
      */
     public AuthValidator check(boolean condition, ResponseCode responseCode) {
-        if(result == null && !condition){
+        if(result == null || !condition){
             result = new AuthResult(false, responseCode);
         }
         return this;
