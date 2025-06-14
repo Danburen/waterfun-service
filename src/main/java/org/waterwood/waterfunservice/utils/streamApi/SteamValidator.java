@@ -1,19 +1,19 @@
-package org.waterwood.waterfunservice.utils.validator;
+package org.waterwood.waterfunservice.utils.streamApi;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
-public class Validator<T>{
+public class SteamValidator<T>{
     private boolean valid = true;
     private T result;
 
-    private Validator() {}
+    private SteamValidator() {}
 
-    public static <T> Validator<T> start() {
-        return new Validator<>();
+    public static <T> SteamValidator<T> start() {
+        return new SteamValidator<>();
     }
 
-    public Validator<T> check(BooleanSupplier condition, Supplier<T> failResultSupplier) {
+    public SteamValidator<T> check(BooleanSupplier condition, Supplier<T> failResultSupplier) {
         if (valid && !condition.getAsBoolean()) {
             valid = false;
             result = failResultSupplier.get();

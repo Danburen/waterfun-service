@@ -8,7 +8,7 @@ import org.waterwood.waterfunservice.DTO.common.response.LoginResponseData;
 
 public record AuthResult(Boolean success, @NonNull ResponseCode code) {
     public AuthResult(Boolean success) {
-        this(success, success ? ResponseCode.SUCCESS : ResponseCode.BAD_REQUEST);
+        this(success, success ? ResponseCode.OK : ResponseCode.BAD_REQUEST);
     }
 
     public ApiResponse<LoginResponseData> toApiResponse(@Nullable LoginResponseData loginResponseData) {

@@ -1,0 +1,8 @@
+package org.waterwood.waterfunservice.DTO.common;
+
+public enum ErrorType {
+    CLIENT,SERVER,VALIDATION,
+    AUTHENTICATION,AUTHORIZATION,NOT_FOUND,
+    CONFLICT,UNSUPPORTED_OPERATION,
+    INTERNAL_ERROR,UNKNOWN;
+}

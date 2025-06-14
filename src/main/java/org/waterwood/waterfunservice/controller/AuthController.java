@@ -7,19 +7,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.request.EmailLoginRequestBody;
-import org.waterwood.waterfunservice.DTO.request.LoginRequestBody;
-import org.waterwood.waterfunservice.DTO.request.PwdLoginRequestBody;
-import org.waterwood.waterfunservice.DTO.request.SmsLoginRequestBody;
+import org.waterwood.waterfunservice.DTO.common.result.EmailCodeResult;
+import org.waterwood.waterfunservice.DTO.common.result.OperationResult;
+import org.waterwood.waterfunservice.DTO.common.result.SmsCodeResult;
+import org.waterwood.waterfunservice.DTO.request.*;
 import org.waterwood.waterfunservice.service.EmailService;
-import org.waterwood.waterfunservice.service.SmsService;
 import org.waterwood.waterfunservice.service.authServices.AuthService;
 import org.waterwood.waterfunservice.service.authServices.CaptchaService;
+import org.waterwood.waterfunservice.service.authServices.EmailCodeService;
+import org.waterwood.waterfunservice.service.authServices.SmsCodeService;
 import org.waterwood.waterfunservice.utils.CookieParser;
+import org.waterwood.waterfunservice.utils.ResponseUtil;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 @Slf4j
 @RestController
@@ -28,9 +30,9 @@ public class AuthController {
     @Autowired
     private CaptchaService captchaService;
     @Autowired
-    private EmailService emailService;
+    private EmailCodeService emailCodeService;
     @Autowired
-    private SmsService smsService;
+    private SmsCodeService smsCodeService;
 
     @Autowired
     private AuthService authService;
@@ -54,23 +56,48 @@ public class AuthController {
         result.captcha().write(response.getOutputStream());
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestBody loginRequestBody, HttpServletRequest request) {
-        if(loginRequestBody.getUsername() == null || loginRequestBody.getUsername().isEmpty()) {
-            return ResponseCode.USERNAME_EMPTY.toResponseEntity();
+    @PostMapping("/sendSmsCode")
+    public ResponseEntity<?> sendSmsCode(@RequestBody SendSmsCodeRequest requestBody,HttpServletRequest request, HttpServletResponse response) {
+        OperationResult<SmsCodeResult> smsCodeResult = smsCodeService.sendSmsCode(requestBody.getPhoneNumber());
+        ResponseCode statusCode = smsCodeResult.getResponseCode();
+        if(! smsCodeResult.isTrySuccess()){
+            if(statusCode == null){
+                return ResponseCode.INTERNAL_SERVER_ERROR.toResponseEntity();
+            }else{
+                return statusCode.toResponseEntity();
+            }
         }
+        ResponseUtil.setCookieAndNoCache(response, "SMS_CODE_KEY", smsCodeResult.getResultData().getKey(), 120);
+        return ResponseCode.OK.toResponseEntity();
+    }
 
-        if(loginRequestBody instanceof PwdLoginRequestBody body){
+    @PostMapping("/sendEmailCode")
+    public ResponseEntity<?> sendEmailCode(@RequestBody SendEmailCodeRequest requestBody,HttpServletRequest request, HttpServletResponse response) {
+        OperationResult<EmailCodeResult> emailCodeResult = emailCodeService.sendEmailCode(requestBody.getEmail(), EmailTemplateType.VERIFY_CODE);
+        ResponseCode statusCode = emailCodeResult.getResponseCode();
+        if(! emailCodeResult.isTrySuccess()){
+            if(statusCode == null){
+                return ResponseCode.INTERNAL_SERVER_ERROR.toResponseEntity();
+            }else{
+                return statusCode.toResponseEntity();
+            }
+        }
+        ResponseUtil.setCookieAndNoCache(response, "EMAIL_CODE_KEY", emailCodeResult.getResultData().getKey(), 120);
+        return ResponseCode.OK.toResponseEntity();
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequestBody requestBody, HttpServletRequest request) {
+        if(requestBody instanceof PwdLoginRequestBody body){
             return authService.loginByPassword(body,
                     CookieParser.getCookieValue(request.getCookies(),"CAPTCHA_KEY")).toResponseEntity();
-        }else if(loginRequestBody instanceof SmsLoginRequestBody body){
+        }else if(requestBody instanceof SmsLoginRequestBody body){
             return authService.loginBySmsCode(body,
                     CookieParser.getCookieValue(request.getCookies(),"SMS_CODE_KEY")).toResponseEntity();
-        } else if (loginRequestBody instanceof EmailLoginRequestBody body) {
+        } else if (requestBody instanceof EmailLoginRequestBody body) {
             return authService.loginByEmail(body,
                     CookieParser.getCookieValue(request.getCookies(),"EMAIL_CODE_KEY")).toResponseEntity();
         }
-
         return ResponseCode.INTERNAL_SERVER_ERROR.toResponseEntity();
     }
 }

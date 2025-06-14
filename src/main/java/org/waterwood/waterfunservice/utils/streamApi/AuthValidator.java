@@ -1,10 +1,11 @@
-package org.waterwood.waterfunservice.utils.validator;
+package org.waterwood.waterfunservice.utils.streamApi;
 
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.common.result.AuthResult;
 import org.waterwood.waterfunservice.service.RedisServiceBase;
 
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * A utility class for validating authentication-related data.

@@ -46,9 +46,10 @@ public class RsaJwtUtil {
 
     /**
      * Parses the JWT token and returns the claims.
-     * Must after the token is verified with the public key.
+     * This will validate the token signature and expiration first.
      * @param JwToken the JWT token to parse
      * @return Claims Instance
+     * @throws JwtException if the token is invalid or expired
      */
     public Claims parseToken(String JwToken) throws JwtException {
         return Jwts.parser()

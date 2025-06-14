@@ -3,7 +3,11 @@ package org.waterwood.waterfunservice.service.authServices;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
+import org.waterwood.waterfunservice.DTO.common.ErrorType;
+import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.common.result.EmailCodeResult;
+import org.waterwood.waterfunservice.DTO.common.result.OperationResult;
 import org.waterwood.waterfunservice.repository.RedisRepository;
 import org.waterwood.waterfunservice.service.EmailService;
 import org.waterwood.waterfunservice.service.RedisServiceBase;
@@ -14,6 +18,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static org.waterwood.waterfunservice.utils.ValidateUtil.validateEmail;
+
 @Getter
 @Service
 public class EmailCodeService extends RedisServiceBase<String> implements VerifyServiceBase{
@@ -22,28 +28,38 @@ public class EmailCodeService extends RedisServiceBase<String> implements Verify
     private Long expireDuration;
     private final EmailService emailService;
 
-    protected EmailCodeService(RedisRepository<String> redisRepository,EmailService emailService) {
+    protected EmailCodeService(RedisRepository<String> redisRepository, EmailService emailService) {
         super(redisKeyPrefix, redisRepository);
         this.emailService = emailService;
     }
 
-    public EmailCodeResult sendEmailCode(String emailTo, EmailService.EmailTemplateType type) {
+    public OperationResult<EmailCodeResult> sendEmailCode(String emailTo, EmailTemplateType type) {
+        if(! validateEmail(emailTo)) {
+            return OperationResult.<EmailCodeResult>builder()
+                    .errorType(ErrorType.CLIENT)
+                    .responseCode(ResponseCode.EMAIL_ADDRESS_INVALID)
+                    .build();
+        }
         if(emailService == null) {
-            return EmailCodeResult.builder()
-                    .trySendSuccess(false)
+            return OperationResult.<EmailCodeResult>builder()
+                    .errorType(ErrorType.SERVER)
                     .serviceErrorCode(ServiceErrorCode.EMAIL_SERVICE_NOT_AVAILABLE)
                     .build();
         }
         String code = generateVerifyCode();
         String uuid = generateKey();
-        saveValue(emailTo + "_" + uuid,code, Duration.ofMinutes(expireDuration));
 
         Map<String,Object> templateData = new HashMap<>();
         templateData.put("verificationCode",code);
         templateData.put("expireTime",expireDuration);
-        return EmailCodeResult.builder()
-                .trySendSuccess(true)
-                .result(emailService.sendHtmlEmail(emailTo, type, templateData))
+
+        EmailCodeResult sendResult= emailService.sendHtmlEmail(emailTo, type, templateData);
+        sendResult.setKey(uuid);
+
+        if (sendResult.isSendSuccess()){ saveValue(emailTo + "_" + uuid,code, Duration.ofMinutes(expireDuration)); }
+        return OperationResult.<EmailCodeResult>builder()
+                .trySuccess(true)
+                .resultData(sendResult)
                 .build();
     }
 
@@ -55,5 +71,4 @@ public class EmailCodeService extends RedisServiceBase<String> implements Verify
     public String generateVerifyCode() {
         return String.valueOf( ThreadLocalRandom.current().nextInt(100000, 1000000));
     }
-
 }

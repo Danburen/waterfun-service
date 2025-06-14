@@ -81,7 +81,7 @@ public class TokenService extends RedisServiceBase<String> {
         return generateAccessToken(userId,role);
     }
 
-    public Claims parseToken(String ValidatedAccessToken) {
+    public Claims parseToken(String ValidatedAccessToken) throws JwtException{
         return rsaJwtUtil.parseToken(ValidatedAccessToken);
     }
 

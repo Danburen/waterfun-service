@@ -3,8 +3,10 @@ package org.waterwood.waterfunservice.service.authServices;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.waterwood.waterfunservice.DTO.common.ErrorType;
+import org.waterwood.waterfunservice.DTO.common.ResponseCode;
+import org.waterwood.waterfunservice.DTO.common.result.OperationResult;
 import org.waterwood.waterfunservice.DTO.common.result.SmsCodeResult;
-import org.waterwood.waterfunservice.DTO.common.result.SmsCodeSendResult;
 import org.waterwood.waterfunservice.repository.RedisRepository;
 import org.waterwood.waterfunservice.service.RedisServiceBase;
 import org.waterwood.waterfunservice.service.SmsService;
@@ -13,6 +15,8 @@ import org.waterwood.waterfunservice.service.common.ServiceErrorCode;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+
+import static org.waterwood.waterfunservice.utils.ValidateUtil.validatePhone;
 
 @Getter
 @Service
@@ -29,22 +33,28 @@ public class SmsCodeService extends RedisServiceBase<String> implements VerifySe
         this.smsService = smsService;
     }
 
-    public SmsCodeResult sendSmsCode(String phoneNumber) {
+    public OperationResult<SmsCodeResult> sendSmsCode(String phoneNumber) {
+        if (! validatePhone(phoneNumber)) {
+            return OperationResult.<SmsCodeResult>builder()
+                    .errorType(ErrorType.CLIENT)
+                    .responseCode(ResponseCode.PHONE_NUMBER_INVALID)
+                    .build();
+        }
         if (smsService == null) {
-            return SmsCodeResult.builder()
-                    .trySendSuccess(false)
+            return OperationResult.<SmsCodeResult>builder()
+                    .errorType(ErrorType.SERVER)
                     .serviceErrorCode(ServiceErrorCode.SMS_SERVICE_NOT_AVAILABLE)
                     .build();
         }
         String code = generateVerifyCode();
         String uuid = generateNewUUID();
-        saveValue(phoneNumber + "_" + uuid, code, Duration.ofMinutes(expireDuration));
-        // If smsService is null, return a result indicating failure
-        SmsCodeSendResult result = smsService.sendSms(phoneNumber, smsCodeTemplate,
+        SmsCodeResult result = smsService.sendSms(phoneNumber, smsCodeTemplate,
                 Map.of("code", code, "time", expireDuration));
-        return SmsCodeResult.builder()
-                .trySendSuccess(true)
-                .result(result)
+        result.setKey(uuid);
+        if(result.isSendSuccess()){ saveValue(phoneNumber + "_" + uuid, code, Duration.ofMinutes(expireDuration)); }
+        return OperationResult.<SmsCodeResult>builder()
+                .trySuccess(true)
+                .resultData(result)
                 .build();
     }
 

@@ -10,7 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
-import org.waterwood.waterfunservice.DTO.common.result.EmailCodeSendResult;
+import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
+import org.waterwood.waterfunservice.DTO.common.result.EmailCodeResult;
 
 
 import java.util.Map;
@@ -23,7 +24,7 @@ public class EmailService {
     private final SpringTemplateEngine templateEngine;
 
 
-    protected EmailService( SpringTemplateEngine templateEngine) {
+    protected EmailService(SpringTemplateEngine templateEngine) {
         this.templateEngine = templateEngine;
     }
 
@@ -33,8 +34,8 @@ public class EmailService {
      * @param type type of email
      * @param data inject data to template context
      */
-    public EmailCodeSendResult sendHtmlEmail(String to, EmailTemplateType type, Map<String,Object> data) {
-       return sendHtmlEmail(to,type.defaultFrom,type.subject,"email_base",type.templateKey,data);
+    public EmailCodeResult sendHtmlEmail(String to, EmailTemplateType type, Map<String,Object> data) {
+       return sendHtmlEmail(to,type.getDefaultFrom(),type.getSubject(),"email_base",type.getTemplateKey(),data);
     }
 
     /**
@@ -47,7 +48,7 @@ public class EmailService {
      * @param contentTemplate content Template
      * @param data data to inject into context
      */
-    public EmailCodeSendResult sendHtmlEmail(String to, String from, String subject, String baseTemplate, String contentTemplate, Map<String,Object> data) {
+    public EmailCodeResult sendHtmlEmail(String to, String from, String subject, String baseTemplate, String contentTemplate, Map<String,Object> data) {
         Context context = new Context();
         String contentPart = templateEngine.process("email/" + contentTemplate, context);
         data.put("content", contentPart);
@@ -63,13 +64,13 @@ public class EmailService {
                 .build();
         try{
             CreateEmailResponse res = resend.emails().send(params);
-            return EmailCodeSendResult.builder()
+            return EmailCodeResult.builder()
                     .sendSuccess(true)
                     .email(to)
                     .responseRaw(res.getId())
                     .build();
         } catch (ResendException e) {
-            EmailCodeSendResult result = EmailCodeSendResult.builder()
+            EmailCodeResult result = EmailCodeResult.builder()
                     .sendSuccess(false)
                     .email(to)
                     .message("Email send fail,Please check the email provider & params.")
@@ -79,17 +80,5 @@ public class EmailService {
         }
     }
 
-    @Getter
-    public enum EmailTemplateType{
-        VERIFY_CODE("verify-code","WaterFun 账户验证","WaterFun<verify@mail.waterfun.com>"),
-        PASSWORD_RESET("password-reset","WaterFun 密码重置","WaterFun<verify@mail.waterfun.com>"),;
-        private final String templateKey;
-        private final String subject;
-        private final String defaultFrom;
-        EmailTemplateType(String templateKey, String subject, String defaultFrom) {
-            this.templateKey = templateKey;
-            this.subject = subject;
-            this.defaultFrom = defaultFrom;
-        }
-    }
+
 }

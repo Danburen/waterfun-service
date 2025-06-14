@@ -1,6 +1,7 @@
 package org.waterwood.waterfunservice.service.authServices;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.DTO.common.response.ApiResponse;
@@ -14,7 +15,7 @@ import org.waterwood.waterfunservice.entity.User.User;
 import org.waterwood.waterfunservice.repository.UserRepository;
 import org.waterwood.waterfunservice.service.TokenService;
 import org.waterwood.waterfunservice.service.common.TokenResult;
-import org.waterwood.waterfunservice.utils.validator.AuthValidator;
+import org.waterwood.waterfunservice.utils.streamApi.AuthValidator;
 
 @Service
 public class AuthService {
@@ -48,8 +49,7 @@ public class AuthService {
 
     public  ApiResponse<LoginResponseData> loginBySmsCode(SmsLoginRequestBody requestBody, String uuid) {
         return userRepo.findUserByPhone(requestBody.getUsername()).map(
-                user-> validateTokenAndBuildResult(
-                        AuthValidator.start()
+                user-> validateTokenAndBuildResult(AuthValidator.start()
                                 .validateUsername(requestBody.getUsername())
                                 .checkEmpty(requestBody.getSmsCode(), ResponseCode.SMS_CODE_EMPTY)
                                 .check(smsCodeService.verifySmsCode(
@@ -97,14 +97,17 @@ public class AuthService {
 
         if(accessToken != null){
             // validate the content of the access token
-            if(isTokenValid(accessToken, user)){
+            try{
                 Claims claims = tokenService.parseToken(accessToken);
                 res.getData().setExpiresIn((claims.getExpiration().getTime() - System.currentTimeMillis())/1000);
                 res.getData().setUsername(user.getUsername());
                 res.getData().setUserId(user.getId());
-            } else {
-                // Access token is invalid, return error response
-                return new AuthResult(false, ResponseCode.ACCESS_TOKEN_INVALID).toLoginResponse();
+            }catch (Exception e){
+                if(e instanceof ExpiredJwtException) {
+                    return new AuthResult(false, ResponseCode.ACCESS_TOKEN_EXPIRED).toLoginResponse();
+                } else {
+                    return new AuthResult(false, ResponseCode.ACCESS_TOKEN_INVALID).toLoginResponse();
+                }
             }
         }
         return res;

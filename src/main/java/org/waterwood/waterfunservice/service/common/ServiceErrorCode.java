@@ -4,6 +4,9 @@ import lombok.Getter;
 
 @Getter
 public enum ServiceErrorCode {
+    CLIENT_ERROR(200,"Client error"),
+    UNKNOWN_ERROR(5000,"Unknown error"),
+
     USER_NOT_FOUND(1001,"User not found"),
     USER_DATUM_NOT_FOUND(1002,"User data not found"),
     EMAIL_SEND_FAILED(1003,"Email send failed"),
