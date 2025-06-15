@@ -6,8 +6,6 @@ import org.waterwood.waterfunservice.DTO.common.CodePurpose;
 
 @Data
 public class SendSmsCodeRequest {
-    @JsonProperty("phone_number")
     private String phoneNumber;
-    @JsonProperty("purpose")
     private CodePurpose purpose;
 }

@@ -7,6 +7,7 @@ import org.waterwood.waterfunservice.DTO.common.LoginType;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class EmailLoginRequestBody extends LoginRequestBody {
+    private String email;
     private String emailCode;
     public EmailLoginRequestBody() {
         this.setLoginType(LoginType.EMAIL);

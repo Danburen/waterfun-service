@@ -18,4 +18,13 @@ public class ValidateUtil {
         String phoneRegex = "^\\+?[0-9]{10,15}$";
         return phone.matches(phoneRegex);
     }
+
+    public static boolean validateUsername(String username) {
+        if (username == null || username.isEmpty()) {
+            return false;
+        }
+        // Username must be alphanumeric and can include underscores, 3-20 characters
+        String usernameRegex = "^[a-zA-Z0-9_]{3,20}$";
+        return username.matches(usernameRegex);
+    }
 }

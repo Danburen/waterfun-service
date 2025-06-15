@@ -37,7 +37,7 @@ public class SmsCodeService extends RedisServiceBase<String> implements VerifySe
         if (! validatePhone(phoneNumber)) {
             return OperationResult.<SmsCodeResult>builder()
                     .errorType(ErrorType.CLIENT)
-                    .responseCode(ResponseCode.PHONE_NUMBER_INVALID)
+                    .responseCode(ResponseCode.PHONE_NUMBER_EMPTY_OR_INVALID)
                     .build();
         }
         if (smsService == null) {

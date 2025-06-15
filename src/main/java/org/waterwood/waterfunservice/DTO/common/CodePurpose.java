@@ -5,5 +5,5 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public enum CodePurpose {
     @JsonProperty("login") LOGIN,
     @JsonProperty("register") REGISTER,
-    @JsonProperty("reset_password") RESET_PASSWORD,
+    @JsonProperty("resetPassword") RESET_PASSWORD,
 }

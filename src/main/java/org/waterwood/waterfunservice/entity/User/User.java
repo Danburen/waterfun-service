@@ -2,9 +2,7 @@ package org.waterwood.waterfunservice.entity.User;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-import org.bouncycastle.crypto.generators.BCrypt;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -14,6 +12,7 @@ import org.waterwood.waterfunservice.utils.PasswordUtil;
 import java.time.Instant;
 @Data
 @Entity
+@NoArgsConstructor
 @Table(name = "user", schema = "waterfun")
 public class User {
     @Id
@@ -51,6 +50,13 @@ public class User {
     @Column(name = "updated_at")
     @UpdateTimestamp
     private Instant updatedAt;
+
+    public User(String username, String passwordHash) {
+        this.username = username;
+        this.passwordHash = passwordHash;
+        this.role = Role.USER;
+        this.accountStatus = AccountStatus.ACTIVE;
+    }
 
     public boolean checkPassword(String password) {
         return PasswordUtil.matchPassword(password, passwordHash);

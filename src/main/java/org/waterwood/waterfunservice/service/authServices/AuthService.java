@@ -2,6 +2,7 @@ package org.waterwood.waterfunservice.service.authServices;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.DTO.common.response.ApiResponse;
@@ -18,6 +19,7 @@ import org.waterwood.waterfunservice.service.common.TokenResult;
 import org.waterwood.waterfunservice.utils.streamApi.AuthValidator;
 
 @Service
+@Getter
 public class AuthService {
     @Autowired
     private CaptchaService captchaService;
@@ -28,48 +30,6 @@ public class AuthService {
     @Autowired
     private TokenService tokenService;
 
-    @Autowired
-    UserRepository userRepo;
-
-    public ApiResponse<LoginResponseData> loginByPassword(PwdLoginRequestBody requestBody, String captchaUUID) {
-        return userRepo.findByUsername(requestBody.getUsername()).map(
-                user-> validateTokenAndBuildResult(AuthValidator.start()
-                        .validateUsername(requestBody.getUsername())
-                        .checkEmpty(requestBody.getPassword(), ResponseCode.PASSWORD_EMPTY)
-                        .checkEmpty(requestBody.getCaptcha(), ResponseCode.CAPTCHA_EMPTY)
-                        .validateCode(captchaUUID, requestBody.getCaptcha(), captchaService, ResponseCode.CAPTCHA_INCORRECT)
-                        .ifValidThen(() -> {
-                            if (!user.checkPassword(requestBody.getPassword())) {
-                                return new AuthResult(false, ResponseCode.USERNAME_OR_PASSWORD_INCORRECT);
-                            }
-                            return new AuthResult(true);
-                        }),requestBody.getAccessToken(), requestBody.getRefreshToken(), user))
-                .orElseGet(()-> new AuthResult(false, ResponseCode.USERNAME_OR_PASSWORD_INCORRECT).toLoginResponse());
-    }
-
-    public  ApiResponse<LoginResponseData> loginBySmsCode(SmsLoginRequestBody requestBody, String uuid) {
-        return userRepo.findUserByPhone(requestBody.getUsername()).map(
-                user-> validateTokenAndBuildResult(AuthValidator.start()
-                                .validateUsername(requestBody.getUsername())
-                                .checkEmpty(requestBody.getSmsCode(), ResponseCode.SMS_CODE_EMPTY)
-                                .check(smsCodeService.verifySmsCode(
-                                        requestBody.getUsername(), uuid, requestBody.getSmsCode()), ResponseCode.SMS_CODE_INCORRECT),
-                        requestBody.getAccessToken(), requestBody.getRefreshToken(), user))
-                .orElseGet(()-> new AuthResult(false, ResponseCode.USERNAME_OR_PASSWORD_INCORRECT).toLoginResponse());
-    }
-
-    public  ApiResponse<LoginResponseData> loginByEmail(EmailLoginRequestBody requestBody, String uuid) {
-        return userRepo.findUserByEmail(requestBody.getUsername()).map(
-                user-> validateTokenAndBuildResult(AuthValidator.start()
-                        .validateUsername(requestBody.getUsername())
-                        .checkEmpty(requestBody.getEmailCode(), ResponseCode.EMAIL_CODE_EMPTY)
-                        .check(emailCodeService.verifyEmailCode(
-                                requestBody.getUsername(),uuid,requestBody.getEmailCode()
-                        ), ResponseCode.EMAIL_CODE_INCORRECT),
-                        requestBody.getAccessToken(), requestBody.getRefreshToken(), user))
-                .orElseGet(()-> new AuthResult(false, ResponseCode.USERNAME_OR_PASSWORD_INCORRECT).toLoginResponse());
-    }
-
     /**
      * Processing Token validation and build the login response.
      * @param validator AuthValidator instance for pre-auth validation.
@@ -78,7 +38,7 @@ public class AuthService {
      * @param user User entity
      * @return Login response instance containing the login result and tokens.
      */
-    private ApiResponse<LoginResponseData> validateTokenAndBuildResult(AuthValidator validator, String accessToken, String refreshToken, User user) {
+    public ApiResponse<LoginResponseData> validateTokenAndBuildResult(AuthValidator validator, String accessToken, String refreshToken, User user) {
         // If the Pre-auth validation is not successful, return the error response
         AuthResult authResult = validator.buildResult();
         if(! authResult.success()){
@@ -113,7 +73,7 @@ public class AuthService {
         return res;
     }
 
-    private boolean isTokenValid(String accessToken, User user) {
+    public boolean isTokenValid(String accessToken, User user) {
         if (!tokenService.validateAccessToken(accessToken)) return false;
         Claims claims = tokenService.parseToken(accessToken);
         return String.valueOf(user.getId()).equals(claims.getSubject())

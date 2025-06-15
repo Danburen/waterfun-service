@@ -7,6 +7,7 @@ import org.waterwood.waterfunservice.DTO.common.LoginType;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class SmsLoginRequestBody extends LoginRequestBody {
+    private String phoneNumber;
     private String smsCode;
     public SmsLoginRequestBody() {
         this.setLoginType(LoginType.SMS);

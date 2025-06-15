@@ -13,11 +13,8 @@ import org.waterwood.waterfunservice.DTO.common.result.EmailCodeResult;
 import org.waterwood.waterfunservice.DTO.common.result.OperationResult;
 import org.waterwood.waterfunservice.DTO.common.result.SmsCodeResult;
 import org.waterwood.waterfunservice.DTO.request.*;
-import org.waterwood.waterfunservice.service.EmailService;
-import org.waterwood.waterfunservice.service.authServices.AuthService;
-import org.waterwood.waterfunservice.service.authServices.CaptchaService;
-import org.waterwood.waterfunservice.service.authServices.EmailCodeService;
-import org.waterwood.waterfunservice.service.authServices.SmsCodeService;
+import org.waterwood.waterfunservice.service.authServices.RegisterService;
+import org.waterwood.waterfunservice.service.authServices.*;
 import org.waterwood.waterfunservice.utils.CookieParser;
 import org.waterwood.waterfunservice.utils.ResponseUtil;
 
@@ -35,7 +32,9 @@ public class AuthController {
     private SmsCodeService smsCodeService;
 
     @Autowired
-    private AuthService authService;
+    private LoginService loginService;
+    @Autowired
+    private RegisterService registerService;
     /** redis + cookie(HttpOnly) save captcha
      * Generate the captcha
      */
@@ -86,18 +85,27 @@ public class AuthController {
         return ResponseCode.OK.toResponseEntity();
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestBody requestBody, HttpServletRequest request) {
-        if(requestBody instanceof PwdLoginRequestBody body){
-            return authService.loginByPassword(body,
-                    CookieParser.getCookieValue(request.getCookies(),"CAPTCHA_KEY")).toResponseEntity();
-        }else if(requestBody instanceof SmsLoginRequestBody body){
-            return authService.loginBySmsCode(body,
-                    CookieParser.getCookieValue(request.getCookies(),"SMS_CODE_KEY")).toResponseEntity();
-        } else if (requestBody instanceof EmailLoginRequestBody body) {
-            return authService.loginByEmail(body,
-                    CookieParser.getCookieValue(request.getCookies(),"EMAIL_CODE_KEY")).toResponseEntity();
-        }
-        return ResponseCode.INTERNAL_SERVER_ERROR.toResponseEntity();
+    @PostMapping("/login/password")
+    public ResponseEntity<?> loginByPassword(@RequestBody PwdLoginRequestBody body, HttpServletRequest request) {
+        return loginService.loginByPassword(
+                body,
+                CookieParser.getCookieValue(request.getCookies(), "CAPTCHA_KEY")
+        ).toResponseEntity();
+    }
+
+    @PostMapping("/login/sms")
+    public ResponseEntity<?> loginBySms(@RequestBody SmsLoginRequestBody body, HttpServletRequest request) {
+        return loginService.loginBySmsCode(
+                body,
+                CookieParser.getCookieValue(request.getCookies(), "SMS_CODE_KEY")
+        ).toResponseEntity();
+    }
+
+    @PostMapping("/login/email")
+    public ResponseEntity<?> loginByEmail(@RequestBody EmailLoginRequestBody body, HttpServletRequest request) {
+        return loginService.loginByEmail(
+                body,
+                CookieParser.getCookieValue(request.getCookies(), "EMAIL_CODE_KEY")
+        ).toResponseEntity();
     }
 }

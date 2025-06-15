@@ -20,7 +20,7 @@ public enum ResponseCode {
     UNKNOWN_ERROR(50000, "UNKNOWN_ERROR"),
 
     // User-info-related Errors
-    USERNAME_EMPTY(40001, "USERNAME_EMPTY"),
+    USERNAME_EMPTY_OR_INVALID(40001, "USERNAME_EMPTY_OR_INVALID"),
     PASSWORD_EMPTY(40002, "PASSWORD_EMPTY"),
     USERNAME_OR_PASSWORD_INCORRECT(40003, "USERNAME_OR_PASSWORD_INCORRECT"),
     CAPTCHA_EXPIRED(40004,"CAPTCHA_EXPIRED"),
@@ -34,8 +34,9 @@ public enum ResponseCode {
     CAPTCHA_EMPTY(40012, "CAPTCHA_EMPTY"),
     SMS_CODE_EMPTY(40013, "SMS_CODE_EMPTY"),
     EMAIL_CODE_EMPTY(40014, "EMAIL_CODE_EMPTY"),
-    PHONE_NUMBER_INVALID(40015, "PHONE_NUMBER_INVALID"),
-    EMAIL_ADDRESS_INVALID(40016, "EMAIL_ADDRESS_INVALID"),
+    PHONE_NUMBER_EMPTY_OR_INVALID(40015, "PHONE_NUMBER_EMPTY_OR_INVALID"),
+    EMAIL_ADDRESS_EMPTY_OR_INVALID(40016, "EMAIL_ADDRESS_EMPTY_OR_INVALID"),
+    USER_ALREADY_EXISTS(40017, "USER_ALREADY_EXISTS"),
 
     // Authentication Errors
     ACCESS_TOKEN_EXPIRED(40101, "ACCESS_TOKEN_EXPIRED"),
@@ -55,10 +56,10 @@ public enum ResponseCode {
     }
 
     public static int toHttpStatus(int code) {
-        return (code >= 200 && code < 600) ? code : code / 100;
+        return (code >= 200 && code <= 600) ? code : code / 100;
     }
 
     public int getHttpStatus() {
         return toHttpStatus(this.code);
-        }
+    }
 }

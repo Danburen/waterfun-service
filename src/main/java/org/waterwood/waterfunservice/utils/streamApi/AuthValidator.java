@@ -3,9 +3,9 @@ package org.waterwood.waterfunservice.utils.streamApi;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.common.result.AuthResult;
 import org.waterwood.waterfunservice.service.RedisServiceBase;
+import org.waterwood.waterfunservice.utils.ValidateUtil;
 
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 /**
  * A utility class for validating authentication-related data.
@@ -30,17 +30,25 @@ public class AuthValidator {
      * @return the current AuthValidator instance for method chaining.
      */
     public AuthValidator check(boolean condition, ResponseCode responseCode) {
-        if(result == null || !condition){
+        if(result == null){
+            result = new AuthResult(false,responseCode);
+        }else{
+            if(! result.success()){
+                return this; // If already failed, skip further checks
+            }
+        }
+        if(!condition){
             result = new AuthResult(false, responseCode);
         }
         return this;
     }
 
     public AuthValidator ifValidThen(Supplier<AuthResult> supplier) {
+        if(result != null && !result.success()) {
+            return this; // If already failed, skip further checks
+        }
         AuthResult r = supplier.get();
-        if (r.success()) {
-            result = r;
-        } else {
+        if (! r.success()) {
             result = new AuthResult(false, r.code());
         }
         return this;
@@ -53,15 +61,6 @@ public class AuthValidator {
      */
     public AuthValidator checkEmpty(String value, ResponseCode responseCode) {
         return check(value != null && !value.isEmpty(), responseCode);
-    }
-
-    /**
-     * Validates that the provided username is not null or empty.
-     * @param username the username to validate.
-     * @return the current AuthValidator instance for method chaining.
-     */
-    public AuthValidator validateUsername(String username) {
-        return checkEmpty(username, ResponseCode.USERNAME_EMPTY);
     }
 
     /**
@@ -82,6 +81,23 @@ public class AuthValidator {
      */
     public AuthResult orElse(AuthResult defaultResult) {
         return result != null ? result : defaultResult;
+    }
+
+    /**
+     * Validates that the provided username is not null or empty.
+     * @param username the username to validate.
+     * @return the current AuthValidator instance for method chaining.
+     */
+    public AuthValidator validateUsername(String username) {
+        return check(ValidateUtil.validateUsername(username), ResponseCode.USERNAME_OR_PASSWORD_INCORRECT);
+    }
+
+    public AuthValidator validateEmail(String email) {
+        return check(ValidateUtil.validateEmail(email), ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID);
+    }
+
+    public AuthValidator validatePhone(String phone) {
+        return check(ValidateUtil.validatePhone(phone), ResponseCode.PHONE_NUMBER_EMPTY_OR_INVALID);
     }
 
     /**

@@ -15,6 +15,6 @@ public class ApiResponse<T>{
     T data;
     public ResponseEntity<ApiResponse<T>> toResponseEntity() {
         int httpStatus = (ResponseCode.toHttpStatus(code));
-        return ResponseEntity.status(code).body(this);
+        return ResponseEntity.status(httpStatus).body(this);
     }
 }

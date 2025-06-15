@@ -37,7 +37,7 @@ public class EmailCodeService extends RedisServiceBase<String> implements Verify
         if(! validateEmail(emailTo)) {
             return OperationResult.<EmailCodeResult>builder()
                     .errorType(ErrorType.CLIENT)
-                    .responseCode(ResponseCode.EMAIL_ADDRESS_INVALID)
+                    .responseCode(ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID)
                     .build();
         }
         if(emailService == null) {
