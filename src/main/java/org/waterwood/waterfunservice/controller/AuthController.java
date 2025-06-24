@@ -66,6 +66,14 @@ public class AuthController {
                 return statusCode.toResponseEntity();
             }
         }
+        if (statusCode != null) {
+            log.info(smsCodeResult.getServiceErrorCode() != null ?
+                    "Error: " + statusCode + ", Service Error Code: " + smsCodeResult.getServiceErrorCode() :
+                    "Error: " + statusCode);
+            log.info(smsCodeResult.getResultData().getResponseRaw());
+        }else{
+            log.info("Null smsCode.");
+        }
         ResponseUtil.setCookieAndNoCache(response, "SMS_CODE_KEY", smsCodeResult.getResultData().getKey(), 120);
         return ResponseCode.OK.toResponseEntity();
     }

@@ -15,17 +15,6 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
     @Autowired
     UserRepository userRepository;
-
-    @Override
-    public User register(User user) {
-        return null;
-    }
-
-    @Override
-    public User authenticate(String username, String password) {
-        return null;
-    }
-
     @Override
     public Optional<User> getUserByUsername(String username) {
         return userRepository.findByUsername(username);
@@ -33,7 +22,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<User> getUserById(long id) {
-        return null;
+        return userRepository.findById(id);
     }
 
     @Override

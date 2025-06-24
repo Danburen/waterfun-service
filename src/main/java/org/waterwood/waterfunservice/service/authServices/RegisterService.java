@@ -37,7 +37,7 @@ public class RegisterService {
                     Long userId = user.getId();
 
                     return authService.validateTokenAndBuildResult(AuthValidator.start().buildResult(),
-                            null, null, user);
+                            null, null, user).t;
                 });
     }
 }

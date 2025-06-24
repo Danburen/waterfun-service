@@ -26,6 +26,8 @@ public class EmailCodeService extends RedisServiceBase<String> implements Verify
     private static final String redisKeyPrefix = "verify:email-code";
     @Value("${expiration.email-code}")
     private Long expireDuration;
+    @Value("${mail.support.email}")
+    private String supportEmail;
     private final EmailService emailService;
 
     protected EmailCodeService(RedisRepository<String> redisRepository, EmailService emailService) {
@@ -52,6 +54,7 @@ public class EmailCodeService extends RedisServiceBase<String> implements Verify
         Map<String,Object> templateData = new HashMap<>();
         templateData.put("verificationCode",code);
         templateData.put("expireTime",expireDuration);
+        templateData.put("supportEmail","support@mail.waterfun.top");
 
         EmailCodeResult sendResult= emailService.sendHtmlEmail(emailTo, type, templateData);
         sendResult.setKey(uuid);
@@ -60,6 +63,7 @@ public class EmailCodeService extends RedisServiceBase<String> implements Verify
         return OperationResult.<EmailCodeResult>builder()
                 .trySuccess(true)
                 .resultData(sendResult)
+                .responseCode(sendResult.isSendSuccess() ? ResponseCode.OK : ResponseCode.INTERNAL_SERVER_ERROR)
                 .build();
     }
 

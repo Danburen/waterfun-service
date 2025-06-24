@@ -13,7 +13,5 @@ public class WaterfunServiceApplication {
         System.out.println("WaterFun Service Started");
         System.out.println("========================");
         System.out.println("1");
-
     }
-
 }

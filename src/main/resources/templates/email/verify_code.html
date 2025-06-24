@@ -4,10 +4,9 @@
 
     <div class="code" th:text="${verificationCode}">123456</div>
 
-    <p>该验证码将在<span th:text="${expireTime} + '分钟'">30</span>分钟后失效，请尽快完成验证。</p>
+    <p>该验证码将在 <span th:text="${expireTime} + '分钟'">30</span> 后失效，请尽快完成验证。</p>
 
-    <p>如非本人操作，请忽略此邮件或<a href="mailto:support@mail.waterfun.com">联系客服</a>。</p>
-
+    <p>如非本人操作，请忽略此邮件或<a href="mailto:${supportMail}">联系客服</a>。</p>
     <div class="note">
         <p>此为系统自动发送邮件，请勿直接回复。</p>
         <p>© 2025 WaterFun 版权所有</p>

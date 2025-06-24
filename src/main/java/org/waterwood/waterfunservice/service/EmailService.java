@@ -50,14 +50,14 @@ public class EmailService {
      */
     public EmailCodeResult sendHtmlEmail(String to, String from, String subject, String baseTemplate, String contentTemplate, Map<String,Object> data) {
         Context context = new Context();
-        String contentPart = templateEngine.process("email/" + contentTemplate, context);
-        data.put("content", contentPart);
         context.setVariables(data);
+        String contentPart = templateEngine.process("email/" + contentTemplate, context);
 
+        context.setVariable("content", contentPart);
         String emailContent = templateEngine.process("email/" + baseTemplate , context);
         Resend resend = new Resend(apiKey);
         CreateEmailOptions params = CreateEmailOptions.builder()
-                .from("WaterFun<verify@waterfun.com>")
+                .from(from)
                 .to(to)
                 .subject(subject)
                 .html(emailContent)

@@ -35,7 +35,9 @@ dependencies {
     implementation 'org.springframework.session:spring-session-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-    implementation 'com.aliyun:dysmsapi20170525:4.1.0'
+    implementation('com.aliyun:dysmsapi20170525:4.1.1') {
+        exclude group: 'com.squareup.okhttp3', module: 'okhttp'
+    }
     implementation 'cn.hutool:hutool-captcha:5.8.26'
     implementation 'com.resend:resend-java:3.1.0'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'

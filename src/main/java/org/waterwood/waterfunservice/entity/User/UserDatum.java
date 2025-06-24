@@ -2,6 +2,7 @@ package org.waterwood.waterfunservice.entity.User;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
@@ -13,10 +14,11 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "user_data")
+@NoArgsConstructor
 public class UserDatum {
     @Id
     @Column(name = "user_id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @MapsId
     @OneToOne(fetch = FetchType.LAZY, optional = false)
@@ -48,4 +50,13 @@ public class UserDatum {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    public UserDatum(User user, String email, String phone, String encryptionKeyId) {
+        this.user = user;
+        this.id = user.getId();
+        this.email = email;
+        this.phone = phone;
+        this.encryptionKeyId = encryptionKeyId;
+        this.emailVerified = false;
+        this.phoneVerified = false;
+    }
 }

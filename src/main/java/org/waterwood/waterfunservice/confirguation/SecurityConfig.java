@@ -39,10 +39,10 @@ public class SecurityConfig {
                         .requireCsrfProtectionMatcher(request ->
                                 !request.getMethod().equalsIgnoreCase("GET"))
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
-                .securityMatcher("/api/auth/login","/api/auth/captcha")
+                .securityMatcher("/api/auth/**")
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/captcha").permitAll()
-                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 )
                 .formLogin(form -> form.disable());
         return http.build();
@@ -71,34 +71,11 @@ public class SecurityConfig {
     }
 
 
-    
-//    @Bean
-//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-//        http
-//
-//                .cors(cors-> cors.configurationSource(corsConfigurationSource()))
-//                //.csrf(csrf -> csrf.disable())
-//                .csrf(csrf -> csrf
-//                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-//                        .requireCsrfProtectionMatcher(request ->
-//                                !request.getMethod().equalsIgnoreCase("GET")) //filter GET request
-//                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()) // enable BREACH protection compatibility
-//                )
-//                .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // permit option request
-//                        .requestMatchers("/api/test/**", "/api/auth/**").permitAll()
-//                        .anyRequest().authenticated()
-//                )
-//                .formLogin(form -> form.disable());
-//
-//        return http.build();
-//    }
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
-        config.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 

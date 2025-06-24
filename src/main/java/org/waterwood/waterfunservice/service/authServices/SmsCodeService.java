@@ -54,6 +54,7 @@ public class SmsCodeService extends RedisServiceBase<String> implements VerifySe
         if(result.isSendSuccess()){ saveValue(phoneNumber + "_" + uuid, code, Duration.ofMinutes(expireDuration)); }
         return OperationResult.<SmsCodeResult>builder()
                 .trySuccess(true)
+                .responseCode(result.isSendSuccess() ? ResponseCode.OK : ResponseCode.INTERNAL_SERVER_ERROR)
                 .resultData(result)
                 .build();
     }

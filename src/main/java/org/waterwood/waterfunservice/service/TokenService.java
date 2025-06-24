@@ -4,19 +4,14 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.entity.User.Role;
 import org.waterwood.waterfunservice.repository.RedisRepository;
 import org.waterwood.waterfunservice.service.common.TokenResult;
 import org.waterwood.waterfunservice.utils.RsaJwtUtil;
 
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class TokenService extends RedisServiceBase<String> {
@@ -49,7 +44,7 @@ public class TokenService extends RedisServiceBase<String> {
      * Validates the refresh token and returns the userId if valid.
      * <p><b>Refresh Token will be removed </b>after validate</p>
      * @param refreshToken the refresh token to validate
-     * @return String of <b>UserID</b> if the token is valid, null otherwise
+     * @return Long of <b>UserID</b> if the token is valid, null otherwise
      */
     public @Nullable Long validateRefreshToken(String refreshToken) {
         String key = buildRawRedisKey("ref", refreshToken);
