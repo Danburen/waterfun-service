@@ -16,5 +16,6 @@ public class OperationResult<T> {
     private @Nullable final ServiceErrorCode serviceErrorCode;
     private @Nullable final ResponseCode responseCode;
     private @Nullable final ErrorType errorType;
+    private @Nullable final String message;
     T resultData;
 }
