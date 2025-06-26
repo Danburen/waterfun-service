@@ -3,6 +3,8 @@
     - [x] Sms Service
     - [x] Email Service
     - [x] Captcha Service
+    - [x] Role Service
+    - [x] Permission Service
     - [ ] Jwt
       - [x] RsaJwt
       - [ ] HsaJwt

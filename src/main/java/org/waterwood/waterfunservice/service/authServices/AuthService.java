@@ -80,6 +80,11 @@ public class AuthService {
         if (!tokenService.validateAccessToken(accessToken)) return false;
         Claims claims = tokenService.parseToken(accessToken);
         return String.valueOf(user.getId()).equals(claims.getSubject())
-                && user.getRole().name().toLowerCase().equals(claims.get("role"));
+                && userService.getUserRoles(user.getId()).stream()
+                .map(role-> role.getName().toLowerCase())
+                .toList().equals(claims.get("roles"))
+                && userService.getUserPermissions(user.getId()).stream()
+                .map(role-> role.getName().toLowerCase())
+                .toList().equals(claims.get("perms"));
     }
 }

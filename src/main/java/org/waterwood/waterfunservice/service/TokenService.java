@@ -34,7 +34,7 @@ public class TokenService extends RedisServiceBase<String> {
         Map<String, Object> claims = new HashMap<>();
         claims.put(Claims.SUBJECT, userId);
         claims.put("roles",roles.stream().map(role-> role.getName().toLowerCase()).toList());
-        claims.put("perms",extraPerms);
+        claims.put("perms",extraPerms.stream().map(role-> role.getName().toLowerCase()).toList());
         return rsaJwtUtil.generateToken(claims);
     }
 

@@ -13,8 +13,4 @@ public class ApiResponse<T>{
     Integer code;
     String message;
     T data;
-    public ResponseEntity<ApiResponse<T>> toResponseEntity() {
-        int httpStatus = (ResponseCode.toHttpStatus(code));
-        return ResponseEntity.status(httpStatus).body(this);
-    }
 }

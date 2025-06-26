@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
+import org.waterwood.waterfunservice.DTO.common.response.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.response.LoginResponseData;
 import org.waterwood.waterfunservice.DTO.common.result.EmailCodeResult;
 import org.waterwood.waterfunservice.DTO.common.result.OpResult;
 import org.waterwood.waterfunservice.DTO.common.result.SmsCodeResult;
@@ -95,25 +97,38 @@ public class AuthController {
 
     @PostMapping("/login/password")
     public ResponseEntity<?> loginByPassword(@RequestBody PwdLoginRequestBody body, HttpServletRequest request) {
-        return loginService.loginByPassword(
-                body,
-                CookieParser.getCookieValue(request.getCookies(), "CAPTCHA_KEY")
-        ).toResponseEntity();
+        return ResponseUtil.buildResponse(loginService.loginByPassword(
+                        body,
+                        CookieParser.getCookieValue(request.getCookies(), "CAPTCHA_KEY")
+                ));
     }
 
     @PostMapping("/login/sms")
     public ResponseEntity<?> loginBySms(@RequestBody SmsLoginRequestBody body, HttpServletRequest request) {
-        return loginService.loginBySmsCode(
+        return  ResponseUtil.buildResponse(loginService.loginBySmsCode(
                 body,
                 CookieParser.getCookieValue(request.getCookies(), "SMS_CODE_KEY")
-        ).toResponseEntity();
+        ));
     }
 
     @PostMapping("/login/email")
     public ResponseEntity<?> loginByEmail(@RequestBody EmailLoginRequestBody body, HttpServletRequest request) {
-        return loginService.loginByEmail(
+        return  ResponseUtil.buildResponse(loginService.loginByEmail(
                 body,
                 CookieParser.getCookieValue(request.getCookies(), "EMAIL_CODE_KEY")
-        ).toResponseEntity();
+        ));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest requestBody, HttpServletRequest request,HttpServletResponse response) {
+        ApiResponse<LoginResponseData> apiResponse = registerService.register(requestBody,
+                CookieParser.getCookieValue(request.getCookies(), "SMS_CODE_KEY"));
+        ResponseUtil.setTokenCookie(response,apiResponse.getData());
+        response.setContentType("application/json");
+        response.setHeader("Pragma", "No-cache");
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        response.setHeader("X-Frame-Options", "DENY");
+        return ResponseUtil.buildResponse(apiResponse);
     }
 }
