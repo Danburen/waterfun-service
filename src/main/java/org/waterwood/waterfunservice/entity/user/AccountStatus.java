@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.entity.User;
+package org.waterwood.waterfunservice.entity.user;
 
 public enum AccountStatus {
     ACTIVE,

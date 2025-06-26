@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.common.result.EmailCodeResult;
-import org.waterwood.waterfunservice.DTO.common.result.OperationResult;
+import org.waterwood.waterfunservice.DTO.common.result.OpResult;
 import org.waterwood.waterfunservice.DTO.common.result.SmsCodeResult;
 import org.waterwood.waterfunservice.DTO.request.*;
 import org.waterwood.waterfunservice.service.authServices.RegisterService;
@@ -57,7 +57,7 @@ public class AuthController {
 
     @PostMapping("/sendSmsCode")
     public ResponseEntity<?> sendSmsCode(@RequestBody SendSmsCodeRequest requestBody,HttpServletRequest request, HttpServletResponse response) {
-        OperationResult<SmsCodeResult> smsCodeResult = smsCodeService.sendSmsCode(requestBody.getPhoneNumber());
+        OpResult<SmsCodeResult> smsCodeResult = smsCodeService.sendSmsCode(requestBody.getPhoneNumber());
         ResponseCode statusCode = smsCodeResult.getResponseCode();
         if(! smsCodeResult.isTrySuccess()){
             if(statusCode == null){
@@ -80,7 +80,7 @@ public class AuthController {
 
     @PostMapping("/sendEmailCode")
     public ResponseEntity<?> sendEmailCode(@RequestBody SendEmailCodeRequest requestBody,HttpServletRequest request, HttpServletResponse response) {
-        OperationResult<EmailCodeResult> emailCodeResult = emailCodeService.sendEmailCode(requestBody.getEmail(), EmailTemplateType.VERIFY_CODE);
+        OpResult<EmailCodeResult> emailCodeResult = emailCodeService.sendEmailCode(requestBody.getEmail(), EmailTemplateType.VERIFY_CODE);
         ResponseCode statusCode = emailCodeResult.getResponseCode();
         if(! emailCodeResult.isTrySuccess()){
             if(statusCode == null){

@@ -7,7 +7,7 @@ import org.waterwood.waterfunservice.DTO.common.response.ApiResponse;
 import org.waterwood.waterfunservice.DTO.common.response.LoginResponseData;
 import org.waterwood.waterfunservice.DTO.common.result.AuthResult;
 import org.waterwood.waterfunservice.DTO.request.RegisterRequest;
-import org.waterwood.waterfunservice.entity.User.User;
+import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.repository.UserRepository;
 import org.waterwood.waterfunservice.utils.PasswordUtil;
 import org.waterwood.waterfunservice.utils.streamApi.AuthValidator;

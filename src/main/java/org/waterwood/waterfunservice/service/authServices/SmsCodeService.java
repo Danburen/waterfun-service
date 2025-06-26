@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.DTO.common.ErrorType;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.common.result.OperationResult;
+import org.waterwood.waterfunservice.DTO.common.result.OpResult;
 import org.waterwood.waterfunservice.DTO.common.result.SmsCodeResult;
 import org.waterwood.waterfunservice.repository.RedisRepository;
 import org.waterwood.waterfunservice.service.RedisServiceBase;
@@ -33,15 +33,15 @@ public class SmsCodeService extends RedisServiceBase<String> implements VerifySe
         this.smsService = smsService;
     }
 
-    public OperationResult<SmsCodeResult> sendSmsCode(String phoneNumber) {
+    public OpResult<SmsCodeResult> sendSmsCode(String phoneNumber) {
         if (! validatePhone(phoneNumber)) {
-            return OperationResult.<SmsCodeResult>builder()
+            return OpResult.<SmsCodeResult>builder()
                     .errorType(ErrorType.CLIENT)
                     .responseCode(ResponseCode.PHONE_NUMBER_EMPTY_OR_INVALID)
                     .build();
         }
         if (smsService == null) {
-            return OperationResult.<SmsCodeResult>builder()
+            return OpResult.<SmsCodeResult>builder()
                     .errorType(ErrorType.SERVER)
                     .serviceErrorCode(ServiceErrorCode.SMS_SERVICE_NOT_AVAILABLE)
                     .build();
@@ -52,7 +52,7 @@ public class SmsCodeService extends RedisServiceBase<String> implements VerifySe
                 Map.of("code", code, "time", expireDuration));
         result.setKey(uuid);
         if(result.isSendSuccess()){ saveValue(phoneNumber + "_" + uuid, code, Duration.ofMinutes(expireDuration)); }
-        return OperationResult.<SmsCodeResult>builder()
+        return OpResult.<SmsCodeResult>builder()
                 .trySuccess(true)
                 .responseCode(result.isSendSuccess() ? ResponseCode.OK : ResponseCode.INTERNAL_SERVER_ERROR)
                 .resultData(result)

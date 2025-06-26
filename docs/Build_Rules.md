@@ -1,4 +1,4 @@
-### 文件/属性命名规范
+## 文件/属性命名规范
 
 ### Properties
 * 属性分割: `-`
@@ -39,3 +39,6 @@ SQL文件命名规范:
 * SQL分割: `_`
 * 命名方式: `snake_case`
 * 命名样例: `my_table`, `my_column`
+
+## Service 开发规范
+`CRUD` 操作中除了 `R` 操作，其余都返回 OpResult ， R操作一般返回 Optional/List/Set 等

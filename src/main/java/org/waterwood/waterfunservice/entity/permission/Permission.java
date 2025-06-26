@@ -2,6 +2,7 @@ package org.waterwood.waterfunservice.entity.permission;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
@@ -13,6 +14,7 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "permission")
+@NoArgsConstructor
 public class Permission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,9 +30,10 @@ public class Permission {
     @Column(name = "description")
     private String description;
 
-    @Lob
+    @ColumnDefault("'API'")
+    @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
-    private String type;
+    private PermissionType type;
 
     @Column(name = "resource")
     private String resource;

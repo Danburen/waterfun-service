@@ -9,13 +9,10 @@ import org.waterwood.waterfunservice.DTO.common.response.ApiResponse;
 import org.waterwood.waterfunservice.DTO.common.response.LoginResponseData;
 import org.waterwood.waterfunservice.DTO.common.result.AuthResult;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.request.EmailLoginRequestBody;
-import org.waterwood.waterfunservice.DTO.request.PwdLoginRequestBody;
-import org.waterwood.waterfunservice.DTO.request.SmsLoginRequestBody;
-import org.waterwood.waterfunservice.entity.User.User;
-import org.waterwood.waterfunservice.repository.UserRepository;
+import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.service.TokenService;
 import org.waterwood.waterfunservice.service.common.TokenResult;
+import org.waterwood.waterfunservice.service.user.UserService;
 import org.waterwood.waterfunservice.utils.streamApi.AuthValidator;
 
 @Service
@@ -29,6 +26,8 @@ public class AuthService {
     private EmailCodeService emailCodeService;
     @Autowired
     private TokenService tokenService;
+    @Autowired
+    private UserService userService;
 
     /**
      * Processing Token validation and build the login response.
@@ -47,7 +46,11 @@ public class AuthService {
         ApiResponse<LoginResponseData> res =  authResult.toLoginResponse();
         //First time login in
         if(accessToken == null && refreshToken == null) {
-            TokenResult newAccessToken = tokenService.generateAccessToken(user.getId(),user.getRole());
+            long userId = user.getId();
+            TokenResult newAccessToken = tokenService.generateAccessToken(
+                    userId,
+                    userService.getUserRoles(userId),
+                    userService.getUserPermissions(userId));
             String newRefreshToken = tokenService.generateAndStoreRefreshToken(user.getId());
             res.getData().setAccessToken(newAccessToken.token());
             res.getData().setRefreshToken(newRefreshToken);

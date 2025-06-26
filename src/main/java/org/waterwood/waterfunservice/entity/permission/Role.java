@@ -1,7 +1,9 @@
 package org.waterwood.waterfunservice.entity.permission;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
@@ -13,6 +15,7 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "role")
+@NoArgsConstructor
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,4 +37,10 @@ public class Role {
     @Column(name = "created_at")
     private Instant createdAt;
 
+    public Role(String name, String description) {
+        this.name = name;
+        this.description = description;
+        this.parent = null;
+        this.createdAt = Instant.now();
+    }
 }

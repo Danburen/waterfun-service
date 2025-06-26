@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.entity.User;
+package org.waterwood.waterfunservice.entity.user;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -6,8 +6,6 @@ import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.waterwood.waterfunservice.entity.User.Gender;
-import org.waterwood.waterfunservice.entity.User.User;
 
 @Getter
 @Setter

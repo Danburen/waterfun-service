@@ -6,7 +6,7 @@ import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.waterwood.waterfunservice.entity.User.User;
+import org.waterwood.waterfunservice.entity.user.User;
 
 import java.time.Instant;
 

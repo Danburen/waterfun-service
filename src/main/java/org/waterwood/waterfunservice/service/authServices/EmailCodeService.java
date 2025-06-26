@@ -7,7 +7,7 @@ import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
 import org.waterwood.waterfunservice.DTO.common.ErrorType;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.common.result.EmailCodeResult;
-import org.waterwood.waterfunservice.DTO.common.result.OperationResult;
+import org.waterwood.waterfunservice.DTO.common.result.OpResult;
 import org.waterwood.waterfunservice.repository.RedisRepository;
 import org.waterwood.waterfunservice.service.EmailService;
 import org.waterwood.waterfunservice.service.RedisServiceBase;
@@ -35,15 +35,15 @@ public class EmailCodeService extends RedisServiceBase<String> implements Verify
         this.emailService = emailService;
     }
 
-    public OperationResult<EmailCodeResult> sendEmailCode(String emailTo, EmailTemplateType type) {
+    public OpResult<EmailCodeResult> sendEmailCode(String emailTo, EmailTemplateType type) {
         if(! validateEmail(emailTo)) {
-            return OperationResult.<EmailCodeResult>builder()
+            return OpResult.<EmailCodeResult>builder()
                     .errorType(ErrorType.CLIENT)
                     .responseCode(ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID)
                     .build();
         }
         if(emailService == null) {
-            return OperationResult.<EmailCodeResult>builder()
+            return OpResult.<EmailCodeResult>builder()
                     .errorType(ErrorType.SERVER)
                     .serviceErrorCode(ServiceErrorCode.EMAIL_SERVICE_NOT_AVAILABLE)
                     .build();
@@ -60,7 +60,7 @@ public class EmailCodeService extends RedisServiceBase<String> implements Verify
         sendResult.setKey(uuid);
 
         if (sendResult.isSendSuccess()){ saveValue(emailTo + "_" + uuid,code, Duration.ofMinutes(expireDuration)); }
-        return OperationResult.<EmailCodeResult>builder()
+        return OpResult.<EmailCodeResult>builder()
                 .trySuccess(true)
                 .resultData(sendResult)
                 .responseCode(sendResult.isSendSuccess() ? ResponseCode.OK : ResponseCode.INTERNAL_SERVER_ERROR)

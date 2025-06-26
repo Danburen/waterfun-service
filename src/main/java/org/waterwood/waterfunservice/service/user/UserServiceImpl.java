@@ -3,23 +3,26 @@ package org.waterwood.waterfunservice.service.user;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.DTO.common.ErrorType;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.common.result.OperationResult;
-import org.waterwood.waterfunservice.entity.User.AccountStatus;
-import org.waterwood.waterfunservice.entity.User.User;
+import org.waterwood.waterfunservice.DTO.common.result.OpResult;
+import org.waterwood.waterfunservice.entity.user.AccountStatus;
+import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.entity.permission.Permission;
 import org.waterwood.waterfunservice.entity.permission.Role;
 import org.waterwood.waterfunservice.entity.permission.UserPermission;
 import org.waterwood.waterfunservice.entity.permission.UserRole;
 import org.waterwood.waterfunservice.repository.*;
+import org.waterwood.waterfunservice.service.RoleService;
 import org.waterwood.waterfunservice.utils.PasswordUtil;
 import org.waterwood.waterfunservice.utils.RepoUtil;
 
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -34,6 +37,9 @@ public class UserServiceImpl implements UserService {
     private RoleRepo roleRepo;
     @Autowired
     private PermissionRepo permissionRepo;
+
+    @Autowired
+    private RoleService roleService;
 
     @Override
     public Optional<User> getUserByUsername(String username) {
@@ -60,117 +66,104 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<Permission> getUserPermissions(long userId) {
-        return userPermRepo.findByUserId(userId)
-                .stream()
+        return userPermRepo.findByUserId(userId).stream()
                 .map(UserPermission::getPermission)
                 .toList();
     }
 
     @Override
-    public OperationResult<Void> activateUser(long id) {
+    public Set<Permission> getUserAllPermissions(long userId) {
+        List<Role> roles = userRoleRepo.findByUserId(userId).stream().map(UserRole::getRole).toList();
+
+        Set<Permission> rolePermission = roles.stream()
+                .flatMap(role-> roleService.getPermissions(role.getId()).stream())
+                .collect(Collectors.toSet());
+
+        Set<Permission> userPermission = userPermRepo.findByUserId(userId).stream()
+                .map(UserPermission::getPermission).collect(Collectors.toSet());
+        HashSet<Permission> permissions = new HashSet<>();
+        permissions.addAll(rolePermission);
+        permissions.addAll(userPermission);
+        return permissions;
+    }
+
+    @Override
+    public OpResult<Void> activateUser(long id) {
         return findUserAndUpdateStatus(id, AccountStatus.ACTIVE);
     }
 
     @Override
-    public OperationResult<Void> deactivateUser(long id) {
+    public OpResult<Void> deactivateUser(long id) {
         return findUserAndUpdateStatus(id, AccountStatus.DEACTIVATED);
     }
 
     @Override
-    public OperationResult<Void> suspendUser(long id) {
+    public OpResult<Void> suspendUser(long id) {
         return findUserAndUpdateStatus(id, AccountStatus.SUSPENDED);
     }
 
     @Override
-    public OperationResult<Void> deleteUser(long id) {
+    public OpResult<Void> deleteUser(long id) {
         return findUserAndUpdateStatus(id, AccountStatus.DELETED);
 
     }
 
     @Override
-    public OperationResult<Void> addUserRole(long userId, int roleId) {
-        return RepoUtil.checkEntityExists(userRepository, userId, "User", ResponseCode.USER_NOT_FOUND, user ->
-                RepoUtil.checkEntityExists(roleRepo, roleId, "Role", ResponseCode.ROLE_NOT_FOUND, role -> {
+    public OpResult<Void> addUserRole(long userId, int roleId) {
+        return RepoUtil.checkEntityExistsWithId(userRepository, userId, "User", ResponseCode.USER_NOT_FOUND, user ->
+                RepoUtil.checkEntityExistsWithId(roleRepo, roleId, "Role", ResponseCode.ROLE_NOT_FOUND, role -> {
                     if (userRoleRepo.existsByUserIdAndRoleId(userId, roleId)) {
-                        return OperationResult.<Void>builder()
-                                .trySuccess(false)
-                                .errorType(ErrorType.CLIENT)
-                                .responseCode(ResponseCode.ROLE_ALREADY_EXISTS)
-                                .message("User already has role with ID " + roleId + ".")
-                                .build();
+                        return OpResult.failure(ResponseCode.ROLE_ALREADY_EXISTS,
+                                "User "+ userId +" already has role with ID " + roleId + ".");
                     }
                     UserRole userRole = new UserRole();
                     userRole.setUser(user);
                     userRole.setRole(role);
                     userRoleRepo.save(userRole);
-                    return OperationResult.<Void>builder()
-                            .trySuccess(true)
-                            .responseCode(ResponseCode.OK)
-                            .build();
+                    return OpResult.success();
         }));
     }
 
     @Override
-    public OperationResult<Void> removeUserRole(long userId, int roleId) {
-        return RepoUtil.checkEntityExists(userRepository, userId, "User", ResponseCode.USER_NOT_FOUND,
-                user -> RepoUtil.checkEntityExists(roleRepo, roleId, "Role", ResponseCode.ROLE_NOT_FOUND,
+    public OpResult<Void> removeUserRole(long userId, int roleId) {
+        return RepoUtil.checkEntityExistsWithId(userRepository, userId, "User", ResponseCode.USER_NOT_FOUND,
+                user -> RepoUtil.checkEntityExistsWithId(roleRepo, roleId, "Role", ResponseCode.ROLE_NOT_FOUND,
                         role -> {
                     if (!userRoleRepo.existsByUserIdAndRoleId(userId, roleId)) {
-                        return OperationResult.<Void>builder()
-                                .trySuccess(false)
-                                .errorType(ErrorType.CLIENT)
-                                .responseCode(ResponseCode.ROLE_NOT_FOUND)
-                                .message("User does not have role with ID " + roleId + ".")
-                                .build();
+                        return OpResult.failure(ResponseCode.ROLE_NOT_FOUND,
+                                "User " + userId + " does not have role with ID " + roleId + ".");
                     }
                     userRoleRepo.deleteByUserIdAndRoleId(userId, roleId);
-                    return OperationResult.<Void>builder()
-                            .trySuccess(true)
-                            .responseCode(ResponseCode.OK)
-                            .build();
+                    return OpResult.success();
                 }));
     }
 
     @Override
-    public OperationResult<Void> addUserPermission(long userId, int permissionId) {
-        return RepoUtil.checkEntityExists(userRepository, userId, "User", ResponseCode.USER_NOT_FOUND, user ->
-                RepoUtil.checkEntityExists(permissionRepo,permissionId,"Permission", ResponseCode.PERMISSION_NOT_FOUND, permission -> {
+    public OpResult<Void> addUserPermission(long userId, int permissionId) {
+        return RepoUtil.checkEntityExistsWithId(userRepository, userId, "User", ResponseCode.USER_NOT_FOUND, user ->
+                RepoUtil.checkEntityExistsWithId(permissionRepo,permissionId,"Permission", ResponseCode.PERMISSION_NOT_FOUND, permission -> {
                     if (userPermRepo.existsByUserIdAndPermissionId(userId, permissionId)) {
-                        return OperationResult.<Void>builder()
-                                .trySuccess(false)
-                                .errorType(ErrorType.CLIENT)
-                                .responseCode(ResponseCode.PERMISSION_ALREADY_EXISTS)
-                                .message("User already has permission with ID " + permissionId + ".")
-                                .build();
+                        return OpResult.failure(ResponseCode.PERMISSION_ALREADY_EXISTS,
+                                "User already has permission with ID " + permissionId + ".");
                     }
                     UserPermission userPermission = new UserPermission();
                     userPermission.setUser(user);
                     userPermission.setPermission(permission);
                     userPermRepo.save(userPermission);
-                    return OperationResult.<Void>builder()
-                            .trySuccess(true)
-                            .responseCode(ResponseCode.OK)
-                            .build();
+                    return OpResult.success();
                 }));
     }
 
     @Override
-    public OperationResult<Void> removeUserPermission(long userId, int permissionId) {
-        return RepoUtil.checkEntityExists(userRepository, userId, "User", ResponseCode.USER_NOT_FOUND, user ->
-                RepoUtil.checkEntityExists(permissionRepo, permissionId, "Permission", ResponseCode.PERMISSION_NOT_FOUND, permission -> {
+    public OpResult<Void> removeUserPermission(long userId, int permissionId) {
+        return RepoUtil.checkEntityExistsWithId(userRepository, userId, "User", ResponseCode.USER_NOT_FOUND, user ->
+                RepoUtil.checkEntityExistsWithId(permissionRepo, permissionId, "Permission", ResponseCode.PERMISSION_NOT_FOUND, permission -> {
                     if (!userPermRepo.existsByUserIdAndPermissionId(userId, permissionId)) {
-                        return OperationResult.<Void>builder()
-                                .trySuccess(false)
-                                .errorType(ErrorType.CLIENT)
-                                .responseCode(ResponseCode.PERMISSION_NOT_FOUND)
-                                .message("User does not have permission with ID " + permissionId + ".")
-                                .build();
+                        return OpResult.failure(ResponseCode.PERMISSION_NOT_FOUND,
+                                "User "+ userId +" does not have permission with ID " + permissionId + ".");
                     }
                     userPermRepo.deleteByUserIdAndPermissionId(userId, permissionId);
-                    return OperationResult.<Void>builder()
-                            .trySuccess(true)
-                            .responseCode(ResponseCode.OK)
-                            .build();
+                    return OpResult.success();
         }));
     }
 
@@ -178,7 +171,7 @@ public class UserServiceImpl implements UserService {
         return PasswordUtil.matchPassword(rawPassword, hashedPassword);
     }
 
-    private OperationResult<Void> findUserAndUpdateStatus(long userId, AccountStatus status) {
+    private OpResult<Void> findUserAndUpdateStatus(long userId, AccountStatus status) {
         return findUserAndUpdate(userId, user -> {
             user.setAccountStatus(status);
             user.setStatusChangedAt(Instant.now());
@@ -186,21 +179,13 @@ public class UserServiceImpl implements UserService {
         });
     }
 
-    private OperationResult<Void> findUserAndUpdate(long userId, Consumer<User> updater) {
+    private OpResult<Void> findUserAndUpdate(long userId, Consumer<User> updater) {
         return userRepository.findById(userId).map(user -> {
             updater.accept(user);
             userRepository.save(user);
-            return OperationResult.<Void>builder()
-                    .trySuccess(true)
-                    .responseCode(ResponseCode.OK)
-                    .build();
+            return OpResult.success();
         }).orElse(
-                OperationResult.<Void>builder()
-                        .trySuccess(false)
-                        .errorType(ErrorType.CLIENT)
-                        .responseCode(ResponseCode.USER_NOT_FOUND)
-                        .message("User with ID " + userId + " not found.")
-                        .build()
+                OpResult.failure(ResponseCode.USER_NOT_FOUND, "User "+ userId + " does not exist.")
         );
     }
 }

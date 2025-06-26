@@ -5,12 +5,15 @@ import io.jsonwebtoken.JwtException;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.waterwood.waterfunservice.entity.permission.Permission;
+import org.waterwood.waterfunservice.entity.permission.Role;
 import org.waterwood.waterfunservice.repository.RedisRepository;
 import org.waterwood.waterfunservice.service.common.TokenResult;
 import org.waterwood.waterfunservice.utils.RsaJwtUtil;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -27,10 +30,11 @@ public class TokenService extends RedisServiceBase<String> {
         this.rsaJwtUtil = rsaJwtUtil;
     }
 
-    public TokenResult generateAccessToken(Long userId, Role role) {
+    public TokenResult generateAccessToken(Long userId, List<Role> roles, List<Permission> extraPerms) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(Claims.SUBJECT, userId);
-        claims.put("role",role.name().toLowerCase());
+        claims.put("roles",roles.stream().map(role-> role.getName().toLowerCase()).toList());
+        claims.put("perms",extraPerms);
         return rsaJwtUtil.generateToken(claims);
     }
 
@@ -68,12 +72,12 @@ public class TokenService extends RedisServiceBase<String> {
         }
     }
 
-    public TokenResult refreshAccessToken(String refreshToken,Role role) {
+    public TokenResult refreshAccessToken(String refreshToken,List<Role> roles, List<Permission> extraPerms) {
         Long userId = validateRefreshToken(refreshToken);
         if(userId == null) {
             return null; // Refresh token is invalid
         }
-        return generateAccessToken(userId,role);
+        return generateAccessToken(userId,roles,extraPerms);
     }
 
     public Claims parseToken(String ValidatedAccessToken) throws JwtException{

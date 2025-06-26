@@ -1,6 +1,6 @@
 package org.waterwood.waterfunservice.utils;
 
-import org.waterwood.waterfunservice.entity.User.EncryptionDataKey;
+import org.waterwood.waterfunservice.entity.user.EncryptionDataKey;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
