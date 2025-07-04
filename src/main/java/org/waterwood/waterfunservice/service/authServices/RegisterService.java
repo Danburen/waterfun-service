@@ -4,9 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.common.response.ApiResponse;
-import org.waterwood.waterfunservice.DTO.common.response.LoginResponseData;
-import org.waterwood.waterfunservice.DTO.common.result.AuthResult;
+import org.waterwood.waterfunservice.DTO.response.ApiResponse;
+import org.waterwood.waterfunservice.DTO.response.LoginResponseData;
 import org.waterwood.waterfunservice.DTO.request.RegisterRequest;
 import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.entity.user.UserDatum;
@@ -24,16 +23,16 @@ public class RegisterService {
 
     @Transactional
     public ApiResponse<LoginResponseData> register(RegisterRequest request,String uuid) {
-        AuthResult result = AuthValidator.start()
+        ApiResponse<LoginResponseData> result = AuthValidator.start()
                 .validateUsername(request.getUsername())
-                .checkEmpty(request.getPassword(), ResponseCode.PASSWORD_EMPTY)
+                //.checkEmpty(request.getPassword(), ResponseCode.PASSWORD_EMPTY) allow password empty
                 .checkEmpty(request.getSmsCode(), ResponseCode.SMS_CODE_EMPTY)
                 .check(authService.getSmsCodeService().verifySmsCode(
                         request.getPhoneNumber(),uuid,request.getSmsCode()), ResponseCode.SMS_CODE_INCORRECT)
                 .buildResult();
-        if(! result.success()) return result.toLoginResponse();
+        if(! result.isSuccess()) return result;
         return userRepo.findByUsername(request.getUsername()).map(
-                        user -> new AuthResult(false, ResponseCode.USER_ALREADY_EXISTS).toLoginResponse())
+                        user -> ApiResponse.failure(ResponseCode.USER_NOT_FOUND))
                 .orElseGet(() -> {
                     // Create a new user
                     User user = new User();

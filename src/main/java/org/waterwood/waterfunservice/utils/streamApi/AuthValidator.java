@@ -1,7 +1,8 @@
 package org.waterwood.waterfunservice.utils.streamApi;
 
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.common.result.AuthResult;
+import org.waterwood.waterfunservice.DTO.response.ApiResponse;
+import org.waterwood.waterfunservice.DTO.response.LoginResponseData;
 import org.waterwood.waterfunservice.service.RedisServiceBase;
 import org.waterwood.waterfunservice.utils.ValidateUtil;
 
@@ -21,7 +22,7 @@ public class AuthValidator {
         return new AuthValidator();
     }
 
-    private AuthResult result = null;
+    private ApiResponse<LoginResponseData> result;
 
     /**
      * Checks a condition and sets the result if the condition is false.
@@ -31,25 +32,25 @@ public class AuthValidator {
      */
     public AuthValidator check(boolean condition, ResponseCode responseCode) {
         if(result == null){
-            result = new AuthResult(false,responseCode);
+            result = ApiResponse.failure(responseCode);
         }else{
-            if(! result.success()){
+            if(! result.isSuccess()){
                 return this; // If already failed, skip further checks
             }
         }
         if(!condition){
-            result = new AuthResult(false, responseCode);
+            result = ApiResponse.failure(responseCode);
         }
         return this;
     }
 
-    public AuthValidator ifValidThen(Supplier<AuthResult> supplier) {
-        if(result != null && !result.success()) {
+    public AuthValidator ifValidThen(Supplier<ApiResponse<LoginResponseData>> supplier) {
+        if(result != null && ! result.isSuccess()) {
             return this; // If already failed, skip further checks
         }
-        AuthResult r = supplier.get();
-        if (! r.success()) {
-            result = new AuthResult(false, r.code());
+        ApiResponse<LoginResponseData> r = supplier.get();
+        if (! r.isSuccess()) {
+            result = r;
         }
         return this;
     }
@@ -79,7 +80,7 @@ public class AuthValidator {
      * @param defaultResult the default AuthResult to return
      * @return current AuthResult if it exists, otherwise the default result.
      */
-    public AuthResult orElse(AuthResult defaultResult) {
+    public ApiResponse<LoginResponseData> orElse(ApiResponse<LoginResponseData> defaultResult) {
         return result != null ? result : defaultResult;
     }
 
@@ -105,7 +106,7 @@ public class AuthValidator {
      * a new AuthResult indicating failure if no checks were performed.
      * @return result of the validation
      */
-    public AuthResult buildResult() {
-        return result == null ? new AuthResult(false,ResponseCode.BAD_REQUEST) : result;
+    public ApiResponse<LoginResponseData> buildResult() {
+        return result == null ? ApiResponse.failure(ResponseCode.BAD_REQUEST) : result;
     }
 }

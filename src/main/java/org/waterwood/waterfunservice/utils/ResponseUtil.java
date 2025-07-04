@@ -2,12 +2,11 @@ package org.waterwood.waterfunservice.utils;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.common.response.ApiResponse;
-import org.waterwood.waterfunservice.DTO.common.response.LoginResponseData;
+import org.waterwood.waterfunservice.DTO.response.ApiResponse;
+import org.waterwood.waterfunservice.DTO.response.LoginResponseData;
 import org.waterwood.waterfunservice.DTO.common.result.OpResult;
 
 public class ResponseUtil {
@@ -24,7 +23,7 @@ public class ResponseUtil {
     }
 
     public static void setTokenCookie(HttpServletResponse response, LoginResponseData data) {
-        ResponseCookie accessCookie = ResponseCookie.from("access_Token",data.getAccessToken())
+        ResponseCookie accessCookie = ResponseCookie.from("ACCESS_TOKEN",data.getAccessToken())
                 .httpOnly(true)
                 .secure(true) // only https
                 .sameSite("Strict")
@@ -32,7 +31,7 @@ public class ResponseUtil {
                 .path("/")
                 .build();
         response.addHeader("Set-Cookie",accessCookie.toString());
-        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", data.getRefreshToken())
+        ResponseCookie refreshCookie = ResponseCookie.from("REFRESH_TOKEN", data.getRefreshToken())
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("Strict")

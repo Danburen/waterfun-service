@@ -5,9 +5,8 @@ import io.jsonwebtoken.ExpiredJwtException;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.DTO.common.response.ApiResponse;
-import org.waterwood.waterfunservice.DTO.common.response.LoginResponseData;
-import org.waterwood.waterfunservice.DTO.common.result.AuthResult;
+import org.waterwood.waterfunservice.DTO.response.ApiResponse;
+import org.waterwood.waterfunservice.DTO.response.LoginResponseData;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.service.TokenService;
@@ -39,11 +38,10 @@ public class AuthService {
      */
     public ApiResponse<LoginResponseData> validateTokenAndBuildResult(AuthValidator validator, String accessToken, String refreshToken, User user) {
         // If the Pre-auth validation is not successful, return the error response
-        AuthResult authResult = validator.buildResult();
-        if(! authResult.success()){
-            return authResult.toLoginResponse();
+        ApiResponse<LoginResponseData> result = validator.buildResult();
+        if(! result.isSuccess()){
+            return result;
         }
-        ApiResponse<LoginResponseData> res =  authResult.toLoginResponse();
         //First time login in
         if(accessToken == null && refreshToken == null) {
             long userId = user.getId();
@@ -52,28 +50,28 @@ public class AuthService {
                     userService.getUserRoles(userId),
                     userService.getUserPermissions(userId));
             String newRefreshToken = tokenService.generateAndStoreRefreshToken(user.getId());
-            res.getData().setAccessToken(newAccessToken.token());
-            res.getData().setRefreshToken(newRefreshToken);
-            res.getData().setExpiresIn(newAccessToken.expireIn());
-            return res;
+            result.getData().setAccessToken(newAccessToken.token());
+            result.getData().setRefreshToken(newRefreshToken);
+            result.getData().setExpiresIn(newAccessToken.expireIn());
+            return result;
         }
 
         if(accessToken != null){
             // validate the content of the access token
             try{
                 Claims claims = tokenService.parseToken(accessToken);
-                res.getData().setExpiresIn((claims.getExpiration().getTime() - System.currentTimeMillis())/1000);
-                res.getData().setUsername(user.getUsername());
-                res.getData().setUserId(user.getId());
+                result.getData().setExpiresIn((claims.getExpiration().getTime() - System.currentTimeMillis())/1000);
+                result.getData().setUsername(user.getUsername());
+                result.getData().setUserId(user.getId());
             }catch (Exception e){
                 if(e instanceof ExpiredJwtException) {
-                    return new AuthResult(false, ResponseCode.ACCESS_TOKEN_EXPIRED).toLoginResponse();
+                    return ResponseCode.ACCESS_TOKEN_EXPIRED.toApiResponse();
                 } else {
-                    return new AuthResult(false, ResponseCode.ACCESS_TOKEN_INVALID).toLoginResponse();
+                    return ResponseCode.INTERNAL_SERVER_ERROR.toApiResponse();
                 }
             }
         }
-        return res;
+        return result;
     }
 
     public boolean isTokenValid(String accessToken, User user) {

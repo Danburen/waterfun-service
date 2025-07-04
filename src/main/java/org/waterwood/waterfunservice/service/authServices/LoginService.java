@@ -1,15 +1,17 @@
 package org.waterwood.waterfunservice.service.authServices;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.common.response.ApiResponse;
-import org.waterwood.waterfunservice.DTO.common.response.LoginResponseData;
-import org.waterwood.waterfunservice.DTO.common.result.AuthResult;
+import org.waterwood.waterfunservice.DTO.response.ApiResponse;
+import org.waterwood.waterfunservice.DTO.response.LoginResponseData;
 import org.waterwood.waterfunservice.DTO.request.EmailLoginRequestBody;
 import org.waterwood.waterfunservice.DTO.request.PwdLoginRequestBody;
 import org.waterwood.waterfunservice.DTO.request.SmsLoginRequestBody;
 import org.waterwood.waterfunservice.repository.UserRepository;
+import org.waterwood.waterfunservice.service.TokenService;
+import org.waterwood.waterfunservice.utils.CookieParser;
 import org.waterwood.waterfunservice.utils.streamApi.AuthValidator;
 
 @Service
@@ -18,6 +20,8 @@ public class LoginService {
     UserRepository userRepo;
     @Autowired
     AuthService authService;
+    @Autowired
+    private TokenService tokenService;
 
     public ApiResponse<LoginResponseData> loginByPassword(PwdLoginRequestBody requestBody, String captchaUUID) {
         return userRepo.findByUsername(requestBody.getUsername()).map(
@@ -28,11 +32,11 @@ public class LoginService {
                                 .validateCode(captchaUUID, requestBody.getCaptcha(),authService.getCaptchaService(), ResponseCode.CAPTCHA_INCORRECT)
                                 .ifValidThen(() -> {
                                     if (!user.checkPassword(requestBody.getPassword())) {
-                                        return new AuthResult(false, ResponseCode.USERNAME_OR_PASSWORD_INCORRECT);
+                                        return ApiResponse.failure(ResponseCode.USERNAME_OR_PASSWORD_INCORRECT);
                                     }
-                                    return new AuthResult(true);
+                                    return ApiResponse.success();
                                 }),requestBody.getAccessToken(), requestBody.getRefreshToken(), user))
-                .orElseGet(()-> new AuthResult(false, ResponseCode.USERNAME_OR_PASSWORD_INCORRECT).toLoginResponse());
+                .orElseGet(ResponseCode.USERNAME_OR_PASSWORD_INCORRECT::toApiResponse);
     }
 
     public  ApiResponse<LoginResponseData> loginBySmsCode(SmsLoginRequestBody requestBody, String uuid) {
@@ -43,7 +47,7 @@ public class LoginService {
                                         .check(authService.getSmsCodeService().verifySmsCode(
                                                 requestBody.getPhoneNumber(), uuid, requestBody.getSmsCode()), ResponseCode.SMS_CODE_INCORRECT),
                                 requestBody.getAccessToken(), requestBody.getRefreshToken(), user))
-                .orElseGet(()-> new AuthResult(false, ResponseCode.USERNAME_OR_PASSWORD_INCORRECT).toLoginResponse());
+                .orElseGet(ResponseCode.USERNAME_OR_PASSWORD_INCORRECT::toApiResponse);
     }
 
     public  ApiResponse<LoginResponseData> loginByEmail(EmailLoginRequestBody requestBody, String uuid) {
@@ -55,6 +59,12 @@ public class LoginService {
                                                 requestBody.getEmail(),uuid,requestBody.getEmailCode()
                                         ), ResponseCode.EMAIL_CODE_INCORRECT),
                                 requestBody.getAccessToken(), requestBody.getRefreshToken(), user))
-                .orElseGet(()-> new AuthResult(false, ResponseCode.USERNAME_OR_PASSWORD_INCORRECT).toLoginResponse());
+                .orElseGet(ResponseCode.USERNAME_OR_PASSWORD_INCORRECT::toApiResponse);
+    }
+
+    public ResponseCode logout(HttpServletRequest request) {
+        String refreshToken = CookieParser.getCookieValue(request.getCookies(),"REFRESH_TOKEN");
+        tokenService.removeRefreshToken(refreshToken);
+        return ResponseCode.OK;
     }
 }

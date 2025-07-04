@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.DTO.common.response;
+package org.waterwood.waterfunservice.DTO.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -15,5 +15,5 @@ public class LoginResponseData {
     private String refreshToken;
     private Long userId;
     private String username;
-    private Long expiresIn;
+    private Long expiresIn; // seconds
 }

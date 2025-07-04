@@ -3,6 +3,7 @@ package org.waterwood.waterfunservice.DTO.common;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.ResponseEntity;
+import org.waterwood.waterfunservice.DTO.response.ApiResponse;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -59,6 +60,10 @@ public enum ResponseCode {
         body.put("code", this.code);
         body.put("message", this.msg);
         return ResponseEntity.status(getHttpStatus()).body(body);
+    }
+    
+    public <T> ApiResponse<T> toApiResponse(){
+        return new ApiResponse<>(this.getCode(),this.getMsg(),null);
     }
 
     public static int toHttpStatus(int code) {
