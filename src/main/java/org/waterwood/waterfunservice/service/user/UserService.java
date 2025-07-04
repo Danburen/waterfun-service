@@ -1,6 +1,6 @@
 package org.waterwood.waterfunservice.service.user;
 
-import org.waterwood.waterfunservice.DTO.common.result.OpResult;
+import org.waterwood.waterfunservice.service.dto.OpResult;
 import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.entity.permission.Permission;
 import org.waterwood.waterfunservice.entity.permission.Role;

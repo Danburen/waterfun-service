@@ -6,19 +6,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.common.result.OpResult;
+import org.waterwood.waterfunservice.service.dto.OpResult;
 import org.waterwood.waterfunservice.entity.permission.Permission;
 import org.waterwood.waterfunservice.entity.permission.Role;
 import org.waterwood.waterfunservice.entity.permission.RolePermission;
 import org.waterwood.waterfunservice.repository.RolePermRepo;
 import org.waterwood.waterfunservice.repository.RoleRepo;
-import org.waterwood.waterfunservice.utils.RepoUtil;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 @Service
 public class RoleService {

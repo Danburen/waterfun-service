@@ -1,8 +1,8 @@
 package org.waterwood.waterfunservice.utils.streamApi;
 
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.response.ApiResponse;
-import org.waterwood.waterfunservice.DTO.response.LoginResponseData;
+import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
 import org.waterwood.waterfunservice.service.RedisServiceBase;
 import org.waterwood.waterfunservice.utils.ValidateUtil;
 
@@ -22,7 +22,7 @@ public class AuthValidator {
         return new AuthValidator();
     }
 
-    private ApiResponse<LoginResponseData> result;
+    private ApiResponse<LoginServiceResponse> result;
 
     /**
      * Checks a condition and sets the result if the condition is false.
@@ -44,11 +44,11 @@ public class AuthValidator {
         return this;
     }
 
-    public AuthValidator ifValidThen(Supplier<ApiResponse<LoginResponseData>> supplier) {
+    public AuthValidator ifValidThen(Supplier<ApiResponse<LoginServiceResponse>> supplier) {
         if(result != null && ! result.isSuccess()) {
             return this; // If already failed, skip further checks
         }
-        ApiResponse<LoginResponseData> r = supplier.get();
+        ApiResponse<LoginServiceResponse> r = supplier.get();
         if (! r.isSuccess()) {
             result = r;
         }
@@ -80,7 +80,7 @@ public class AuthValidator {
      * @param defaultResult the default AuthResult to return
      * @return current AuthResult if it exists, otherwise the default result.
      */
-    public ApiResponse<LoginResponseData> orElse(ApiResponse<LoginResponseData> defaultResult) {
+    public ApiResponse<LoginServiceResponse> orElse(ApiResponse<LoginServiceResponse> defaultResult) {
         return result != null ? result : defaultResult;
     }
 
@@ -106,7 +106,18 @@ public class AuthValidator {
      * a new AuthResult indicating failure if no checks were performed.
      * @return result of the validation
      */
-    public ApiResponse<LoginResponseData> buildResult() {
-        return result == null ? ApiResponse.failure(ResponseCode.BAD_REQUEST) : result;
+    public ApiResponse<LoginServiceResponse> buildResult() {
+        return result == null ? ResponseCode.BAD_REQUEST.toApiResponse() : result;
+    }
+
+    public ApiResponse<LoginServiceResponse> buildResult(boolean success) {
+        if(result == null){
+            if(success){
+                result = ApiResponse.success();
+            }else{
+                result = ApiResponse.failure(ResponseCode.BAD_REQUEST);
+            }
+        }
+        return result;
     }
 }

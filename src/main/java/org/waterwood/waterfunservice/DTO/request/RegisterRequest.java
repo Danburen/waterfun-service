@@ -1,6 +1,5 @@
 package org.waterwood.waterfunservice.DTO.request;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data

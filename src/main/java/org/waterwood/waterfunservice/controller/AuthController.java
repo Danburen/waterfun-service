@@ -9,12 +9,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.response.ApiResponse;
-import org.waterwood.waterfunservice.DTO.response.LoginResponseData;
-import org.waterwood.waterfunservice.DTO.common.result.EmailCodeResult;
-import org.waterwood.waterfunservice.DTO.common.result.OpResult;
-import org.waterwood.waterfunservice.DTO.common.result.SmsCodeResult;
+import org.waterwood.waterfunservice.DTO.converter.ApiConvertFactory;
+import org.waterwood.waterfunservice.DTO.converter.LoginResponseConverter;
 import org.waterwood.waterfunservice.DTO.request.*;
+import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.response.LoginClientResponse;
+import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
+import org.waterwood.waterfunservice.service.dto.EmailCodeResult;
+import org.waterwood.waterfunservice.service.dto.OpResult;
+import org.waterwood.waterfunservice.service.dto.SmsCodeResult;
 import org.waterwood.waterfunservice.service.authServices.RegisterService;
 import org.waterwood.waterfunservice.service.authServices.*;
 import org.waterwood.waterfunservice.utils.CookieParser;
@@ -37,6 +40,9 @@ public class AuthController {
     private LoginService loginService;
     @Autowired
     private RegisterService registerService;
+
+    @Autowired
+    LoginResponseConverter loginResponseConverter;
     /** redis + cookie(HttpOnly) save captcha
      * Generate the captcha
      */
@@ -58,7 +64,7 @@ public class AuthController {
     }
 
     @PostMapping("/sendSmsCode")
-    public ResponseEntity<?> sendSmsCode(@RequestBody SendSmsCodeRequest requestBody,HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> sendSmsCode(@RequestBody SendSmsCodeRequest requestBody, HttpServletRequest request, HttpServletResponse response) {
         OpResult<SmsCodeResult> smsCodeResult = smsCodeService.sendSmsCode(requestBody.getPhoneNumber());
         ResponseCode statusCode = smsCodeResult.getResponseCode();
         if(! smsCodeResult.isTrySuccess()){
@@ -77,11 +83,11 @@ public class AuthController {
             log.info("Null smsCode.");
         }
         ResponseUtil.setCookieAndNoCache(response, "SMS_CODE_KEY", smsCodeResult.getResultData().getKey(), 120);
-        return ResponseCode.OK.toResponseEntity();
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/sendEmailCode")
-    public ResponseEntity<?> sendEmailCode(@RequestBody SendEmailCodeRequest requestBody,HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> sendEmailCode(@RequestBody SendEmailCodeRequest requestBody, HttpServletRequest request, HttpServletResponse response) {
         OpResult<EmailCodeResult> emailCodeResult = emailCodeService.sendEmailCode(requestBody.getEmail(), EmailTemplateType.VERIFY_CODE);
         ResponseCode statusCode = emailCodeResult.getResponseCode();
         if(! emailCodeResult.isTrySuccess()){
@@ -92,36 +98,32 @@ public class AuthController {
             }
         }
         ResponseUtil.setCookieAndNoCache(response, "EMAIL_CODE_KEY", emailCodeResult.getResultData().getKey(), 120);
-        return ResponseCode.OK.toResponseEntity();
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/login/password")
     public ResponseEntity<?> loginByPassword(@RequestBody PwdLoginRequestBody body, HttpServletRequest request) {
-        return ResponseUtil.buildResponse(loginService.loginByPassword(
-                        body,
-                        CookieParser.getCookieValue(request.getCookies(), "CAPTCHA_KEY")
-                ));
+        return ResponseUtil.buildResponse(toClientResponse(
+                loginService.loginByPassword(body, CookieParser.getCookieValue(request.getCookies(), "CAPTCHA_KEY"))));
     }
 
     @PostMapping("/login/sms")
     public ResponseEntity<?> loginBySms(@RequestBody SmsLoginRequestBody body, HttpServletRequest request) {
-        return  ResponseUtil.buildResponse(loginService.loginBySmsCode(
-                body,
-                CookieParser.getCookieValue(request.getCookies(), "SMS_CODE_KEY")
+        return  ResponseUtil.buildResponse(toClientResponse(
+                loginService.loginBySmsCode(body, CookieParser.getCookieValue(request.getCookies(), "SMS_CODE_KEY"))
         ));
     }
 
     @PostMapping("/login/email")
     public ResponseEntity<?> loginByEmail(@RequestBody EmailLoginRequestBody body, HttpServletRequest request) {
-        return  ResponseUtil.buildResponse(loginService.loginByEmail(
-                body,
-                CookieParser.getCookieValue(request.getCookies(), "EMAIL_CODE_KEY")
+        return  ResponseUtil.buildResponse(toClientResponse(
+                loginService.loginByEmail(body, CookieParser.getCookieValue(request.getCookies(), "EMAIL_CODE_KEY"))
         ));
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest requestBody, HttpServletRequest request,HttpServletResponse response) {
-        ApiResponse<LoginResponseData> apiResponse = registerService.register(requestBody,
+    public ResponseEntity<?> register(@RequestBody RegisterRequest requestBody, HttpServletRequest request, HttpServletResponse response) {
+        ApiResponse<LoginServiceResponse> apiResponse = registerService.register(requestBody,
                 CookieParser.getCookieValue(request.getCookies(), "SMS_CODE_KEY"));
         ResponseUtil.setTokenCookie(response,apiResponse.getData());
         response.setContentType("application/json");
@@ -129,6 +131,17 @@ public class AuthController {
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response.setHeader("X-Content-Type-Options", "nosniff");
         response.setHeader("X-Frame-Options", "DENY");
-        return ResponseUtil.buildResponse(apiResponse);
+        return ResponseUtil.buildResponse(toClientResponse(apiResponse));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request,HttpServletResponse response) {
+        return loginService.logout(request).toResponseEntity();
+    }
+
+    private ApiResponse<LoginClientResponse> toClientResponse(ApiResponse<LoginServiceResponse> source){
+        return ApiConvertFactory.convert(
+                source,loginResponseConverter
+        );
     }
 }

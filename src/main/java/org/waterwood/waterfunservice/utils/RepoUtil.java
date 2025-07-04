@@ -3,7 +3,7 @@ package org.waterwood.waterfunservice.utils;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.waterwood.waterfunservice.DTO.common.ErrorType;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.common.result.OpResult;
+import org.waterwood.waterfunservice.service.dto.OpResult;
 
 import java.util.Optional;
 import java.util.function.Function;

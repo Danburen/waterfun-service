@@ -5,9 +5,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.response.ApiResponse;
-import org.waterwood.waterfunservice.DTO.response.LoginResponseData;
-import org.waterwood.waterfunservice.DTO.common.result.OpResult;
+import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
+import org.waterwood.waterfunservice.service.dto.OpResult;
 
 public class ResponseUtil {
     public static void setCookieAndNoCache(HttpServletResponse response, String cookieName, String cookieValue, int maxAge) {
@@ -22,7 +22,7 @@ public class ResponseUtil {
         response.setDateHeader("Expires", 0);
     }
 
-    public static void setTokenCookie(HttpServletResponse response, LoginResponseData data) {
+    public static void setTokenCookie(HttpServletResponse response, LoginServiceResponse data) {
         ResponseCookie accessCookie = ResponseCookie.from("ACCESS_TOKEN",data.getAccessToken())
                 .httpOnly(true)
                 .secure(true) // only https

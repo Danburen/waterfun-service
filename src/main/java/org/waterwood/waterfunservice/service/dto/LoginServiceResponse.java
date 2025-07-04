@@ -1,6 +1,5 @@
-package org.waterwood.waterfunservice.DTO.response;
+package org.waterwood.waterfunservice.service.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -10,7 +9,7 @@ import lombok.Setter;
 @Setter
 @Builder
 @AllArgsConstructor
-public class LoginResponseData {
+public class LoginServiceResponse {
     private String accessToken;
     private String refreshToken;
     private Long userId;

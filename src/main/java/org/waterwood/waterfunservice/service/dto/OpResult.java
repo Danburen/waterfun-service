@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.DTO.common.result;
+package org.waterwood.waterfunservice.service.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,6 +1,5 @@
 package org.waterwood.waterfunservice.DTO.request;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import org.waterwood.waterfunservice.DTO.common.LoginType;

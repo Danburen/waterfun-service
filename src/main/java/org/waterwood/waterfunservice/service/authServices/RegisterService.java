@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.response.ApiResponse;
-import org.waterwood.waterfunservice.DTO.response.LoginResponseData;
+import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
 import org.waterwood.waterfunservice.DTO.request.RegisterRequest;
 import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.entity.user.UserDatum;
@@ -22,8 +22,8 @@ public class RegisterService {
     private UserRepository userRepo;
 
     @Transactional
-    public ApiResponse<LoginResponseData> register(RegisterRequest request,String uuid) {
-        ApiResponse<LoginResponseData> result = AuthValidator.start()
+    public ApiResponse<LoginServiceResponse> register(RegisterRequest request, String uuid) {
+        ApiResponse<LoginServiceResponse> result = AuthValidator.start()
                 .validateUsername(request.getUsername())
                 //.checkEmpty(request.getPassword(), ResponseCode.PASSWORD_EMPTY) allow password empty
                 .checkEmpty(request.getSmsCode(), ResponseCode.SMS_CODE_EMPTY)
@@ -32,7 +32,7 @@ public class RegisterService {
                 .buildResult();
         if(! result.isSuccess()) return result;
         return userRepo.findByUsername(request.getUsername()).map(
-                        user -> ApiResponse.failure(ResponseCode.USER_NOT_FOUND))
+                        user -> ApiResponse.<LoginServiceResponse>failure(ResponseCode.USER_NOT_FOUND))
                 .orElseGet(() -> {
                     // Create a new user
                     User user = new User();
@@ -46,8 +46,7 @@ public class RegisterService {
                     userDatum.setPhone(request.getPhoneNumber());
                     userDatum.setPhoneVerified(true);
 
-                    return authService.validateTokenAndBuildResult(new AuthValidator(),
-                            null, null, user);
+                    return authService.validateTokens(null,null,user);
                 });
     }
 }

@@ -1,11 +1,8 @@
-package org.waterwood.waterfunservice.DTO.response;
+package org.waterwood.waterfunservice.DTO.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.jetbrains.annotations.Nullable;
-import org.springframework.http.ResponseEntity;
-import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 
 /**
  * A class to process and store internal response to send to the next layout
@@ -29,7 +26,7 @@ public class ApiResponse<T>{
     }
 
     public static <T> ApiResponse<T> success() {
-        return new ApiResponse<T>(200,null,null);
+        return new ApiResponse<T>(200,null, null);
     }
 
     public static <T> ApiResponse<T> failure(T data){

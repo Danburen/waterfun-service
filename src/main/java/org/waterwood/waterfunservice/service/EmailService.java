@@ -4,14 +4,13 @@ import com.resend.Resend;
 import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
-import org.waterwood.waterfunservice.DTO.common.result.EmailCodeResult;
+import org.waterwood.waterfunservice.service.dto.EmailCodeResult;
 
 
 import java.util.Map;

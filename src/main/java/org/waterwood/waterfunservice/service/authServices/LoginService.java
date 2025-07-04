@@ -4,8 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.response.ApiResponse;
-import org.waterwood.waterfunservice.DTO.response.LoginResponseData;
+import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
 import org.waterwood.waterfunservice.DTO.request.EmailLoginRequestBody;
 import org.waterwood.waterfunservice.DTO.request.PwdLoginRequestBody;
 import org.waterwood.waterfunservice.DTO.request.SmsLoginRequestBody;
@@ -23,7 +23,7 @@ public class LoginService {
     @Autowired
     private TokenService tokenService;
 
-    public ApiResponse<LoginResponseData> loginByPassword(PwdLoginRequestBody requestBody, String captchaUUID) {
+    public ApiResponse<LoginServiceResponse> loginByPassword(PwdLoginRequestBody requestBody, String captchaUUID) {
         return userRepo.findByUsername(requestBody.getUsername()).map(
                         user-> authService.validateTokenAndBuildResult(AuthValidator.start()
                                 .checkEmpty(requestBody.getUsername(),ResponseCode.USERNAME_EMPTY_OR_INVALID)
@@ -39,7 +39,7 @@ public class LoginService {
                 .orElseGet(ResponseCode.USERNAME_OR_PASSWORD_INCORRECT::toApiResponse);
     }
 
-    public  ApiResponse<LoginResponseData> loginBySmsCode(SmsLoginRequestBody requestBody, String uuid) {
+    public  ApiResponse<LoginServiceResponse> loginBySmsCode(SmsLoginRequestBody requestBody, String uuid) {
         return userRepo.findUserByPhone(requestBody.getPhoneNumber()).map(
                         user-> authService.validateTokenAndBuildResult(AuthValidator.start()
                                         .checkEmpty(requestBody.getPhoneNumber(),ResponseCode.USERNAME_EMPTY_OR_INVALID)
@@ -50,7 +50,7 @@ public class LoginService {
                 .orElseGet(ResponseCode.USERNAME_OR_PASSWORD_INCORRECT::toApiResponse);
     }
 
-    public  ApiResponse<LoginResponseData> loginByEmail(EmailLoginRequestBody requestBody, String uuid) {
+    public  ApiResponse<LoginServiceResponse> loginByEmail(EmailLoginRequestBody requestBody, String uuid) {
         return userRepo.findUserByEmail(requestBody.getEmail()).map(
                         user-> authService.validateTokenAndBuildResult(AuthValidator.start()
                                         .checkEmpty(requestBody.getEmail(),ResponseCode.USERNAME_EMPTY_OR_INVALID)
