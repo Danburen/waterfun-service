@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.service;
+package org.waterwood.waterfunservice.service.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Service
-public class RoleService {
+public class RoleServiceImpl {
     @Autowired
     RoleRepo roleRepo;
     @Autowired

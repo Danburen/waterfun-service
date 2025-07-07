@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.service;
+package org.waterwood.waterfunservice.service.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 @Service
-public class PermissionService {
+public class PermissionServiceImpl {
     @Autowired
     PermissionRepo permissionRepo;
 

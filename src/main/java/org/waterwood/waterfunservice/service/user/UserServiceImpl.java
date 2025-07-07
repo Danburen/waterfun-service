@@ -12,7 +12,6 @@ import org.waterwood.waterfunservice.entity.permission.Role;
 import org.waterwood.waterfunservice.entity.permission.UserPermission;
 import org.waterwood.waterfunservice.entity.permission.UserRole;
 import org.waterwood.waterfunservice.repository.*;
-import org.waterwood.waterfunservice.service.RoleService;
 import org.waterwood.waterfunservice.utils.PasswordUtil;
 import org.waterwood.waterfunservice.utils.RepoUtil;
 
@@ -39,7 +38,9 @@ public class UserServiceImpl implements UserService {
     private PermissionRepo permissionRepo;
 
     @Autowired
-    private RoleService roleService;
+    private RoleServiceImpl roleServiceImpl;
+    @Autowired
+    private PermissionServiceImpl permissionServiceImpl;
 
     @Override
     public Optional<User> getUserByUsername(String username) {
@@ -76,7 +77,7 @@ public class UserServiceImpl implements UserService {
         List<Role> roles = userRoleRepo.findByUserId(userId).stream().map(UserRole::getRole).toList();
 
         Set<Permission> rolePermission = roles.stream()
-                .flatMap(role-> roleService.getPermissions(role.getId()).stream())
+                .flatMap(role-> roleServiceImpl.getPermissions(role.getId()).stream())
                 .collect(Collectors.toSet());
 
         Set<Permission> userPermission = userPermRepo.findByUserId(userId).stream()

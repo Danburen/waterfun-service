@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.repository.UserDatumRepo;
 import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
 import org.waterwood.waterfunservice.DTO.request.RegisterRequest;
 import org.waterwood.waterfunservice.entity.user.User;
@@ -20,6 +21,8 @@ public class RegisterService {
 
     @Autowired
     private UserRepository userRepo;
+    @Autowired
+    private UserDatumRepo userDatumRepo;
 
     @Transactional
     public ApiResponse<LoginServiceResponse> register(RegisterRequest request, String uuid) {
@@ -45,7 +48,8 @@ public class RegisterService {
                     userDatum.setEmail(request.getEmail());
                     userDatum.setPhone(request.getPhoneNumber());
                     userDatum.setPhoneVerified(true);
-
+                    userRepo.save(user);
+                    userDatumRepo.save(userDatum);
                     return authService.validateTokens(null,null,user);
                 });
     }

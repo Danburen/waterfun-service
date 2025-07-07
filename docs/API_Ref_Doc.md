@@ -63,8 +63,6 @@ WaterFun Service 是一个基于 Spring Boot 的后端服务项目，提供了�
     "code": "number",
     "message": "string",
     "data": {
-      "accessToken": "string",
-      "refreshToken": "string",
       "username": "string",
       "userId": "number",
       "expireIn": "number"
