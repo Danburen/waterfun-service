@@ -9,6 +9,7 @@ import org.waterwood.waterfunservice.entity.permission.UserRole;
 import org.waterwood.waterfunservice.repository.UserPermRepo;
 import org.waterwood.waterfunservice.repository.UserRepository;
 import org.waterwood.waterfunservice.repository.UserRoleRepo;
+import org.waterwood.waterfunservice.service.user.RoleService;
 import org.waterwood.waterfunservice.service.user.UserPermissionService;
 import org.waterwood.waterfunservice.service.user.UserRoleService;
 
@@ -29,6 +30,10 @@ public class UserManagerService {
     private UserPermissionService userPermissionService;
     @Autowired
     private UserRoleService userRoleService;
+    @Autowired
+    private UserManagerService userManagerService;
+    @Autowired
+    private RoleService roleService;
 
     public List<Role> getUserRoles(long userId){
         return userRoleService.getUserRoles(userId);
