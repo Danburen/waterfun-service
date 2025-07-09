@@ -37,8 +37,8 @@ public class OpResult<T> {
     }
 
 
-    public static <E> OpResult<E> failure(ResponseCode responseCode, String message){
-        return OpResult.<E>builder()
+    public static OpResult<Void> failure(ResponseCode responseCode, String message){
+        return OpResult.<Void>builder()
                 .trySuccess(false)
                 .errorType(ErrorType.CLIENT)
                 .responseCode(responseCode)

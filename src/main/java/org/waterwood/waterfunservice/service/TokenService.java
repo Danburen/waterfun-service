@@ -9,7 +9,7 @@ import org.waterwood.waterfunservice.entity.permission.Permission;
 import org.waterwood.waterfunservice.entity.permission.Role;
 import org.waterwood.waterfunservice.repository.RedisRepository;
 import org.waterwood.waterfunservice.service.common.TokenResult;
-import org.waterwood.waterfunservice.utils.RsaJwtUtil;
+import org.waterwood.waterfunservice.utils.security.RsaJwtUtil;
 
 import java.time.Duration;
 import java.util.HashMap;

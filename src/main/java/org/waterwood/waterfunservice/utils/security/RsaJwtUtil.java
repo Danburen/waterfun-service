@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.utils;
+package org.waterwood.waterfunservice.utils.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -11,7 +11,6 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.time.Duration;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 @Component

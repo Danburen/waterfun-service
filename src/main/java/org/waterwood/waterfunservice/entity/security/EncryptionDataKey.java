@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.entity.user;
+package org.waterwood.waterfunservice.entity.security;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.waterwood.waterfunservice.utils.PasswordUtil;
+import org.waterwood.waterfunservice.utils.security.PasswordUtil;
 
 
 import java.time.Instant;

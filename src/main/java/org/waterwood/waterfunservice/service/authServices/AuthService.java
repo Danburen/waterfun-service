@@ -6,12 +6,12 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.service.UserManagerService;
 import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.service.TokenService;
 import org.waterwood.waterfunservice.service.common.TokenResult;
-import org.waterwood.waterfunservice.service.user.UserService;
 import org.waterwood.waterfunservice.utils.streamApi.AuthValidator;
 
 @Service
@@ -26,7 +26,7 @@ public class AuthService {
     @Autowired
     private TokenService tokenService;
     @Autowired
-    private UserService userService;
+    private UserManagerService userManagerService;
 
     /**
      * Processing Token validation and build the login response.
@@ -51,8 +51,8 @@ public class AuthService {
             long userId = user.getId();
             TokenResult newAccessToken = tokenService.generateAccessToken(
                     userId,
-                    userService.getUserRoles(userId),
-                    userService.getUserPermissions(userId));
+                    userManagerService.getUserRoles(userId),
+                    userManagerService.getUserPermissions(userId));
             String newRefreshToken = tokenService.generateAndStoreRefreshToken(user.getId());
             return ApiResponse.success(LoginServiceResponse.builder()
                     .accessToken(newAccessToken.token())
@@ -83,10 +83,10 @@ public class AuthService {
         if (!tokenService.validateAccessToken(accessToken)) return false;
         Claims claims = tokenService.parseToken(accessToken);
         return String.valueOf(user.getId()).equals(claims.getSubject())
-                && userService.getUserRoles(user.getId()).stream()
+                && userManagerService.getUserRoles(user.getId()).stream()
                 .map(role-> role.getName().toLowerCase())
                 .toList().equals(claims.get("roles"))
-                && userService.getUserPermissions(user.getId()).stream()
+                && userManagerService.getUserPermissions(user.getId()).stream()
                 .map(role-> role.getName().toLowerCase())
                 .toList().equals(claims.get("perms"));
     }

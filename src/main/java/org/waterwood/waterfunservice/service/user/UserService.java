@@ -1,58 +1,76 @@
 package org.waterwood.waterfunservice.service.user;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.service.dto.OpResult;
+import org.waterwood.waterfunservice.entity.user.AccountStatus;
 import org.waterwood.waterfunservice.entity.user.User;
-import org.waterwood.waterfunservice.entity.permission.Permission;
-import org.waterwood.waterfunservice.entity.permission.Role;
+import org.waterwood.waterfunservice.repository.*;
+import org.waterwood.waterfunservice.utils.security.PasswordUtil;
 
-import java.util.List;
+import java.time.Instant;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.Consumer;
 
-public interface UserService {
-    Optional<User> getUserByUsername(String username);
-    Optional<User> getUserById(long id);
-    List<User> getUserByRole(String role);
+@Service
+@Slf4j
+public class UserService {
+    @Autowired
+    private UserRepository userRepository;
 
-    List<Role> getUserRoles(long userId);
-    List<Permission> getUserPermissions(long userId);
+    @Autowired
+    private RoleService roleService;
 
-    Set<Permission> getUserAllPermissions(long userId);
+    public Optional<User> getUserByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
 
-    OpResult<Void> activateUser(long id);
-    OpResult<Void> deactivateUser(long id);
-    OpResult<Void> suspendUser(long id);
-    OpResult<Void> deleteUser(long id);
+    public Optional<User> getUserById(long id) {
+        return userRepository.findById(id);
+    }
 
-    /**
-     * Add or remove user role or permission
-     * @param userId the user id
-     * @param roleId the role id
-     * @return OperationResult indicating success or failure
-     */
-    OpResult<Void> addUserRole(long userId, int roleId);
+    public OpResult<Void> activateUser(long id) {
+        return findUserAndUpdateStatus(id, AccountStatus.ACTIVE);
+    }
 
-    /**
-     * Remove a role from a user
-     * @param userId the user id
-     * @param roleId the role id
-     * @return OperationResult indicating success or failure
-     */
-    OpResult<Void> removeUserRole(long userId, int roleId);
+    public OpResult<Void> deactivateUser(long id) {
+        return findUserAndUpdateStatus(id, AccountStatus.DEACTIVATED);
+    }
 
-    /**
-     * Add or remove user permission
-     * @param userId the user id
-     * @param permissionId the permission id
-     * @return OperationResult indicating success or failure
-     */
-    OpResult<Void> addUserPermission(long userId, int permissionId);
+    public OpResult<Void> suspendUser(long id) {
+        return findUserAndUpdateStatus(id, AccountStatus.SUSPENDED);
+    }
 
-    /**
-     * Remove a permission from a user
-     * @param userId the user id
-     * @param permissionId the permission id
-     * @return OperationResult indicating success or failure
-     */
-    OpResult<Void> removeUserPermission(long userId, int permissionId);
+    public OpResult<Void> deleteUser(long id) {
+        return findUserAndUpdateStatus(id, AccountStatus.DELETED);
+
+    }
+
+    public boolean isUserExist(long userId) {
+        return userRepository.existsById(userId);
+    }
+
+    private boolean checkPassword(String rawPassword, String hashedPassword) {
+        return PasswordUtil.matchPassword(rawPassword, hashedPassword);
+    }
+
+    private OpResult<Void> findUserAndUpdateStatus(long userId, AccountStatus status) {
+        return findUserAndUpdate(userId, user -> {
+            user.setAccountStatus(status);
+            user.setStatusChangedAt(Instant.now());
+            user.setStatusChangeReason("Status changed to " + status.name());
+        });
+    }
+
+    private OpResult<Void> findUserAndUpdate(long userId, Consumer<User> updater) {
+        return userRepository.findById(userId).map(user -> {
+            updater.accept(user);
+            userRepository.save(user);
+            return OpResult.success();
+        }).orElse(
+                OpResult.failure(ResponseCode.USER_NOT_FOUND, "User "+ userId + " does not exist.")
+        );
+    }
 }

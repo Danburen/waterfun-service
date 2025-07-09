@@ -11,7 +11,7 @@ import org.waterwood.waterfunservice.DTO.request.RegisterRequest;
 import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.entity.user.UserDatum;
 import org.waterwood.waterfunservice.repository.UserRepository;
-import org.waterwood.waterfunservice.utils.PasswordUtil;
+import org.waterwood.waterfunservice.utils.security.PasswordUtil;
 import org.waterwood.waterfunservice.utils.streamApi.AuthValidator;
 
 @Service

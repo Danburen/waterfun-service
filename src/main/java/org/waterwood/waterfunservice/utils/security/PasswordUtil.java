@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.utils;
+package org.waterwood.waterfunservice.utils.security;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
