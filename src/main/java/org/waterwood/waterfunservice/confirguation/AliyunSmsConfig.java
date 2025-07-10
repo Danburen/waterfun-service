@@ -9,10 +9,6 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AliyunSmsConfig {
-    @Value("${aliyun.sms.access-key-id}")
-    private static String accessKeyId;
-    @Value("${aliyun.sms.access-key-secret}")
-    private static String accessKeySecret;
     @Bean
     public static Client getClient() throws Exception {
         Config config = new Config()
