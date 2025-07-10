@@ -36,6 +36,7 @@ public class EncryptedKeyService {
         key.setKeyLength(keyLength != null ? keyLength : 256);
         key.setCreatedAt(Instant.now());
         key.setDescription(description);
+        key.setKeyStatus(KeyStatus.PENDING_ACTIVATION);
         encryptionKeyDataRepo.save(key);
         return OpResult.success(key);
     }
@@ -46,6 +47,7 @@ public class EncryptedKeyService {
             try{
                 int KeysToGenerateCount = (int)(MIN_KEY_COUNT-activeKeyCount);
                 List<EncryptionDataKey> newKeys = KeyEncryptionHelper.generateAndEncryptDEKs(KeysToGenerateCount);
+                newKeys.forEach(key-> key.setKeyStatus(KeyStatus.ACTIVE));
                 encryptionKeyDataRepo.saveAll(newKeys);
                 log.info("Generate {} new encrypted Keys",KeysToGenerateCount);
             }catch (Exception e){

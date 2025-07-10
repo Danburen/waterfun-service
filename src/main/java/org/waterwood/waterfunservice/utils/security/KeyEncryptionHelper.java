@@ -1,17 +1,26 @@
 package org.waterwood.waterfunservice.utils.security;
 
 import org.waterwood.waterfunservice.entity.security.EncryptionDataKey;
+import org.waterwood.waterfunservice.entity.security.KeyStatus;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 
+/**
+ * A Class to help data with symmetric key encryption and decryption
+ * must set up kek env in your system
+ * @since 1.0
+ * @author Danburen
+ * @version 1.0
+ */
 public class KeyEncryptionHelper {
     private static final String AES_GCM = "AES/GCM/NoPadding";
     private static final int GCM_IV_LENGTH = 12;
@@ -20,7 +29,7 @@ public class KeyEncryptionHelper {
     public static SecretKey getKEKFromEnv() throws Exception{
         String kekBase64 = System.getenv("WATERFUN_KEK");
         if (kekBase64 == null) {
-            throw new RuntimeException("KEK System Environment Variable is not set");
+            throw new RuntimeException("KEK System Environment Variable is not set.");
         }
         byte[] kekBytes = Base64.getDecoder().decode(kekBase64);
         return new SecretKeySpec(kekBytes, "AES");
@@ -34,19 +43,8 @@ public class KeyEncryptionHelper {
             KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
             keyGenerator.init(256); // Use 256-bit AES keys
             SecretKey dek = keyGenerator.generateKey();
-
-            // Random iv
-            byte[] iv = new byte[GCM_IV_LENGTH];
-            new SecureRandom().nextBytes(iv);
-            // Encrypt Data
-            Cipher cipher = Cipher.getInstance(AES_GCM);
-            GCMParameterSpec parameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
-            cipher.init(Cipher.ENCRYPT_MODE, dek, parameterSpec);
-            byte[] encryptedDek = cipher.doFinal(dek.getEncoded());
-            // Combined IV and Encrypted data
-            byte[] combined = new byte[iv.length + encryptedDek.length];
-            System.arraycopy(iv, 0, combined, 0, iv.length);
-            System.arraycopy(encryptedDek, 0, combined, iv.length, encryptedDek.length);
+            // Encrypt DEK with KEK
+            byte[] combined = encryptWithGCM(dek.getEncoded(),kek);
             // Create DEK record
             EncryptionDataKey dekKey = new EncryptionDataKey();
             String dekId = "dek-" + java.util.UUID.randomUUID();
@@ -55,6 +53,7 @@ public class KeyEncryptionHelper {
             dekKey.setAlgorithm("AES");
             dekKey.setKeyLength(256);
             dekKey.setCreatedAt(Instant.now());
+            dekKey.setKeyStatus(KeyStatus.PENDING_ACTIVATION);
             dekKey.setDescription("Auto Generated DEK #" + i + 1);
 
             dekList.add(dekKey);
@@ -66,19 +65,7 @@ public class KeyEncryptionHelper {
         SecretKey kek = getKEKFromEnv();
         // Decrypt Base64
         byte[] combined = Base64.getDecoder().decode(dekKey.getEncryptedKey());
-
-        // Divide into IV,Encrypted Data
-        byte[] iv = new byte[GCM_IV_LENGTH];
-        byte[] encryptedDek = new byte[combined.length - GCM_IV_LENGTH];
-        System.arraycopy(combined, 0, iv, 0, GCM_IV_LENGTH);
-        System.arraycopy(combined, GCM_IV_LENGTH, encryptedDek, 0, encryptedDek.length);
-
-        // Decrypt
-        Cipher cipher = Cipher.getInstance(AES_GCM);
-        GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
-        cipher.init(Cipher.DECRYPT_MODE, kek, spec);
-        byte[] decryptedDekBytes = cipher.doFinal(encryptedDek);
-
+        byte[] decryptedDekBytes = decryptWithGCM(combined,kek);
         return new SecretKeySpec(decryptedDekBytes, "AES");
     }
 
@@ -91,13 +78,8 @@ public class KeyEncryptionHelper {
      */
     public static String decryptField(String encryptedFieldBase64, EncryptionDataKey dekKey) throws Exception {
         SecretKey dek = decryptDEK(dekKey);
-        Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.DECRYPT_MODE, dek);
-
-        byte[] encryptedBytes = Base64.getDecoder().decode(encryptedFieldBase64);
-        byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
-
-        return new String(decryptedBytes);
+        byte[] combined = Base64.getDecoder().decode(encryptedFieldBase64);
+        return new String(decryptWithGCM(combined,dek), StandardCharsets.UTF_8);
     }
 
     /**
@@ -108,13 +90,48 @@ public class KeyEncryptionHelper {
      * @throws Exception Encryption errors
      */
     public static String encryptField(String field, EncryptionDataKey dekKey) throws Exception {
-        SecretKey dek = decryptDEK(dekKey);
-        Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.ENCRYPT_MODE, dek);
+        SecretKey dek =  decryptDEK(dekKey);
+        return Base64.getEncoder().encodeToString(encryptWithGCM(field.getBytes(),dek));
+    }
 
-        byte[] fieldBytes = field.getBytes();
-        byte[] encryptedBytes = cipher.doFinal(fieldBytes);
+    /**
+     * Use GCM_AES Type encryption cipher decrypt data
+     * @param combined the combined encrypted data with init vector
+     * @param key the encryption key for decryption
+     * @return combined encrypted data.
+     * @throws Exception exception
+     */
+    private static byte[] decryptWithGCM(byte[] combined, SecretKey key) throws Exception {
+        byte[] iv = new byte[GCM_IV_LENGTH];
+        byte[] encryptedData = new byte[combined.length - GCM_IV_LENGTH];
+        System.arraycopy(combined, 0, iv, 0, GCM_IV_LENGTH);
+        System.arraycopy(combined, GCM_IV_LENGTH, encryptedData, 0, encryptedData.length);
 
-        return Base64.getEncoder().encodeToString(encryptedBytes);
+        Cipher cipher = Cipher.getInstance(AES_GCM);
+        GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
+        cipher.init(Cipher.DECRYPT_MODE, key, spec);
+        return cipher.doFinal(encryptedData);
+    }
+
+    /**
+     * Use GCM_AES Type encryption cipher encrypt data to encrypted data
+     * @param original original of data
+     * @param key key for encryption
+     * @return combined encrypted data with init vector
+     * @throws Exception exception
+     */
+    private static byte[] encryptWithGCM(byte[] original, SecretKey key) throws Exception {
+        byte[] iv = new byte[GCM_IV_LENGTH];
+        new SecureRandom().nextBytes(iv);
+
+        Cipher cipher = Cipher.getInstance(AES_GCM);
+        GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
+        cipher.init(Cipher.ENCRYPT_MODE, key, spec);
+
+        byte[] encryptedData = cipher.doFinal(original);
+        byte[] combined = new byte[iv.length + encryptedData.length];
+        System.arraycopy(iv, 0, combined, 0, iv.length);
+        System.arraycopy(encryptedData, 0, combined, iv.length, encryptedData.length);
+        return combined;
     }
 }
