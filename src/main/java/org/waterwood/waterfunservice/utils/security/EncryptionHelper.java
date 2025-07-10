@@ -21,7 +21,7 @@ import java.util.List;
  * @author Danburen
  * @version 1.0
  */
-public class KeyEncryptionHelper {
+public class EncryptionHelper {
     private static final String AES_GCM = "AES/GCM/NoPadding";
     private static final int GCM_IV_LENGTH = 12;
     private static final int GCM_TAG_LENGTH = 128;

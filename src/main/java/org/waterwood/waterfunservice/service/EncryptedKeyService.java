@@ -9,7 +9,7 @@ import org.waterwood.waterfunservice.entity.security.EncryptionDataKey;
 import org.waterwood.waterfunservice.entity.security.KeyStatus;
 import org.waterwood.waterfunservice.repository.EncryptionKeyDataRepo;
 import org.waterwood.waterfunservice.service.dto.OpResult;
-import org.waterwood.waterfunservice.utils.security.KeyEncryptionHelper;
+import org.waterwood.waterfunservice.utils.security.EncryptionHelper;
 
 import java.time.Instant;
 import java.util.List;
@@ -47,7 +47,7 @@ public class EncryptedKeyService {
         if(activeKeyCount < MIN_KEY_COUNT){
             try{
                 int KeysToGenerateCount = (int)(MIN_KEY_COUNT-activeKeyCount);
-                List<EncryptionDataKey> newKeys = KeyEncryptionHelper.generateAndEncryptDEKs(KeysToGenerateCount);
+                List<EncryptionDataKey> newKeys = EncryptionHelper.generateAndEncryptDEKs(KeysToGenerateCount);
                 newKeys.forEach(key-> key.setKeyStatus(KeyStatus.ACTIVE));
                 encryptionKeyDataRepo.saveAll(newKeys);
                 log.info("Generate {} new encrypted Keys",KeysToGenerateCount);

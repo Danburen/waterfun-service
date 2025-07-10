@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
-import org.waterwood.waterfunservice.entity.security.EncryptionDataKey;
 import org.waterwood.waterfunservice.repository.UserDatumRepo;
 import org.waterwood.waterfunservice.service.EncryptedKeyService;
 import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
@@ -13,7 +12,7 @@ import org.waterwood.waterfunservice.DTO.request.RegisterRequest;
 import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.entity.user.UserDatum;
 import org.waterwood.waterfunservice.repository.UserRepository;
-import org.waterwood.waterfunservice.utils.security.KeyEncryptionHelper;
+import org.waterwood.waterfunservice.utils.security.EncryptionHelper;
 import org.waterwood.waterfunservice.utils.security.PasswordUtil;
 import org.waterwood.waterfunservice.utils.streamApi.AuthValidator;
 
@@ -56,8 +55,8 @@ public class RegisterService {
                                 userDatum.setId(userId);
                                 userDatum.setEncryptionKeyId(key.getId());
                                 try {
-                                    userDatum.setEmail(KeyEncryptionHelper.encryptField(request.getEmail(),key));
-                                    userDatum.setPhone(KeyEncryptionHelper.encryptField(request.getPhoneNumber(),key));
+                                    userDatum.setEmail(EncryptionHelper.encryptField(request.getEmail(),key));
+                                    userDatum.setPhone(EncryptionHelper.encryptField(request.getPhoneNumber(),key));
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
                                 }
