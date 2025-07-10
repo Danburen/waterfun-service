@@ -31,8 +31,6 @@ public class UserManagerService {
     @Autowired
     private UserRoleService userRoleService;
     @Autowired
-    private UserManagerService userManagerService;
-    @Autowired
     private RoleService roleService;
 
     public List<Role> getUserRoles(long userId){

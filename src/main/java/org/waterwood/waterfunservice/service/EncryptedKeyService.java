@@ -1,21 +1,33 @@
 package org.waterwood.waterfunservice.service;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.entity.security.EncryptionDataKey;
+import org.waterwood.waterfunservice.entity.security.KeyStatus;
 import org.waterwood.waterfunservice.repository.EncryptionKeyDataRepo;
 import org.waterwood.waterfunservice.service.dto.OpResult;
+import org.waterwood.waterfunservice.utils.security.KeyEncryptionHelper;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class EncryptedKeyService {
+    private static final int MIN_KEY_COUNT = 2;
     @Autowired
     EncryptionKeyDataRepo encryptionKeyDataRepo;
+
+    @PostConstruct
+    public void init(){
+        ensureMinKeysExists();
+    }
+
     private OpResult<EncryptionDataKey> createEncryptedKey(String encryptedKey, String algorithm, Integer keyLength, String description){
         EncryptionDataKey key = new EncryptionDataKey();
         key.setId(generateKeyId());
@@ -26,6 +38,20 @@ public class EncryptedKeyService {
         key.setDescription(description);
         encryptionKeyDataRepo.save(key);
         return OpResult.success(key);
+    }
+
+    private void ensureMinKeysExists(){
+        long activeKeyCount = encryptionKeyDataRepo.countEncryptionDataKeysByKeyStatus(KeyStatus.ACTIVE);
+        if(activeKeyCount < MIN_KEY_COUNT){
+            try{
+                int KeysToGenerateCount = (int)(MIN_KEY_COUNT-activeKeyCount);
+                List<EncryptionDataKey> newKeys = KeyEncryptionHelper.generateAndEncryptDEKs(KeysToGenerateCount);
+                encryptionKeyDataRepo.saveAll(newKeys);
+                log.info("Generate {} new encrypted Keys",KeysToGenerateCount);
+            }catch (Exception e){
+                log.error("Error occurred when generate Encrypted key. {}", String.valueOf(e));
+            }
+        }
     }
 
     public List<EncryptionDataKey> getAllKeys() {

@@ -1,9 +1,6 @@
 package org.waterwood.waterfunservice.entity.security;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
@@ -29,6 +26,11 @@ public class EncryptionDataKey {
     @ColumnDefault("256")
     @Column(name = "key_length", nullable = false)
     private Integer keyLength;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "key_status", nullable = false, length = 20)
+    @ColumnDefault("'PENDING_ACTIVATION'")
+    private KeyStatus keyStatus;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
