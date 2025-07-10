@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Service
@@ -58,6 +59,15 @@ public class EncryptedKeyService {
 
     public List<EncryptionDataKey> getAllKeys() {
         return encryptionKeyDataRepo.findAll();
+    }
+
+    public Optional<EncryptionDataKey> randomPickEncryptionKey(){
+        List<EncryptionDataKey> keys = getAllKeys();
+        if(keys.isEmpty()){
+            return Optional.empty();
+        }else{
+            return Optional.of(keys.get(ThreadLocalRandom.current().nextInt(keys.size())));
+        }
     }
 
     @Transactional
