@@ -19,7 +19,9 @@ public class AuthValidator {
      * @return a new instance of AuthValidator.
      */
     public static AuthValidator start(){
-        return new AuthValidator();
+        AuthValidator validator = new AuthValidator();
+        validator.result = ApiResponse.success();
+        return validator;
     }
 
     private ApiResponse<LoginServiceResponse> result;
@@ -32,7 +34,7 @@ public class AuthValidator {
      */
     public AuthValidator check(boolean condition, ResponseCode responseCode) {
         if(result == null){
-            result = ApiResponse.failure(responseCode);
+            result = ApiResponse.success();
         }else{
             if(! result.isSuccess()){
                 return this; // If already failed, skip further checks
@@ -93,7 +95,7 @@ public class AuthValidator {
         return check(ValidateUtil.validateUsername(username), ResponseCode.USERNAME_OR_PASSWORD_INCORRECT);
     }
 
-    public AuthValidator validateEmail(String email) {
+    public AuthValidator validateEmail(String email,boolean allowEmpty) {
         return check(ValidateUtil.validateEmail(email), ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID);
     }
 

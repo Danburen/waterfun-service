@@ -3,6 +3,7 @@ package org.waterwood.waterfunservice.DTO.common;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.http.ResponseEntity;
 
 /**
  * A class to process and store internal response to send to the next layout
@@ -41,7 +42,19 @@ public class ApiResponse<T>{
         return new ApiResponse<T>(responseCode.getCode(),responseCode.getMsg(),null);
     }
 
+    public static <T> ApiResponse<T> failure(int code,String msg){
+        return new ApiResponse<T>(code,msg,null);
+    }
+
     public boolean isSuccess(){
         return code == 200;
+    }
+
+    public static ResponseEntity<?> toResponseEntity(ApiResponse<?> apiResponse){
+        return ResponseEntity.status(ResponseCode.toHttpStatus(apiResponse.code)).body(apiResponse);
+    }
+
+    public ResponseEntity<?> toResponseEntity(){
+        return ResponseEntity.status(ResponseCode.toHttpStatus(code)).body(this);
     }
 }

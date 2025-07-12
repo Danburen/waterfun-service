@@ -5,7 +5,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
@@ -14,6 +16,7 @@ import org.waterwood.waterfunservice.DTO.converter.LoginResponseConverter;
 import org.waterwood.waterfunservice.DTO.request.*;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
 import org.waterwood.waterfunservice.DTO.response.LoginClientResponse;
+import org.waterwood.waterfunservice.service.TokenService;
 import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
 import org.waterwood.waterfunservice.service.dto.EmailCodeResult;
 import org.waterwood.waterfunservice.service.dto.OpResult;
@@ -24,6 +27,7 @@ import org.waterwood.waterfunservice.utils.CookieParser;
 import org.waterwood.waterfunservice.utils.ResponseUtil;
 
 import java.io.IOException;
+import java.time.Duration;
 
 @Slf4j
 @RestController
@@ -43,9 +47,9 @@ public class AuthController {
 
     @Autowired
     LoginResponseConverter loginResponseConverter;
-    /** redis + cookie(HttpOnly) save captcha
-     * Generate the captcha
-     */
+    @Autowired
+    private TokenService tokenService;
+
     @GetMapping("/captcha")
     public void getCaptcha(HttpServletResponse response) throws IOException{
         CaptchaService.LineCaptchaResult result = captchaService.generateCaptcha();
@@ -63,7 +67,20 @@ public class AuthController {
         result.captcha().write(response.getOutputStream());
     }
 
-    @PostMapping("/sendSmsCode")
+    @GetMapping("/csrf-token")
+    public ResponseEntity<?> getCsrfToken(HttpServletRequest request,HttpServletResponse response) {
+        CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+        ResponseCookie cookie = ResponseCookie.from("XSRF-TOKEN", token.getToken())
+                .httpOnly(false)
+                .secure(true)
+                .path("/")
+                .sameSite("Lax")
+                .maxAge(Duration.ofHours(1))
+                .build();
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/send-sms-code")
     public ResponseEntity<?> sendSmsCode(@RequestBody SendSmsCodeRequest requestBody, HttpServletRequest request, HttpServletResponse response) {
         OpResult<SmsCodeResult> smsCodeResult = smsCodeService.sendSmsCode(requestBody.getPhoneNumber());
         ResponseCode statusCode = smsCodeResult.getResponseCode();
@@ -86,7 +103,7 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/sendEmailCode")
+    @PostMapping("/send-email-code")
     public ResponseEntity<?> sendEmailCode(@RequestBody SendEmailCodeRequest requestBody, HttpServletRequest request, HttpServletResponse response) {
         OpResult<EmailCodeResult> emailCodeResult = emailCodeService.sendEmailCode(requestBody.getEmail(), EmailTemplateType.VERIFY_CODE);
         ResponseCode statusCode = emailCodeResult.getResponseCode();
@@ -103,21 +120,33 @@ public class AuthController {
 
     @PostMapping("/login/password")
     public ResponseEntity<?> loginByPassword(@RequestBody PwdLoginRequestBody body, HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
         return ResponseUtil.buildResponse(toClientResponse(
-                loginService.loginByPassword(body, CookieParser.getCookieValue(request.getCookies(), "CAPTCHA_KEY"))));
+                loginService.loginByPassword(body,
+                        CookieParser.getCookieValue(cookies, "CAPTCHA_KEY"),
+                        CookieParser.getCookieValue(cookies,"ACCESS_TOKEN"),
+                        CookieParser.getCookieValue(cookies,"REFRESH_TOKEN"))));
     }
 
     @PostMapping("/login/sms")
     public ResponseEntity<?> loginBySms(@RequestBody SmsLoginRequestBody body, HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
         return  ResponseUtil.buildResponse(toClientResponse(
-                loginService.loginBySmsCode(body, CookieParser.getCookieValue(request.getCookies(), "SMS_CODE_KEY"))
+                loginService.loginBySmsCode(body,
+                        CookieParser.getCookieValue(cookies, "SMS_CODE_KEY"),
+                        CookieParser.getCookieValue(cookies,"ACCESS_TOKEN"),
+                        CookieParser.getCookieValue(cookies,"REFRESH_TOKEN"))
         ));
     }
 
     @PostMapping("/login/email")
     public ResponseEntity<?> loginByEmail(@RequestBody EmailLoginRequestBody body, HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
         return  ResponseUtil.buildResponse(toClientResponse(
-                loginService.loginByEmail(body, CookieParser.getCookieValue(request.getCookies(), "EMAIL_CODE_KEY"))
+                loginService.loginByEmail(body,
+                        CookieParser.getCookieValue(cookies, "EMAIL_CODE_KEY"),
+                        CookieParser.getCookieValue(cookies,"ACCESS_TOKEN"),
+                        CookieParser.getCookieValue(cookies,"REFRESH_TOKEN"))
         ));
     }
 
@@ -125,6 +154,7 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody RegisterRequest requestBody, HttpServletRequest request, HttpServletResponse response) {
         ApiResponse<LoginServiceResponse> apiResponse = registerService.register(requestBody,
                 CookieParser.getCookieValue(request.getCookies(), "SMS_CODE_KEY"));
+        if(! apiResponse.isSuccess() || apiResponse.getData() == null) return apiResponse.toResponseEntity();
         ResponseUtil.setTokenCookie(response,apiResponse.getData());
         response.setContentType("application/json");
         response.setHeader("Pragma", "No-cache");

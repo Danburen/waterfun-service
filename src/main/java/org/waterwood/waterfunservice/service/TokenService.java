@@ -32,7 +32,7 @@ public class TokenService extends RedisServiceBase<String> {
 
     public TokenResult generateAccessToken(Long userId, List<Role> roles, List<Permission> extraPerms) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put(Claims.SUBJECT, userId);
+        claims.put(Claims.SUBJECT,String.valueOf(userId));
         claims.put("roles",roles.stream().map(role-> role.getName().toLowerCase()).toList());
         claims.put("perms",extraPerms.stream().map(role-> role.getName().toLowerCase()).toList());
         return rsaJwtUtil.generateToken(claims);

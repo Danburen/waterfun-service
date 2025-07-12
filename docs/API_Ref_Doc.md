@@ -50,8 +50,6 @@ WaterFun Service 是一个基于 Spring Boot 的后端服务项目，提供了�
       "password": "string",
       "captcha": "string",
       "loginType": "password",
-      "accessToken": "string",
-      "refreshToken": "string"
     }
     ```
 
@@ -71,7 +69,7 @@ WaterFun Service 是一个基于 Spring Boot 的后端服务项目，提供了�
   ```
   
 #### 1.2 用户获取 邮箱/手机验证码
-- **接口**: `/api/auth/sendEmailCode`
+- **接口**: `/api/auth/send-email-code`
 - **方法**: POST
 - **描述**: 发送邮箱验证码接口
 - **请求体**:

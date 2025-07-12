@@ -38,12 +38,14 @@ dependencies {
     implementation('com.aliyun:dysmsapi20170525:4.1.1') {
         exclude group: 'com.squareup.okhttp3', module: 'okhttp'
     }
+
     implementation 'cn.hutool:hutool-captcha:5.8.26'
     implementation 'com.resend:resend-java:3.1.0'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
     implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
     implementation 'io.jsonwebtoken:jjwt-impl:0.12.5'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.12.6'
     implementation 'org.jetbrains:annotations:26.0.2'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'

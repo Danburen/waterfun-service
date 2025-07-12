@@ -1,15 +1,16 @@
 package org.waterwood.waterfunservice.DTO.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.waterwood.waterfunservice.DTO.common.LoginType;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class SmsLoginRequestBody extends LoginRequestBody {
+public class SmsLoginRequestBody {
+    @JsonProperty("username")
     private String phoneNumber;
     private String smsCode;
-    public SmsLoginRequestBody() {
-        this.setLoginType(LoginType.SMS);
-    }
+    @JsonProperty("loginType")
+    private LoginType loginType;
 }
