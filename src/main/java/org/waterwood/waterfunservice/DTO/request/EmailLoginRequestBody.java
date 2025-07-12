@@ -1,15 +1,14 @@
 package org.waterwood.waterfunservice.DTO.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.waterwood.waterfunservice.DTO.common.LoginType;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class EmailLoginRequestBody extends LoginRequestBody {
+public class EmailLoginRequestBody {
+    @JsonProperty("username")
     private String email;
     private String emailCode;
-    public EmailLoginRequestBody() {
-        this.setLoginType(LoginType.EMAIL);
-    }
+    @JsonProperty("loginType")
+    private LoginType loginType;
 }

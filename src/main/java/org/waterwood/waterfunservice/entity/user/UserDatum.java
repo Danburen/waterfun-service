@@ -26,15 +26,9 @@ public class UserDatum {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "email")
-    private String email;
-
     @ColumnDefault("0")
     @Column(name = "email_verified")
     private Boolean emailVerified;
-
-    @Column(name = "phone", length = 20)
-    private String phone;
 
     @ColumnDefault("0")
     @Column(name = "phone_verified")
@@ -50,11 +44,27 @@ public class UserDatum {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    @Column(name = "email_display", length = 10)
+    private String emailDisplay;
+
+    @Column(name = "email_encrypted", length = 50)
+    private String emailEncrypted;
+
+    @Column(name = "email_hash", length = 65)
+    private String emailHash;
+
+    @Column(name = "phone_prefix", length = 3)
+    private String phonePrefix;
+
+    @Column(name = "phone_encrypted", length = 50)
+    private String phoneEncrypted;
+
+    @Column(name = "phone_hash", length = 65)
+    private String phoneHash;
+
     public UserDatum(User user, String email, String phone, String encryptionKeyId) {
         this.user = user;
         this.id = user.getId();
-        this.email = email;
-        this.phone = phone;
         this.encryptionKeyId = encryptionKeyId;
         this.emailVerified = false;
         this.phoneVerified = false;
