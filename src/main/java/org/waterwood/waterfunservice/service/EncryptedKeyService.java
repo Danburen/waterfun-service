@@ -12,9 +12,7 @@ import org.waterwood.waterfunservice.service.dto.OpResult;
 import org.waterwood.waterfunservice.utils.security.EncryptionHelper;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
@@ -68,6 +66,42 @@ public class EncryptedKeyService {
         }else{
             return Optional.of(keys.get(ThreadLocalRandom.current().nextInt(keys.size())));
         }
+    }
+
+    public Optional<EncryptionDataKey> pickEncryptionKey(int keyInd){
+        List<EncryptionDataKey> keys = getAllKeys();
+        if(keys.isEmpty()){
+            return Optional.empty();
+        }else{
+            return Optional.of(keys.stream()
+                    .filter(key -> key.getKeyStatus() == KeyStatus.ACTIVE)
+                    .toList()
+                    .get(keyInd));
+        }
+    }
+
+    public Optional<List<EncryptionDataKey>> pickEncryptionKeys(int... keysInd){
+        List<EncryptionDataKey> keys = getAllKeys();
+        if(keys.isEmpty()){
+            return Optional.empty();
+        }
+        List<EncryptionDataKey> activeKeys = keys.stream()
+                .filter(key -> key.getKeyStatus() == KeyStatus.ACTIVE)
+                .toList();
+
+        if (activeKeys.isEmpty()) {
+            return Optional.empty();
+        }
+        if (keysInd == null || keysInd.length == 0) {
+            return Optional.of(activeKeys);
+        }
+        List<EncryptionDataKey> selectedKeys = new ArrayList<>();
+        for (int index : keysInd) {
+            if (index >= 0 && index < activeKeys.size()) {
+                selectedKeys.add(activeKeys.get(index));
+            }
+        }
+        return selectedKeys.isEmpty() ? Optional.empty() : Optional.of(selectedKeys);
     }
 
     @Transactional

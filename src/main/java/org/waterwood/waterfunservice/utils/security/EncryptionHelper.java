@@ -61,12 +61,16 @@ public class EncryptionHelper {
         return dekList;
     }
 
-    public static SecretKey decryptDEK(EncryptionDataKey dekKey) throws Exception {
-        SecretKey kek = getKEKFromEnv();
-        // Decrypt Base64
-        byte[] combined = Base64.getDecoder().decode(dekKey.getEncryptedKey());
-        byte[] decryptedDekBytes = decryptWithGCM(combined,kek);
-        return new SecretKeySpec(decryptedDekBytes, "AES");
+    public static SecretKey decryptDEK(EncryptionDataKey dekKey) {
+        try {
+            SecretKey kek = getKEKFromEnv();
+            // Decrypt Base64
+            byte[] combined = Base64.getDecoder().decode(dekKey.getEncryptedKey());
+            byte[] decryptedDekBytes = decryptWithGCM(combined,kek);
+            return new SecretKeySpec(decryptedDekBytes, "AES");
+        }catch (Exception e){
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -74,9 +78,8 @@ public class EncryptionHelper {
      * @param encryptedFieldBase64 base64 encoded encrypted field
      * @param dekKey DEK key used to decrypt the field
      * @return decrypted field as a String
-     * @throws Exception Encryption errors
      */
-    public static String decryptField(String encryptedFieldBase64, EncryptionDataKey dekKey) throws Exception {
+    public static String decryptField(String encryptedFieldBase64, EncryptionDataKey dekKey){
         SecretKey dek = decryptDEK(dekKey);
         byte[] combined = Base64.getDecoder().decode(encryptedFieldBase64);
         return new String(decryptWithGCM(combined,dek), StandardCharsets.UTF_8);
@@ -87,9 +90,8 @@ public class EncryptionHelper {
      * @param field raw field to encrypt
      * @param dekKey DEK key used to encrypt the field
      * @return base64 encoded encrypted field
-     * @throws Exception Encryption errors
      */
-    public static String encryptField(String field, EncryptionDataKey dekKey) throws Exception {
+    public static String encryptField(String field, EncryptionDataKey dekKey) {
         SecretKey dek =  decryptDEK(dekKey);
         return Base64.getEncoder().encodeToString(encryptWithGCM(field.getBytes(),dek));
     }
@@ -99,18 +101,20 @@ public class EncryptionHelper {
      * @param combined the combined encrypted data with init vector
      * @param key the encryption key for decryption
      * @return combined encrypted data.
-     * @throws Exception exception
      */
-    private static byte[] decryptWithGCM(byte[] combined, SecretKey key) throws Exception {
+    private static byte[] decryptWithGCM(byte[] combined, SecretKey key) {
         byte[] iv = new byte[GCM_IV_LENGTH];
         byte[] encryptedData = new byte[combined.length - GCM_IV_LENGTH];
         System.arraycopy(combined, 0, iv, 0, GCM_IV_LENGTH);
         System.arraycopy(combined, GCM_IV_LENGTH, encryptedData, 0, encryptedData.length);
-
-        Cipher cipher = Cipher.getInstance(AES_GCM);
-        GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
-        cipher.init(Cipher.DECRYPT_MODE, key, spec);
-        return cipher.doFinal(encryptedData);
+        try {
+            Cipher cipher = Cipher.getInstance(AES_GCM);
+            GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
+            cipher.init(Cipher.DECRYPT_MODE, key, spec);
+            return cipher.doFinal(encryptedData);
+        }catch (Exception e){
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -118,20 +122,23 @@ public class EncryptionHelper {
      * @param original original of data
      * @param key key for encryption
      * @return combined encrypted data with init vector
-     * @throws Exception exception
      */
-    private static byte[] encryptWithGCM(byte[] original, SecretKey key) throws Exception {
+    private static byte[] encryptWithGCM(byte[] original, SecretKey key) {
         byte[] iv = new byte[GCM_IV_LENGTH];
         new SecureRandom().nextBytes(iv);
 
-        Cipher cipher = Cipher.getInstance(AES_GCM);
-        GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
-        cipher.init(Cipher.ENCRYPT_MODE, key, spec);
+        try {
+            Cipher cipher = Cipher.getInstance(AES_GCM);
+            GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
+            cipher.init(Cipher.ENCRYPT_MODE, key, spec);
 
-        byte[] encryptedData = cipher.doFinal(original);
-        byte[] combined = new byte[iv.length + encryptedData.length];
-        System.arraycopy(iv, 0, combined, 0, iv.length);
-        System.arraycopy(encryptedData, 0, combined, iv.length, encryptedData.length);
-        return combined;
+            byte[] encryptedData = cipher.doFinal(original);
+            byte[] combined = new byte[iv.length + encryptedData.length];
+            System.arraycopy(iv, 0, combined, 0, iv.length);
+            System.arraycopy(encryptedData, 0, combined, iv.length, encryptedData.length);
+            return combined;
+        }catch (Exception e){
+            throw new RuntimeException(e);
+        }
     }
 }
