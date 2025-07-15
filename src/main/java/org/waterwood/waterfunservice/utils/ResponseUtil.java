@@ -2,11 +2,9 @@ package org.waterwood.waterfunservice.utils;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
-import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
 import org.waterwood.waterfunservice.service.dto.OpResult;
 
 public class ResponseUtil {
@@ -20,25 +18,6 @@ public class ResponseUtil {
         response.setHeader("Pragma", "No-cache");
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response.setDateHeader("Expires", 0);
-    }
-
-    public static void setTokenCookie(HttpServletResponse response, LoginServiceResponse data) {
-        ResponseCookie accessCookie = ResponseCookie.from("ACCESS_TOKEN",data.getAccessToken())
-                .httpOnly(true)
-                .secure(true) // only https
-                .sameSite("Strict")
-                .maxAge(data.getExpiresIn())
-                .path("/")
-                .build();
-        response.addHeader("Set-Cookie",accessCookie.toString());
-        ResponseCookie refreshCookie = ResponseCookie.from("REFRESH_TOKEN", data.getRefreshToken())
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("Strict")
-                .maxAge(7 * 24 * 60 * 60)  // same with jwt refresh token
-                .path("/auth/refresh")
-                .build();
-        response.addHeader("Set-Cookie", refreshCookie.toString());
     }
 
     public static <T> ResponseEntity<ApiResponse<T>> buildResponse(ApiResponse<T> response) {
