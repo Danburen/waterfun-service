@@ -75,8 +75,8 @@ public class LoginService {
                                 userRepo.findById(userDatum.getId()).map(user-> authService.validateTokenAndBuildResult(AuthValidator.start()
                                                         .checkEmpty(requestBody.getEmail(),ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID)
                                                         .checkEmpty(requestBody.getEmailCode(), ResponseCode.EMAIL_CODE_EMPTY)
-//                                                        .check(authService.getEmailCodeService().verifyEmailCode(
-//                                                                requestBody.getEmail(),uuid,requestBody.getEmailCode()), ResponseCode.EMAIL_CODE_INCORRECT),
+                                                        .check(authService.getEmailCodeService().verifyEmailCode(
+                                                                requestBody.getEmail(),uuid,requestBody.getEmailCode()), ResponseCode.EMAIL_CODE_INCORRECT)
                                                 ,accessToken, refreshToken, user))
                                         .orElse(ResponseCode.USER_NOT_FOUND.toApiResponse()))
                         .orElseGet(ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID::toApiResponse))
