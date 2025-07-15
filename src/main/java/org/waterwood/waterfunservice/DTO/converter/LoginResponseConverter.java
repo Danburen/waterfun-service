@@ -11,7 +11,7 @@ public class LoginResponseConverter implements DtoConverter<LoginServiceResponse
         return new LoginClientResponse(
                 source.getUserId(),
                 source.getUsername(),
-                source.getExpiresIn()
+                source.getExpireIn()
         );
     }
 }

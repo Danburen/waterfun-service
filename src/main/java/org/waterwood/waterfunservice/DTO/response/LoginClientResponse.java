@@ -12,5 +12,5 @@ import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
 public class LoginClientResponse {
     private Long userId;
     private String username;
-    private Long expiresIn; // seconds
+    private Long expireIn;
 }

@@ -14,5 +14,5 @@ public class LoginServiceResponse {
     private String refreshToken;
     private Long userId;
     private String username;
-    private Long expiresIn; // seconds
+    private Long expireIn; // seconds
 }
