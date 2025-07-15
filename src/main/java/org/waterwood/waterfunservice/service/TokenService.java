@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.entity.permission.Permission;
 import org.waterwood.waterfunservice.entity.permission.Role;
 import org.waterwood.waterfunservice.repository.RedisRepository;
+import org.waterwood.waterfunservice.service.common.ExpiredRefreshTokenException;
+import org.waterwood.waterfunservice.service.common.InvalidRefreshTokenException;
 import org.waterwood.waterfunservice.service.common.TokenResult;
 import org.waterwood.waterfunservice.utils.security.RsaJwtUtil;
 
@@ -40,7 +42,7 @@ public class TokenService extends RedisServiceBase<String> {
 
     public String generateAndStoreRefreshToken(Long userId) {
         String refreshToken = generateNewUUID();
-        saveValue(buildRawRedisKey("ref",refreshToken), userId.toString(), Duration.ofSeconds(accessTokenExpire));
+        saveValue(buildRawRedisKey("ref",refreshToken), userId.toString(), Duration.ofSeconds(refreshTokenExpire));
         return refreshToken;
     }
 
@@ -48,20 +50,22 @@ public class TokenService extends RedisServiceBase<String> {
      * Validates the refresh token and returns the userId if valid.
      * <p><b>Refresh Token will be removed </b>after validate</p>
      * @param refreshToken the refresh token to validate
-     * @return Long of <b>UserID</b> if the token is valid, null otherwise
+     * @return Long of <b>UserID</b> if the token is valid
+     * @throws ExpiredRefreshTokenException the token is expired
+     * @throws  InvalidRefreshTokenException the token is invalid
      */
-    public @Nullable Long validateRefreshToken(String refreshToken) {
+    public long validateRefreshToken(String refreshToken) throws ExpiredRefreshTokenException, InvalidRefreshTokenException {
         String key = buildRawRedisKey("ref", refreshToken);
         String userId = getValue(key);
         if (userId == null) {
-            return null;
+            throw new InvalidRefreshTokenException();
         }
         Long expireTime = getExpire(key);
         if (expireTime == null || expireTime <= 0) {
-            return null;
+            throw new ExpiredRefreshTokenException();
         }
-//        removeValue(key);
-        return Long.valueOf(userId);
+        removeValue(key);
+        return Long.parseLong(userId);
     }
 
     public boolean validateAccessToken(String accessToken) {
@@ -74,9 +78,6 @@ public class TokenService extends RedisServiceBase<String> {
 
     public TokenResult refreshAccessToken(String refreshToken,List<Role> roles, List<Permission> extraPerms) {
         Long userId = validateRefreshToken(refreshToken);
-        if(userId == null) {
-            return null; // Refresh token is invalid
-        }
         return generateAccessToken(userId,roles,extraPerms);
     }
 

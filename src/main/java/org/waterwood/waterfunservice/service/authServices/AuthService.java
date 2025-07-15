@@ -2,10 +2,13 @@ package org.waterwood.waterfunservice.service.authServices;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.InvalidClaimException;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.repository.UserRepository;
 import org.waterwood.waterfunservice.service.UserManagerService;
 import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
@@ -16,6 +19,7 @@ import org.waterwood.waterfunservice.utils.streamApi.AuthValidator;
 
 @Service
 @Getter
+@Slf4j
 public class AuthService {
     @Autowired
     private CaptchaService captchaService;
@@ -27,6 +31,8 @@ public class AuthService {
     private TokenService tokenService;
     @Autowired
     private UserManagerService userManagerService;
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * Processing Token validation and build the login response.
@@ -55,23 +61,28 @@ public class AuthService {
                     userManagerService.getUserPermissions(userId));
             String newRefreshToken = tokenService.generateAndStoreRefreshToken(user.getId());
             return ApiResponse.success(LoginServiceResponse.builder()
+                    .username(user.getUsername())
+                    .userId(user.getId())
                     .accessToken(newAccessToken.token())
                     .refreshToken(newRefreshToken)
-                    .expiresIn(newAccessToken.expireIn()).build());
+                    .expireIn(newAccessToken.expireIn()).build());
         }
 
-        if(accessToken != null){
+        if(accessToken != null && ! accessToken.isEmpty()) {
             // validate the content of the access token
             try{
                 Claims claims = tokenService.parseToken(accessToken);
                 return ApiResponse.success(LoginServiceResponse.builder()
-                        .expiresIn((claims.getExpiration().getTime() - System.currentTimeMillis())/1000)
+                        .expireIn((claims.getExpiration().getTime() - System.currentTimeMillis()) / 1000)
                         .username(user.getUsername())
                         .userId(user.getId()).build());
             }catch (Exception e){
                 if(e instanceof ExpiredJwtException) {
                     return ResponseCode.ACCESS_TOKEN_EXPIRED.toApiResponse();
-                } else {
+                } else if(e instanceof InvalidClaimException) {
+                    return ResponseCode.ACCESS_TOKEN_INVALID.toApiResponse();
+                }else{
+                    log.info("An internal server error occurred {}",e.getMessage());
                     return ResponseCode.INTERNAL_SERVER_ERROR.toApiResponse();
                 }
             }
@@ -89,5 +100,27 @@ public class AuthService {
                 && userManagerService.getUserPermissions(user.getId()).stream()
                 .map(role-> role.getName().toLowerCase())
                 .toList().equals(claims.get("perms"));
+    }
+
+    public ApiResponse<TokenResult> refreshAccessToken(String refreshToken) {
+        if(refreshToken == null || refreshToken.isEmpty()) return ResponseCode.REFRESH_TOKEN_MISSING.toApiResponse();
+        try{
+            long userId = tokenService.validateRefreshToken(refreshToken);
+            return userRepository.findById(userId).map(user->
+                    ApiResponse.success(tokenService.refreshAccessToken(
+                            refreshToken,
+                            userManagerService.getUserRoles(userId),
+                            userManagerService.getUserPermissions(userId))))
+                    .orElse(ApiResponse.failure(ResponseCode.USER_NOT_FOUND));
+        }catch (Exception e){
+            if(e instanceof ExpiredJwtException) {
+                return ResponseCode.ACCESS_TOKEN_EXPIRED.toApiResponse();
+            }else if(e instanceof InvalidClaimException) {
+                return ResponseCode.ACCESS_TOKEN_INVALID.toApiResponse();
+            }else{
+                return ResponseCode.INTERNAL_SERVER_ERROR.toApiResponse();
+            }
+        }
+
     }
 }

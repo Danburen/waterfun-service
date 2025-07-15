@@ -15,8 +15,6 @@ import org.waterwood.waterfunservice.DTO.converter.ApiConvertFactory;
 import org.waterwood.waterfunservice.DTO.converter.LoginResponseConverter;
 import org.waterwood.waterfunservice.DTO.request.*;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
-import org.waterwood.waterfunservice.DTO.response.LoginClientResponse;
-import org.waterwood.waterfunservice.service.TokenService;
 import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
 import org.waterwood.waterfunservice.service.dto.EmailCodeResult;
 import org.waterwood.waterfunservice.service.dto.OpResult;
@@ -24,6 +22,7 @@ import org.waterwood.waterfunservice.service.dto.SmsCodeResult;
 import org.waterwood.waterfunservice.service.authServices.RegisterService;
 import org.waterwood.waterfunservice.service.authServices.*;
 import org.waterwood.waterfunservice.utils.CookieParser;
+import org.waterwood.waterfunservice.utils.CookieUtil;
 import org.waterwood.waterfunservice.utils.ResponseUtil;
 
 import java.io.IOException;
@@ -47,8 +46,16 @@ public class AuthController {
 
     @Autowired
     LoginResponseConverter loginResponseConverter;
+
     @Autowired
-    private TokenService tokenService;
+    private AuthService authService;
+
+    @PostMapping("refresh-access-token")
+    public ResponseEntity<?> refreshAccessToken(HttpServletRequest request,HttpServletResponse response) {
+        return authService.refreshAccessToken(
+                CookieParser.getCookieValue(request.getCookies(),"REFRESH_TOKEN"))
+                .toResponseEntity();
+    }
 
     @GetMapping("/captcha")
     public void getCaptcha(HttpServletResponse response) throws IOException{
@@ -119,59 +126,59 @@ public class AuthController {
     }
 
     @PostMapping("/login/password")
-    public ResponseEntity<?> loginByPassword(@RequestBody PwdLoginRequestBody body, HttpServletRequest request) {
+    public ResponseEntity<?> loginByPassword(@RequestBody PwdLoginRequestBody body, HttpServletRequest request,HttpServletResponse response) {
         Cookie[] cookies = request.getCookies();
-        return ResponseUtil.buildResponse(toClientResponse(
-                loginService.loginByPassword(body,
-                        CookieParser.getCookieValue(cookies, "CAPTCHA_KEY"),
-                        CookieParser.getCookieValue(cookies,"ACCESS_TOKEN"),
-                        CookieParser.getCookieValue(cookies,"REFRESH_TOKEN"))));
+        ApiResponse<LoginServiceResponse> apiResponse = loginService.loginByPassword(body,
+                CookieParser.getCookieValue(cookies, "CAPTCHA_KEY"),
+                CookieParser.getCookieValue(cookies,"ACCESS_TOKEN"),
+                CookieParser.getCookieValue(cookies,"REFRESH_TOKEN"));
+        return BuildLoginResponse(response, apiResponse);
     }
 
     @PostMapping("/login/sms")
-    public ResponseEntity<?> loginBySms(@RequestBody SmsLoginRequestBody body, HttpServletRequest request) {
+    public ResponseEntity<?> loginBySms(@RequestBody SmsLoginRequestBody body, HttpServletRequest request,HttpServletResponse response) {
         Cookie[] cookies = request.getCookies();
-        return  ResponseUtil.buildResponse(toClientResponse(
-                loginService.loginBySmsCode(body,
-                        CookieParser.getCookieValue(cookies, "SMS_CODE_KEY"),
-                        CookieParser.getCookieValue(cookies,"ACCESS_TOKEN"),
-                        CookieParser.getCookieValue(cookies,"REFRESH_TOKEN"))
-        ));
+        ApiResponse<LoginServiceResponse> apiResponse = loginService.loginBySmsCode(body,
+                CookieParser.getCookieValue(cookies, "SMS_CODE_KEY"),
+                CookieParser.getCookieValue(cookies,"ACCESS_TOKEN"),
+                CookieParser.getCookieValue(cookies,"REFRESH_TOKEN"));
+        return BuildLoginResponse(response, apiResponse);
     }
 
     @PostMapping("/login/email")
-    public ResponseEntity<?> loginByEmail(@RequestBody EmailLoginRequestBody body, HttpServletRequest request) {
+    public ResponseEntity<?> loginByEmail(@RequestBody EmailLoginRequestBody body, HttpServletRequest request,HttpServletResponse response) {
         Cookie[] cookies = request.getCookies();
-        return  ResponseUtil.buildResponse(toClientResponse(
-                loginService.loginByEmail(body,
-                        CookieParser.getCookieValue(cookies, "EMAIL_CODE_KEY"),
-                        CookieParser.getCookieValue(cookies,"ACCESS_TOKEN"),
-                        CookieParser.getCookieValue(cookies,"REFRESH_TOKEN"))
-        ));
+        ApiResponse<LoginServiceResponse> apiResponse = loginService.loginByEmail(body,
+                CookieParser.getCookieValue(cookies, "EMAIL_CODE_KEY"),
+                CookieParser.getCookieValue(cookies,"ACCESS_TOKEN"),
+                CookieParser.getCookieValue(cookies,"REFRESH_TOKEN"));
+        return BuildLoginResponse(response, apiResponse);
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest requestBody, HttpServletRequest request, HttpServletResponse response) {
         ApiResponse<LoginServiceResponse> apiResponse = registerService.register(requestBody,
                 CookieParser.getCookieValue(request.getCookies(), "SMS_CODE_KEY"));
+        return BuildLoginResponse(response, apiResponse);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request,HttpServletResponse response) {
+        CookieUtil.clearTokenCookie(response);
+        return loginService.logout(request).toResponseEntity();
+    }
+
+
+    private ResponseEntity<?> BuildLoginResponse(HttpServletResponse response, ApiResponse<LoginServiceResponse> apiResponse) {
         if(! apiResponse.isSuccess() || apiResponse.getData() == null) return apiResponse.toResponseEntity();
-        ResponseUtil.setTokenCookie(response,apiResponse.getData());
+        CookieUtil.setTokenCookie(response,apiResponse.getData());
         response.setContentType("application/json");
         response.setHeader("Pragma", "No-cache");
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response.setHeader("X-Content-Type-Options", "nosniff");
         response.setHeader("X-Frame-Options", "DENY");
-        return ResponseUtil.buildResponse(toClientResponse(apiResponse));
-    }
-
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request,HttpServletResponse response) {
-        return loginService.logout(request).toResponseEntity();
-    }
-
-    private ApiResponse<LoginClientResponse> toClientResponse(ApiResponse<LoginServiceResponse> source){
-        return ApiConvertFactory.convert(
-                source,loginResponseConverter
-        );
+        return  ResponseUtil.buildResponse(ApiConvertFactory.convert(
+                apiResponse,loginResponseConverter
+        ));
     }
 }

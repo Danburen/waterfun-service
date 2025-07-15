@@ -19,7 +19,7 @@ public class RsaJwtUtil {
 
     private final PublicKey publicKey;
     private final PrivateKey privateKey;
-    private final Long expiration;
+    private final Long expiration; // millisecond
 
     public RsaJwtUtil(PublicKey publicKey, PrivateKey privateKey, @Value("${jwt.expiration}")Long expiration) {
         this.publicKey = publicKey;
