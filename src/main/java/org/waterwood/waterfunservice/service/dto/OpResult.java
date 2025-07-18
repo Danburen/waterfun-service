@@ -28,8 +28,8 @@ public class OpResult<T> {
                 .build();
     }
 
-    public static OpResult<Void> failure(ResponseCode responseCode){
-        return OpResult.<Void>builder()
+    public static <T> OpResult<T> failure(ResponseCode responseCode){
+        return OpResult.<T>builder()
                 .trySuccess(false)
                 .errorType(ErrorType.CLIENT)
                 .responseCode(responseCode)

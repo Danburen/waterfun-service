@@ -9,7 +9,7 @@ import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
  */
 @Data
 @AllArgsConstructor
-public class LoginClientResponse {
+public class LoginClientData {
     private Long userId;
     private String username;
     private Long expireIn;

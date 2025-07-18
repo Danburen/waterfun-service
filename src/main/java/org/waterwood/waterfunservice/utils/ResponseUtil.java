@@ -36,4 +36,19 @@ public class ResponseUtil {
                 new ApiResponse<>(httpStatus,opResult.getMessage(),opResult.getResultData())
         );
     }
+
+    public static String getContentType(String fileType){
+        return switch (fileType) {
+            case "html", "htm" -> "text/html; charset=UTF-8";
+            case "txt" -> "text/plain; charset=UTF-8";
+            case "json" -> "application/json; charset=UTF-8";
+            case "pdf" -> "application/pdf";
+            case "png" -> "image/png";
+            case "jpg", "jpeg" -> "image/jpeg";
+            case "gif" -> "image/gif";
+            case "css" -> "text/css; charset=UTF-8";
+            case "js" -> "application/javascript";
+            default -> "application/octet-stream";
+        };
+    }
 }

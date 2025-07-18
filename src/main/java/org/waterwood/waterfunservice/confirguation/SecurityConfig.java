@@ -48,9 +48,19 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable());
         return http.build();
     }
-
     @Bean
     @Order(2)
+    public SecurityFilterChain resourceFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/resource/**")
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .csrf(csrf -> csrf.disable());
+        return http.build();
+    }
+
+    @Bean
+    @Order(3)
     public SecurityFilterChain jwtFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors-> cors.configurationSource(corsConfigurationSource()))
@@ -62,7 +72,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(3)
+    @Order(4)
     public SecurityFilterChain redisTokenFilterChain(HttpSecurity http) throws Exception {
         http.securityMatcher("/api/admin/**")
                 .cors(cors-> cors.configurationSource(corsConfigurationSource()))
