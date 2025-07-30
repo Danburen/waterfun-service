@@ -38,12 +38,16 @@ public class RegisterService {
         boolean isEmailEmpty = request.getEmail() == null || request.getEmail().isEmpty();
         ApiResponse<LoginServiceResponse> result = AuthValidator.start()
                 .checkEmpty(request.getSmsCode(), ResponseCode.SMS_CODE_EMPTY)
+                .checkEmpty(request.getUsername(),ResponseCode.USERNAME_EMPTY_OR_INVALID)
+                .checkEmpty(request.getPhoneNumber(),ResponseCode.PHONE_NUMBER_EMPTY_OR_INVALID)
                 .check(isPasswordEmpty || ValidateUtil.validateBasicPassword(request.getPassword()),
-                        ResponseCode.PASSWORD_EMPTY)
+                        ResponseCode.PASSWORD_EMPTY_OR_INVALID)
                 .check( isEmailEmpty || ValidateUtil.validateEmail(request.getEmail()),
                         ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID)
-//                .check(authService.getSmsCodeService().verifySmsCode(
-//                        request.getPhoneNumber(),uuid,request.getSmsCode()), ResponseCode.SMS_CODE_INCORRECT)
+                .check(ValidateUtil.validateUsername(request.getUsername()),ResponseCode.USERNAME_EMPTY_OR_INVALID)
+                .check(ValidateUtil.validatePhone(request.getPhoneNumber()),ResponseCode.PHONE_NUMBER_EMPTY_OR_INVALID)
+                .check(authService.getSmsCodeService().verifySmsCode(
+                        request.getPhoneNumber(),uuid,request.getSmsCode()), ResponseCode.SMS_CODE_INCORRECT)
                 .buildResult();
         if(! result.isSuccess()) return result;
         return userRepo.findByUsername(request.getUsername()).map(

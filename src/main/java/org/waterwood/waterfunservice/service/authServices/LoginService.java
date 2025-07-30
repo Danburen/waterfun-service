@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
-import org.waterwood.waterfunservice.entity.security.EncryptionDataKey;
 import org.waterwood.waterfunservice.repository.UserDatumRepo;
 import org.waterwood.waterfunservice.service.EncryptedKeyService;
 import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
@@ -37,7 +36,7 @@ public class LoginService {
         return userRepo.findByUsername(requestBody.getUsername()).map(
                         user-> authService.validateTokenAndBuildResult(AuthValidator.start()
                                 .checkEmpty(requestBody.getUsername(),ResponseCode.USERNAME_EMPTY_OR_INVALID)
-                                .checkEmpty(requestBody.getPassword(), ResponseCode.PASSWORD_EMPTY)
+                                .checkEmpty(requestBody.getPassword(), ResponseCode.PASSWORD_EMPTY_OR_INVALID)
                                 .checkEmpty(requestBody.getCaptcha(), ResponseCode.CAPTCHA_EMPTY)
                                 .validateCode(captchaUUID, requestBody.getCaptcha(),authService.getCaptchaService(), ResponseCode.CAPTCHA_INCORRECT)
                                 .ifValidThen(() -> {
