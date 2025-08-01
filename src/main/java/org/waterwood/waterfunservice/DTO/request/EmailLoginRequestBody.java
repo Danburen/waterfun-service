@@ -9,6 +9,7 @@ public class EmailLoginRequestBody {
     @JsonProperty("username")
     private String email;
     private String emailCode;
+    private String deviceFp;
     @JsonProperty("loginType")
     private LoginType loginType;
 }

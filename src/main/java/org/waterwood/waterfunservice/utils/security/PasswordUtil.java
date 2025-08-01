@@ -47,4 +47,6 @@ public class PasswordUtil {
         int index = random.nextInt(charSet.length());
         list.add(charSet.charAt(index));
     }
+
+    
 }

@@ -11,6 +11,7 @@ public class SmsLoginRequestBody {
     @JsonProperty("username")
     private String phoneNumber;
     private String smsCode;
+    private String deviceFp;
     @JsonProperty("loginType")
     private LoginType loginType;
 }

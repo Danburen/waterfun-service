@@ -8,74 +8,58 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.repository.UserProfileRepo;
 import org.waterwood.waterfunservice.repository.UserRepository;
+import org.waterwood.waterfunservice.service.DeviceService;
 import org.waterwood.waterfunservice.service.UserManagerService;
-import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
+import org.waterwood.waterfunservice.service.common.TokenPair;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.service.TokenService;
 import org.waterwood.waterfunservice.service.common.TokenResult;
-import org.waterwood.waterfunservice.utils.streamApi.AuthValidator;
+import org.waterwood.waterfunservice.service.dto.RefreshTokenPayload;
 
 @Service
 @Getter
 @Slf4j
 public class AuthService {
-    @Autowired
-    private CaptchaService captchaService;
-    @Autowired
-    private SmsCodeService smsCodeService;
-    @Autowired
-    private EmailCodeService emailCodeService;
-    @Autowired
-    private TokenService tokenService;
-    @Autowired
-    private UserManagerService userManagerService;
-    @Autowired
-    private UserRepository userRepository;
+    private final CaptchaService captchaService;
+    private final SmsCodeService smsCodeService;
+    private final EmailCodeService emailCodeService;
+    private final TokenService tokenService;
+    private final UserManagerService userManagerService;
+    private final UserProfileRepo userProfileRepo;
+    private final DeviceService deviceService;
+    private final UserRepository userRepository;
 
-    /**
-     * Processing Token validation and build the login response.
-     * @param validator AuthValidator instance for pre-auth validation.
-     * @param accessToken Access Token
-     * @param refreshToken Refresh Token
-     * @param user User entity
-     * @return Login response instance containing the login result and tokens.
-     */
-    public ApiResponse<LoginServiceResponse> validateTokenAndBuildResult(AuthValidator validator, String accessToken, String refreshToken, User user) {
-        // If the Pre-auth validation is not successful, return the error response
-        ApiResponse<LoginServiceResponse> result = validator.buildResult();
-        if(! result.isSuccess()){
-            return result;
-        }
-        return validateTokens(accessToken, refreshToken, user);
+    public AuthService(CaptchaService cs, SmsCodeService smcs, EmailCodeService emc, TokenService ts, UserManagerService us, UserProfileRepo up, DeviceService ds, UserRepository ur) {
+        this.captchaService = cs;
+        this.smsCodeService = smcs;
+        this.emailCodeService = emc;
+        this.tokenService = ts;
+        this.userManagerService = us;
+        this.userProfileRepo = up;
+        this.deviceService = ds;
+        this.userRepository = ur;
     }
 
-    public ApiResponse<LoginServiceResponse> validateTokens(String accessToken, String refreshToken, User user) {
-        //First time login in
-        if(accessToken == null && refreshToken == null) {
-            long userId = user.getId();
-            TokenResult newAccessToken = tokenService.generateAccessToken(
-                    userId,
-                    userManagerService.getUserRoles(userId),
-                    userManagerService.getUserPermissions(userId));
-            String newRefreshToken = tokenService.generateAndStoreRefreshToken(user.getId());
-            return ApiResponse.success(LoginServiceResponse.builder()
-                    .username(user.getUsername())
-                    .userId(user.getId())
-                    .accessToken(newAccessToken.token())
-                    .refreshToken(newRefreshToken)
-                    .expireIn(newAccessToken.expireIn()).build());
-        }
+    public TokenPair createNewTokens(long userId,String deviceFingerprint) {
+        String deviceId = deviceService.generateAndStoreDeviceId(userId,deviceFingerprint);
+        TokenResult accessToken = tokenService.generateAndStoreAccessToken(userId,deviceId);
+        TokenResult refreshToken = tokenService.generateAndStoreRefreshToken(userId,deviceId);
+        return new TokenPair(
+                accessToken.accessToken(), accessToken.expire(),
+                refreshToken.accessToken(), refreshToken.expire());
+    }
 
+    @Deprecated
+    public ApiResponse<Long> validateAccessToken(String accessToken) {
         if(accessToken != null && ! accessToken.isEmpty()) {
-            // validate the content of the access token
+            // validate the content of the access accessToken
             try{
                 Claims claims = tokenService.parseToken(accessToken);
-                return ApiResponse.success(LoginServiceResponse.builder()
-                        .expireIn((claims.getExpiration().getTime() - System.currentTimeMillis()) / 1000)
-                        .username(user.getUsername())
-                        .userId(user.getId()).build());
+                tokenService.validateAccessToken(claims);
+                Long userId = Long.parseLong(claims.getSubject());
+                return ApiResponse.success(userId);
             }catch (Exception e){
                 if(e instanceof ExpiredJwtException) {
                     return ResponseCode.ACCESS_TOKEN_EXPIRED.toApiResponse();
@@ -90,37 +74,27 @@ public class AuthService {
         return ResponseCode.ACCESS_TOKEN_EXPIRED.toApiResponse();
     }
 
-    public boolean isTokenValid(String accessToken, User user) {
-        if (!tokenService.validateAccessToken(accessToken)) return false;
-        Claims claims = tokenService.parseToken(accessToken);
-        return String.valueOf(user.getId()).equals(claims.getSubject())
-                && userManagerService.getUserRoles(user.getId()).stream()
-                .map(role-> role.getName().toLowerCase())
-                .toList().equals(claims.get("roles"))
-                && userManagerService.getUserPermissions(user.getId()).stream()
-                .map(role-> role.getName().toLowerCase())
-                .toList().equals(claims.get("perms"));
-    }
-
-    public ApiResponse<TokenResult> refreshAccessToken(String refreshToken) {
+    /**
+     * Return the api response of refresh access accessToken operation.
+     * <p>for future extension or refactor , we temporarily use api response instead of OpResult</p>
+     * @param refreshToken refresh accessToken
+     * @return ApiResponse type Token result that contains accessToken and expirations.
+     *
+     */
+    public ApiResponse<TokenResult> refreshAccessToken(String refreshToken,String dfp) {
+        if(dfp == null || dfp.isEmpty()) return ResponseCode.DEVICE_FINGERPRINT_REQUIRED.toApiResponse();
         if(refreshToken == null || refreshToken.isEmpty()) return ResponseCode.REFRESH_TOKEN_MISSING.toApiResponse();
-        try{
-            long userId = tokenService.validateRefreshToken(refreshToken);
+        ApiResponse<RefreshTokenPayload> validRes = tokenService.validateRefreshToken(refreshToken,dfp);
+        if(validRes.isSuccess()){
+            RefreshTokenPayload payload = validRes.getData();
+            long userId = payload.userId();
+            String deviceId = payload.deviceId();
             return userRepository.findById(userId).map(user->
-                    ApiResponse.success(tokenService.refreshAccessToken(
-                            refreshToken,
-                            userManagerService.getUserRoles(userId),
-                            userManagerService.getUserPermissions(userId))))
+                            ApiResponse.success(tokenService.RegenerateRefreshToken(refreshToken,userId,deviceId)))
                     .orElse(ApiResponse.failure(ResponseCode.USER_NOT_FOUND));
-        }catch (Exception e){
-            if(e instanceof ExpiredJwtException) {
-                return ResponseCode.ACCESS_TOKEN_EXPIRED.toApiResponse();
-            }else if(e instanceof InvalidClaimException) {
-                return ResponseCode.ACCESS_TOKEN_INVALID.toApiResponse();
-            }else{
-                return ResponseCode.INTERNAL_SERVER_ERROR.toApiResponse();
-            }
+        }else{
+            return ApiResponse.failure(validRes.getResponseCode());
         }
-
     }
+
 }

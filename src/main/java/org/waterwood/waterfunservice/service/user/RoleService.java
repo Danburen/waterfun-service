@@ -5,8 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.waterwood.waterfunservice.DTO.common.ApiResponse;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.service.dto.OpResult;
 import org.waterwood.waterfunservice.entity.permission.Permission;
 import org.waterwood.waterfunservice.entity.permission.Role;
 import org.waterwood.waterfunservice.entity.permission.RolePermission;
@@ -16,7 +16,6 @@ import org.waterwood.waterfunservice.repository.RoleRepo;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 @Service
 public class RoleService {
@@ -26,39 +25,39 @@ public class RoleService {
     RolePermRepo rolePermRepo;
     /* Create */
     @Transactional
-    public OpResult<Void> addRole(String roleName) {
+    public ApiResponse<Void> addRole(String roleName) {
         if(isRoleExists(roleName)) {
-            return OpResult.failure(ResponseCode.ROLE_ALREADY_EXISTS, "Role already exists: " + roleName);
+            return ApiResponse.failure(ResponseCode.ROLE_ALREADY_EXISTS, "Role already exists: " + roleName);
         }
         Role role = new Role();
         role.setName(roleName);
-        return OpResult.success();
+        return ApiResponse.accept();
     }
 
     @Transactional
-    public OpResult<Void> addRole(String roleName, String description) {
+    public ApiResponse<Void> addRole(String roleName, String description) {
         if(isRoleExists(roleName)) {
-            return OpResult.failure(ResponseCode.ROLE_ALREADY_EXISTS, "Role already exists: " + roleName);
+            return ApiResponse.failure(ResponseCode.ROLE_ALREADY_EXISTS, "Role already exists: " + roleName);
         }
         Role role = new Role();
         role.setName(roleName);
         role.setDescription(description);
-        return OpResult.success();
+        return ApiResponse.accept();
     }
 
     @Transactional
-    public OpResult<Void> addRole(String roleName,String description,int parentId){
+    public ApiResponse<Void> addRole(String roleName,String description,int parentId){
         if(isRoleExists(roleName)) {
-            return OpResult.failure(ResponseCode.ROLE_ALREADY_EXISTS, "Role already exists: " + roleName);
+            return ApiResponse.failure(ResponseCode.ROLE_ALREADY_EXISTS, "Role already exists: " + roleName);
         }
         return roleRepo.findById(parentId).map(parentRole -> {
             Role role = new Role();
             role.setName(roleName);
             role.setDescription(description);
             role.setParent(parentRole);
-            return OpResult.success();
+            return ApiResponse.accept();
         }).orElse(
-                OpResult.failure(ResponseCode.ROLE_NOT_FOUND, "Parent role not found: " + parentId)
+                ApiResponse.failure(ResponseCode.ROLE_NOT_FOUND, "Parent role not found: " + parentId)
         );
     }
 
@@ -99,7 +98,7 @@ public class RoleService {
 
     /* Delete */
     @Transactional
-    public OpResult<Void> deleteRole(int roleId) {
+    public ApiResponse<Void> deleteRole(int roleId) {
         return ifRoleExistsDo(roleId, rc->{
             roleRepo.delete(rc);
         });
@@ -108,14 +107,14 @@ public class RoleService {
     /* Update */
 
     @Transactional
-    public OpResult<Void> updateRoleName(int roleId, String newRoleName) {
+    public ApiResponse<Void> updateRoleName(int roleId, String newRoleName) {
         return ifRoleExistsDo(roleId, role->{
             role.setName(newRoleName);
         });
     }
 
     @Transactional
-    public OpResult<Void> updateRoleDescription(int roleId, String newRoleDescription) {
+    public ApiResponse<Void> updateRoleDescription(int roleId, String newRoleDescription) {
         return ifRoleExistsDo(roleId, role->{
             role.setDescription(newRoleDescription);
             roleRepo.save(role);
@@ -123,28 +122,28 @@ public class RoleService {
     }
 
     @Transactional
-    public OpResult<Void> updateRoleParent(int roleId, int parentId) {
+    public ApiResponse<Void> updateRoleParent(int roleId, int parentId) {
         if(roleId == parentId) {
-            return OpResult.failure(ResponseCode.REDUNDANT_OPERATION,
+            return ApiResponse.failure(ResponseCode.REDUNDANT_OPERATION,
                     "Role cannot be its own parent: " + roleId);
         }
         return roleRepo.findById(parentId).map(parentRole->
                 roleRepo.findById(roleId).map(role -> {
                     role.setParent(parentRole);
-                    return OpResult.success();
-                }).orElse(OpResult.failure(ResponseCode.ROLE_NOT_FOUND, "Role not found: " + roleId))
-        ).orElse(OpResult.failure(ResponseCode.ROLE_NOT_FOUND, "Parent role not found: " + parentId));
+                    return ApiResponse.accept();
+                }).orElse(ApiResponse.failure(ResponseCode.ROLE_NOT_FOUND, "Role not found: " + roleId))
+        ).orElse(ApiResponse.failure(ResponseCode.ROLE_NOT_FOUND, "Parent role not found: " + parentId));
     }
 
     @Transactional
-    public OpResult<Void> ifRoleExistsDo(int roleId, Consumer<Role> roleConsumer) {
+    public ApiResponse<Void> ifRoleExistsDo(int roleId, Consumer<Role> roleConsumer) {
         return roleRepo.findById(roleId).map(
                 role -> {
                     roleConsumer.accept(role);
-                    return OpResult.success();
+                    return ApiResponse.accept();
                 }
         ).orElse(
-                OpResult.failure(ResponseCode.ROLE_NOT_FOUND, "Role not found: " + roleId)
+                ApiResponse.failure(ResponseCode.ROLE_NOT_FOUND, "Role not found: " + roleId)
         );
     }
 }

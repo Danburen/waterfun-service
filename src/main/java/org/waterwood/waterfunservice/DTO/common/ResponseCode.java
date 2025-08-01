@@ -2,6 +2,7 @@ package org.waterwood.waterfunservice.DTO.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
 
 import java.util.HashMap;
@@ -44,6 +45,7 @@ public enum ResponseCode {
     PERMISSION_ALREADY_EXISTS(40022, "PERMISSION_ALREADY_EXISTS"),
 
     REDUNDANT_OPERATION(40023, "REDUNDANT_OPERATION"),
+
     INVALID_PATH(40024, "INVALID_PATH"),
     REQUEST_NOT_IN_WHITELIST(40025, "REQUEST_NOT_IN_WHITELIST"),
     INVALID_CONTENT_TYPE(40026, "INVALID_CONTENT_TYPE"),
@@ -54,7 +56,8 @@ public enum ResponseCode {
     ACCESS_TOKEN_MISSING(40103, "ACCESS_TOKEN_MISSING"),
     REFRESH_TOKEN_EXPIRED(40104, "REFRESH_TOKEN_EXPIRED"),
     REFRESH_TOKEN_INVALID(40105, "REFRESH_TOKEN_INVALID"),
-    REFRESH_TOKEN_MISSING(40106, "REFRESH_TOKEN_MISSING"),;
+    REFRESH_TOKEN_MISSING(40106, "REFRESH_TOKEN_MISSING"),
+    DEVICE_FINGERPRINT_REQUIRED(40107, "DEVICE_FINGERPRINT_REQUIRED"),;
 
     private final int code;    // error code
     private final String msg; // error message
@@ -69,6 +72,10 @@ public enum ResponseCode {
         return new ApiResponse<>(this.getCode(),this.getMsg(),null);
     }
 
+    public <T> ApiResponse<T> toApiResponse(String msg){
+        return new ApiResponse<>(this.getCode(),msg,null);
+    }
+
     public <T> ApiResponse<T> toApiResponse(T data){
         return new ApiResponse<>(this.getCode(),this.getMsg(),data);
     }
@@ -79,5 +86,15 @@ public enum ResponseCode {
 
     public int getHttpStatus() {
         return toHttpStatus(this.code);
+    }
+
+    public @Nullable
+    static ResponseCode fromCode(int code) {
+        for (ResponseCode responseCode : ResponseCode.values()) {
+            if (responseCode.getCode() == code) {
+                return responseCode;
+            }
+        }
+        return null;
     }
 }

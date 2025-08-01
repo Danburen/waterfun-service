@@ -1,26 +1,38 @@
 package org.waterwood.waterfunservice.utils;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.http.ResponseCookie;
-import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
+import org.waterwood.waterfunservice.service.common.TokenPair;
+
+import java.util.Arrays;
 
 public class CookieUtil {
     private static final String COOKIE_SAME_SITE_CONFIG = "Strict";
     private static final boolean COOKIE_SECURE = false;
-    public static void setTokenCookie(HttpServletResponse response, LoginServiceResponse data) {
-        ResponseCookie accessCookie = ResponseCookie.from("ACCESS_TOKEN",data.getAccessToken())
+    public static void setTokenCookie(HttpServletResponse response, TokenPair tokenPair) {
+        //setAccessTokenCookie(response, tokenPair.accessToken(), tokenPair.accessExp()); // Cookie AccessToken
+        setRefreshTokenCookie(response, tokenPair.refreshToken(), (long) (7 * 24 * 60 * 60));
+    }
+
+    public static void setAccessTokenCookie(HttpServletResponse response, String accessToken, Long expireIn) {
+        ResponseCookie accessCookie = ResponseCookie.from("ACCESS_TOKEN",accessToken)
                 .httpOnly(true)
                 .secure(COOKIE_SECURE) // only https
                 .sameSite(COOKIE_SAME_SITE_CONFIG)
-                .maxAge(data.getExpireIn())
+                .maxAge(expireIn)
                 .path("/")
                 .build();
         response.addHeader("Set-Cookie",accessCookie.toString());
-        ResponseCookie refreshCookie = ResponseCookie.from("REFRESH_TOKEN", data.getRefreshToken())
+    }
+
+    public static void setRefreshTokenCookie(HttpServletResponse response, String refreshToken, Long expireIn) {
+        ResponseCookie refreshCookie = ResponseCookie.from("REFRESH_TOKEN",refreshToken)
                 .httpOnly(true)
                 .secure(COOKIE_SECURE)
                 .sameSite(COOKIE_SAME_SITE_CONFIG)
-                .maxAge(7 * 24 * 60 * 60)  // same with jwt refresh token
+                .maxAge(expireIn)  // same with jwt refresh accessToken
                 .path("/auth/refresh")
                 .build();
         response.addHeader("Set-Cookie", refreshCookie.toString());
@@ -45,5 +57,20 @@ public class CookieUtil {
 
         response.addHeader("Set-Cookie", accessCookie.toString());
         response.addHeader("Set-Cookie", refreshCookie.toString());
+    }
+
+    /**
+     * Get target cookie value by key from a cookies array.
+     * @param cookies cookies array
+     * @param key target cookie key
+     * @return the value of the target cookie, or null if not found
+     */
+    public @Nullable
+    static String getCookieValue(Cookie[] cookies, String key) {
+        return Arrays.stream(cookies)
+                .filter(c->key.equals(c.getName()))
+                .findFirst()
+                .map(Cookie::getValue)
+                .orElse(null);
     }
 }

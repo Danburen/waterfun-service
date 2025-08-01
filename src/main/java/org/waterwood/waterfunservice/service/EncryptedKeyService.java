@@ -3,31 +3,35 @@ package org.waterwood.waterfunservice.service;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.entity.security.EncryptionDataKey;
 import org.waterwood.waterfunservice.entity.security.KeyStatus;
 import org.waterwood.waterfunservice.repository.EncryptionKeyDataRepo;
-import org.waterwood.waterfunservice.service.dto.OpResult;
 import org.waterwood.waterfunservice.utils.security.EncryptionHelper;
 
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * A class to hold KEK & DEK encryption operations
+ */
 @Slf4j
 @Service
 public class EncryptedKeyService {
     private static final int MIN_KEY_COUNT = 2;
-    @Autowired
-    EncryptionKeyDataRepo encryptionKeyDataRepo;
+    private final EncryptionKeyDataRepo encryptionKeyDataRepo;
+
+    public EncryptedKeyService(EncryptionKeyDataRepo encryptionKeyDataRepo) {
+        this.encryptionKeyDataRepo = encryptionKeyDataRepo;
+    }
 
     @PostConstruct
     public void init(){
         ensureMinKeysExists();
     }
 
-    private OpResult<EncryptionDataKey> createEncryptedKey(String encryptedKey, String algorithm, Integer keyLength, String description){
+    private EncryptionDataKey createEncryptedKey(String encryptedKey, String algorithm, Integer keyLength, String description){
         EncryptionDataKey key = new EncryptionDataKey();
         key.setId(generateKeyId());
         key.setEncryptedKey(encryptedKey);
@@ -37,7 +41,7 @@ public class EncryptedKeyService {
         key.setDescription(description);
         key.setKeyStatus(KeyStatus.PENDING_ACTIVATION);
         encryptionKeyDataRepo.save(key);
-        return OpResult.success(key);
+        return key;
     }
 
     private void ensureMinKeysExists(){
@@ -117,8 +121,7 @@ public class EncryptedKeyService {
         return UUID.randomUUID().toString();
     }
 
-    private OpResult<Void> deleteEncryptedKey(String keyId){
+    private void deleteEncryptedKey(String keyId){
         encryptionKeyDataRepo.deleteById(keyId);
-        return OpResult.success();
     }
 }

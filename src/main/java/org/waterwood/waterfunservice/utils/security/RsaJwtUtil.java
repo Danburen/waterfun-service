@@ -3,7 +3,6 @@ package org.waterwood.waterfunservice.utils.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.waterwood.waterfunservice.service.common.TokenResult;
 
@@ -19,36 +18,31 @@ public class RsaJwtUtil {
 
     private final PublicKey publicKey;
     private final PrivateKey privateKey;
-    private final Long expiration; // millisecond
 
-    public RsaJwtUtil(PublicKey publicKey, PrivateKey privateKey, @Value("${jwt.expiration}")Long expiration) {
+    public RsaJwtUtil(PublicKey publicKey, PrivateKey privateKey) {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
-        this.expiration = expiration;
     }
 
     public TokenResult generateToken(Map<String,Object> claims, Duration dur){
-        claims.put(Claims.ISSUER,JWT_ISSUER);
         Date expDate = new Date(System.currentTimeMillis() + dur.toMillis());
 
         return new TokenResult(Jwts.builder()
-                .claims(claims)
-                .issuedAt(new Date())
-                .expiration(expDate)
+                .claims(claims) //sub
+                .issuer(JWT_ISSUER) //iss
+                .issuedAt(new Date()) //iat
+                .expiration(expDate)  //exp
+                //.id() //itj
                 .signWith(privateKey,Jwts.SIG.RS256)
                 .compact(), dur.toSeconds());
     }
 
-    public TokenResult generateToken(Map<String,Object> claims) {
-        return generateToken(claims, Duration.ofMillis(expiration));
-    }
-
     /**
-     * Parses the JWT token and returns the claims.
-     * This will validate the token signature and expiration first.
-     * @param JwToken the JWT token to parse
+     * Parses the JWT accessToken and returns the claims.
+     * This will validate the accessToken signature and expiration first.
+     * @param JwToken the JWT accessToken to parse
      * @return Claims Instance
-     * @throws JwtException if the token is invalid or expired
+     * @throws JwtException if the accessToken is invalid or expired
      */
     public Claims parseToken(String JwToken) throws JwtException {
         return Jwts.parser()
@@ -65,5 +59,9 @@ public class RsaJwtUtil {
         } catch (JwtException e) {
             return false;
         }
+    }
+
+    public String getIssuer() {
+        return JWT_ISSUER;
     }
 }

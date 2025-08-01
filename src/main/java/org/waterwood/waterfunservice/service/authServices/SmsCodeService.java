@@ -3,64 +3,52 @@ package org.waterwood.waterfunservice.service.authServices;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.DTO.common.ErrorType;
+import org.waterwood.waterfunservice.DTO.common.ApiResponse;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.service.dto.OpResult;
 import org.waterwood.waterfunservice.service.dto.SmsCodeResult;
-import org.waterwood.waterfunservice.repository.RedisRepository;
-import org.waterwood.waterfunservice.service.RedisServiceBase;
 import org.waterwood.waterfunservice.service.SmsService;
-import org.waterwood.waterfunservice.service.common.ServiceErrorCode;
+import org.waterwood.waterfunservice.service.RedisHelper;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.waterwood.waterfunservice.utils.ValidateUtil.validatePhone;
 
 @Getter
 @Service
-public class SmsCodeService extends RedisServiceBase<String> implements VerifyServiceBase {
-    private static final String redisKeyPrefix = "verify:sms-code";
-    @Value("${expiration.sms-code}")
+public class SmsCodeService implements VerifyServiceBase {
+    private final RedisHelper<String> redisHelper;
+    private static final String SMS_KEY_PREFIX = "verify:sms_code";
+
+    @Value("${expire.sms-code}")
     private Long expireDuration;
     @Value("${aliyun.sms.verify-code.template-name}")
     private String smsCodeTemplate;
     private final SmsService smsService;
 
-    protected SmsCodeService(RedisRepository<String> redisRepository, SmsService smsService) {
-        super(redisKeyPrefix, redisRepository);
+    protected SmsCodeService(RedisHelper<String> redisHelper, SmsService smsService) {
+        this.redisHelper = redisHelper;
         this.smsService = smsService;
+        redisHelper.setRedisKeyPrefix(SMS_KEY_PREFIX);
     }
 
-    public OpResult<SmsCodeResult> sendSmsCode(String phoneNumber) {
-        if (! validatePhone(phoneNumber)) {
-            return OpResult.<SmsCodeResult>builder()
-                    .errorType(ErrorType.CLIENT)
-                    .responseCode(ResponseCode.PHONE_NUMBER_EMPTY_OR_INVALID)
-                    .build();
-        }
-        if (smsService == null) {
-            return OpResult.<SmsCodeResult>builder()
-                    .errorType(ErrorType.SERVER)
-                    .serviceErrorCode(ServiceErrorCode.SMS_SERVICE_NOT_AVAILABLE)
-                    .build();
-        }
+    public ApiResponse<SmsCodeResult> sendSmsCode(String phoneNumber) {
+        if (! validatePhone(phoneNumber)) return ResponseCode.PHONE_NUMBER_EMPTY_OR_INVALID.toApiResponse();
         String code = generateVerifyCode();
-        String uuid = generateNewUUID();
+        String uuid = UUID.randomUUID().toString();
         SmsCodeResult result = smsService.sendSms(phoneNumber, smsCodeTemplate,
                 Map.of("code", code, "time", expireDuration));
         result.setKey(uuid);
-        if(result.isSendSuccess()){ saveValue(phoneNumber + "_" + uuid, code, Duration.ofMinutes(expireDuration)); }
-        return OpResult.<SmsCodeResult>builder()
-                .trySuccess(true)
-                .responseCode(result.isSendSuccess() ? ResponseCode.OK : ResponseCode.INTERNAL_SERVER_ERROR)
-                .resultData(result)
-                .build();
+        if(result.isSendSuccess()){
+            redisHelper.saveValue(redisHelper.buildRedisKey(phoneNumber,uuid),code, Duration.ofMinutes(expireDuration));
+        }
+        return result.isSendSuccess() ? ApiResponse.success(result) : ApiResponse.failure(result);
     }
 
     public boolean verifySmsCode(String phoneNumber,String uuid, String code) {
-        return validate(phoneNumber + "_" + uuid, code);
+        return redisHelper.validate(redisHelper.buildRedisKey(phoneNumber,uuid), code);
     }
 
     @Override

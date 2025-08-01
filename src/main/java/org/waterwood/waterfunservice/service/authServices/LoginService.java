@@ -1,8 +1,9 @@
 package org.waterwood.waterfunservice.service.authServices;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
 import org.waterwood.waterfunservice.repository.UserDatumRepo;
@@ -13,78 +14,98 @@ import org.waterwood.waterfunservice.DTO.request.PwdLoginRequestBody;
 import org.waterwood.waterfunservice.DTO.request.SmsLoginRequestBody;
 import org.waterwood.waterfunservice.repository.UserRepository;
 import org.waterwood.waterfunservice.service.TokenService;
-import org.waterwood.waterfunservice.utils.CookieParser;
+import org.waterwood.waterfunservice.service.dto.RefreshTokenPayload;
+import org.waterwood.waterfunservice.utils.CookieUtil;
 import org.waterwood.waterfunservice.utils.ValidateUtil;
 import org.waterwood.waterfunservice.utils.security.HashUtil;
 import org.waterwood.waterfunservice.utils.security.PartialEncryptionHelper;
-import org.waterwood.waterfunservice.utils.streamApi.AuthValidator;
 
+@Slf4j
 @Service
 public class LoginService {
-    @Autowired
-    UserRepository userRepo;
-    @Autowired
-    AuthService authService;
-    @Autowired
-    private TokenService tokenService;
-    @Autowired
-    private UserDatumRepo userDatumRepo;
-    @Autowired
-    private EncryptedKeyService encryptedKeyService;
+    private final UserRepository userRepo;
+    private final AuthService authService;
+    private final TokenService tokenService;
+    private final UserDatumRepo userDatumRepo;
+    private final EncryptedKeyService encryptedKeyService;
+    private final CaptchaService captchaService;
 
-    public ApiResponse<LoginServiceResponse> loginByPassword(PwdLoginRequestBody requestBody, String captchaUUID,String accessToken,String refreshToken) {
+    public LoginService(UserRepository ur,AuthService as,TokenService ts,CaptchaService cs,EncryptedKeyService edks,UserDatumRepo udr) {
+        this.userRepo = ur;
+        this.authService = as;
+        this.tokenService = ts;
+        this.captchaService = cs;
+        this.encryptedKeyService = edks;
+        this.userDatumRepo = udr;
+
+    }
+
+    public ApiResponse<LoginServiceResponse> verifyPasswordLogin(PwdLoginRequestBody requestBody, String captchaUUID) {
         return userRepo.findByUsername(requestBody.getUsername()).map(
-                        user-> authService.validateTokenAndBuildResult(AuthValidator.start()
+                        user-> AuthValidator.start()
                                 .checkEmpty(requestBody.getUsername(),ResponseCode.USERNAME_EMPTY_OR_INVALID)
                                 .checkEmpty(requestBody.getPassword(), ResponseCode.PASSWORD_EMPTY_OR_INVALID)
                                 .checkEmpty(requestBody.getCaptcha(), ResponseCode.CAPTCHA_EMPTY)
-                                .validateCode(captchaUUID, requestBody.getCaptcha(),authService.getCaptchaService(), ResponseCode.CAPTCHA_INCORRECT)
-                                .ifValidThen(() -> {
+                                .checkEmpty(requestBody.getDeviceFp(),ResponseCode.DEVICE_FINGERPRINT_REQUIRED)
+                                .check(captchaService.validateCaptcha(captchaUUID,requestBody.getCaptcha()), ResponseCode.CAPTCHA_INCORRECT)
+                                .then(() -> {
                                     if (!user.checkPassword(requestBody.getPassword())) {
                                         return ApiResponse.failure(ResponseCode.USERNAME_OR_PASSWORD_INCORRECT);
                                     }
-                                    return ApiResponse.success();
-                                }),accessToken, refreshToken, user))
-                .orElseGet(ResponseCode.USERNAME_OR_PASSWORD_INCORRECT::toApiResponse);
+                                    return ApiResponse.success(new LoginServiceResponse(user.getId()));
+                                }).buildResult())
+                .orElse(ApiResponse.failure(ResponseCode.INTERNAL_SERVER_ERROR));
     }
 
-    public  ApiResponse<LoginServiceResponse> loginBySmsCode(SmsLoginRequestBody requestBody, String uuid,String accessToken,String refreshToken) {
+    public  ApiResponse<LoginServiceResponse> verifySmsCodeLogin(SmsLoginRequestBody requestBody, String uuid) {
         String phone = requestBody.getPhoneNumber();
         String phonePrefix = PartialEncryptionHelper.getPhonePrefix(phone);
         if(!ValidateUtil.validatePhone(phone)) return ApiResponse.failure(ResponseCode.PHONE_NUMBER_EMPTY_OR_INVALID);
-        return encryptedKeyService.pickEncryptionKey(1).map(key->
-                userDatumRepo.findByPhonePrefixAndPhoneHash(phonePrefix, HashUtil.calculateHmac(phone,key.getEncryptedKey())).map(userDatum ->
-                                userRepo.findById(userDatum.getId()).map(user-> authService.validateTokenAndBuildResult(AuthValidator.start()
+        return encryptedKeyService.pickEncryptionKey(1).map(
+                key-> userDatumRepo.findByPhonePrefixAndPhoneHash(phonePrefix, HashUtil.calculateHmac(phone,key.getEncryptedKey())).map(
+                        userDatum -> userRepo.findById(userDatum.getId()).map(
+                                        user-> AuthValidator.start()
                                                 .checkEmpty(requestBody.getPhoneNumber(),ResponseCode.USERNAME_EMPTY_OR_INVALID)
                                                 .checkEmpty(requestBody.getSmsCode(), ResponseCode.SMS_CODE_EMPTY)
+                                                .checkEmpty(requestBody.getDeviceFp(),ResponseCode.DEVICE_FINGERPRINT_REQUIRED)
                                                 .check(authService.getSmsCodeService()
                                                         .verifySmsCode(phone, uuid, requestBody.getSmsCode()), ResponseCode.SMS_CODE_INCORRECT)
-                                        , accessToken, refreshToken, user))
+                                                .then(()-> ApiResponse.success(new LoginServiceResponse(user.getId())))
+                                                .buildResult())
                                 .orElse(ResponseCode.USER_NOT_FOUND.toApiResponse()))
                         .orElse(ApiResponse.failure(ResponseCode.INTERNAL_SERVER_ERROR)))
-                .orElseGet(ResponseCode.INTERNAL_SERVER_ERROR::toApiResponse);
+                .orElse(ApiResponse.failure(ResponseCode.INTERNAL_SERVER_ERROR));
     }
 
-    public  ApiResponse<LoginServiceResponse> loginByEmail(EmailLoginRequestBody requestBody, String uuid,String accessToken,String refreshToken) {
+    public  ApiResponse<LoginServiceResponse> verifyEmailLogin(EmailLoginRequestBody requestBody, String uuid) {
         String email = requestBody.getEmail();
         String emailDisplay = PartialEncryptionHelper.getEmailDisplay(email);
         if(!ValidateUtil.validateEmail(email)) return ApiResponse.failure(ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID);
-        return encryptedKeyService.pickEncryptionKey(1).map(key->
-                userDatumRepo.findByEmailDisplayAndEmailHash(emailDisplay,HashUtil.calculateHmac(email,key.getEncryptedKey())).map(userDatum ->
-                                userRepo.findById(userDatum.getId()).map(user-> authService.validateTokenAndBuildResult(AuthValidator.start()
-                                                        .checkEmpty(requestBody.getEmail(),ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID)
-                                                        .checkEmpty(requestBody.getEmailCode(), ResponseCode.EMAIL_CODE_EMPTY)
-                                                        .check(authService.getEmailCodeService().verifyEmailCode(
-                                                                requestBody.getEmail(),uuid,requestBody.getEmailCode()), ResponseCode.EMAIL_CODE_INCORRECT)
-                                                ,accessToken, refreshToken, user))
-                                        .orElse(ResponseCode.USER_NOT_FOUND.toApiResponse()))
+        return encryptedKeyService.pickEncryptionKey(1).map(
+                key-> userDatumRepo.findByEmailDisplayAndEmailHash(emailDisplay,HashUtil.calculateHmac(email,key.getEncryptedKey())).map(
+                        userDatum -> userRepo.findById(userDatum.getId()).map(
+                                user-> AuthValidator.start()
+                                        .checkEmpty(requestBody.getEmail(),ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID)
+                                        .checkEmpty(requestBody.getEmailCode(), ResponseCode.EMAIL_CODE_EMPTY)
+                                        .checkEmpty(requestBody.getDeviceFp(),ResponseCode.DEVICE_FINGERPRINT_REQUIRED)
+                                        .check(authService.getEmailCodeService().verifyEmailCode(
+                                                requestBody.getEmail(),uuid,requestBody.getEmailCode()), ResponseCode.EMAIL_CODE_INCORRECT)
+                                        .then(()-> ApiResponse.success(new LoginServiceResponse(user.getId())))
+                                        .buildResult()
+                                )
+                                .orElse(ResponseCode.USER_NOT_FOUND.toApiResponse()))
                         .orElseGet(ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID::toApiResponse))
-                .orElseGet(ResponseCode.INTERNAL_SERVER_ERROR::toApiResponse);
+                .orElse(ApiResponse.failure(ResponseCode.INTERNAL_SERVER_ERROR));
     }
 
-    public ResponseCode logout(HttpServletRequest request) {
-        String refreshToken = CookieParser.getCookieValue(request.getCookies(),"REFRESH_TOKEN");
-        tokenService.removeRefreshToken(refreshToken);
-        return ResponseCode.OK;
+    public ApiResponse<Void> logout(String dfp, String refreshToken) {
+        ApiResponse<RefreshTokenPayload> res = tokenService.validateRefreshToken(refreshToken,dfp);
+        if(res.isSuccess()){
+            tokenService.removeAccessToken(res.getData().userId(), res.getData().deviceId());
+            tokenService.removeRefreshToken(refreshToken);
+            return ApiResponse.success();
+        }else{
+            return ApiResponse.fail(res.getResponseCode());
+        }
     }
 }

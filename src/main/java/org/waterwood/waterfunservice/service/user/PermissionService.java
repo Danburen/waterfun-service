@@ -5,8 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.waterwood.waterfunservice.DTO.common.ApiResponse;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.service.dto.OpResult;
 import org.waterwood.waterfunservice.entity.permission.Permission;
 import org.waterwood.waterfunservice.entity.permission.PermissionType;
 import org.waterwood.waterfunservice.repository.PermissionRepo;
@@ -14,7 +14,6 @@ import org.waterwood.waterfunservice.repository.PermissionRepo;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 @Service
 public class PermissionService {
@@ -22,10 +21,8 @@ public class PermissionService {
     PermissionRepo permissionRepo;
     /* Create  */
     @Transactional
-    public OpResult<Void> addPermission(String code, String name, String description, PermissionType type, String resource) {
-        if (isPermissionExists(code)) {
-            return OpResult.failure("Permission "+ name +"("+ code +") already exists.");
-        }
+    public ApiResponse<Void> addPermission(String code, String name, String description, PermissionType type, String resource) {
+        if (isPermissionExists(code)) return ApiResponse.failure(ResponseCode.PERMISSION_ALREADY_EXISTS);
         Permission permission = new Permission();
         permission.setCode(code);
         permission.setName(name);
@@ -34,7 +31,7 @@ public class PermissionService {
         permission.setResource(resource);
 
         permissionRepo.save(permission);
-        return OpResult.success();
+        return ApiResponse.accept();
     }
 
     /* Read  */
@@ -66,55 +63,50 @@ public class PermissionService {
     /* Update */
 
     @Transactional
-    public OpResult<Void> updatePermCode(int permId,String code){
+    public ApiResponse<Void> updatePermCode(int permId,String code){
         if(isPermissionExists(code)){
-            return OpResult.failure("Permission "+ code +"("+ permId +") already exists.");
+            return ApiResponse.failure("Permission "+ code +"("+ permId +") already exists.");
         }
-        return ifPermExistsThen(permId,perm->perm.setCode(code));
+        return ifPermExists(permId, perm->perm.setCode(code));
     }
 
     @Transactional
-    public OpResult<Void> updatePermName(int permId,String name){
-        return ifPermExistsThen(permId,perm->perm.setName(name));
+    public ApiResponse<Void> updatePermName(int permId,String name){
+        return ifPermExists(permId, perm->perm.setName(name));
     }
 
     @Transactional
-    public OpResult<Void> updatePermDescription(int permId,String description){
-        return ifPermExistsThen(permId,perm->perm.setDescription(description));
+    public ApiResponse<Void> updatePermDescription(int permId,String description){
+        return ifPermExists(permId, perm->perm.setDescription(description));
     }
 
     @Transactional
-    public OpResult<Void> updatePermType(int permId,PermissionType type){
-        return ifPermExistsThen(permId,perm->perm.setType(type));
+    public ApiResponse<Void> updatePermType(int permId,PermissionType type){
+        return ifPermExists(permId, perm->perm.setType(type));
     }
 
     @Transactional
-    public OpResult<Void> updatePermResource(int permId,String resource){
-        return ifPermExistsThen(permId,perm->perm.setResource(resource));
+    public ApiResponse<Void> updatePermResource(int permId,String resource){
+        return ifPermExists(permId, perm->perm.setResource(resource));
     }
 
     /* Delete */
 
     @Transactional
-    public OpResult<Void> deletePermCode(int permId){
-        return ifPermExistsThen(permId,perm->permissionRepo.deleteById(permId));
+    public ApiResponse<Void> deletePermCode(int permId){
+        return ifPermExists(permId,
+                perm->permissionRepo.delete(perm));
     }
 
     @Transactional
-    public OpResult<Void> ifPermExistsThen(int permId, Consumer<Permission> permConsumer){
-        return permissionRepo.findById(permId).map(perm->{
-            permConsumer.accept(perm);
-            return OpResult.success();
-        }).orElse(OpResult.failure(ResponseCode.PERMISSION_NOT_FOUND,"Permission "+ permConsumer +" doesn't exists"));
-    }
-
-    @Transactional
-    public OpResult<Void> ifPermNotExistsThen(int permId, Supplier<OpResult<Void>> operation) {
-        if (permissionRepo.existsById(permId)) {
-            Permission perm = permissionRepo.findById(permId).orElseThrow();
-            return OpResult.failure(ResponseCode.PERMISSION_NOT_FOUND,
-                    "Permission " + perm.getName() +" ("+ perm.getId() + ") already exists");
-        }
-        return operation.get();
+    public ApiResponse<Void> ifPermExists(int permId, Consumer<Permission> action) {
+        return permissionRepo.findById(permId)
+                .map(perm -> {
+                    action.accept(perm);
+                    return ApiResponse.accept();
+                })
+                .orElse(ApiResponse.failure(
+                        ResponseCode.PERMISSION_NOT_FOUND,
+                        "Permission " + permId + " doesn't exist"));
     }
 }

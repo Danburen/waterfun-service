@@ -42,7 +42,7 @@ public class JwtKeyConfig {
         String filename = originalPemKeyContent.getFilename();
         String content = new String(originalPemKeyContent.getInputStream().readAllBytes());
         if(content.startsWith("-----BEGIN")){
-             return content.replaceAll("-----BEGIN (.*)-----", "")
+            return content.replaceAll("-----BEGIN (.*)-----", "")
                     .replaceAll("-----END (.*)-----", "")
                     .replaceAll("\\s+", "");
         }

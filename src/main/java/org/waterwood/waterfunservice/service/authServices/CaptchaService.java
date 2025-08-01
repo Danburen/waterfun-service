@@ -4,25 +4,26 @@ import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.LineCaptcha;
 import lombok.Getter;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.repository.RedisRepository;
-import org.waterwood.waterfunservice.service.RedisServiceBase;
+import org.waterwood.waterfunservice.service.RedisHelper;
 
 import java.time.Duration;
 
 @Service
 @Getter
-public class CaptchaService extends RedisServiceBase<String> implements VerifyServiceBase{
-    private static final String redisKeyPrefix = "verify:captcha";
+public class CaptchaService implements VerifyServiceBase{
+    private static final String REDIS_KEY_PREFIX = "verify:captcha";
+    private final RedisHelper<String> redisHelper;
 
-    protected CaptchaService(RedisRepository<String> redisRepository) {
-        super(redisKeyPrefix,redisRepository);
+    protected CaptchaService(RedisHelper<String> redisHelper) {
+        this.redisHelper = redisHelper;
+        redisHelper.setRedisKeyPrefix(REDIS_KEY_PREFIX);
     }
 
     public LineCaptchaResult generateCaptcha(){
         LineCaptcha lineCaptcha = generateVerifyCode();
-        String uuid = generateKey();
+        String uuid = redisHelper.generateKey();
         String code = lineCaptcha.getCode();
-        saveValue(uuid,code, Duration.ofMinutes(2));
+        redisHelper.saveValue(uuid,code, Duration.ofMinutes(2));
         return new LineCaptchaResult(uuid,lineCaptcha);
     }
 
@@ -30,6 +31,11 @@ public class CaptchaService extends RedisServiceBase<String> implements VerifySe
     public LineCaptcha generateVerifyCode() {
         return CaptchaUtil.createLineCaptcha(120, 30, 4, 10);
     }
+
+    public boolean validateCaptcha(String uuid, String code){
+        return redisHelper.validate(uuid,code);
+    }
+
 
     public record LineCaptchaResult(String uuid, LineCaptcha captcha){}
 }

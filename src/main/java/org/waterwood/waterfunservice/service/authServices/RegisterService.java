@@ -1,7 +1,6 @@
 package org.waterwood.waterfunservice.service.authServices;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
@@ -17,20 +16,21 @@ import org.waterwood.waterfunservice.entity.user.UserDatum;
 import org.waterwood.waterfunservice.repository.UserRepository;
 import org.waterwood.waterfunservice.utils.ValidateUtil;
 import org.waterwood.waterfunservice.utils.security.*;
-import org.waterwood.waterfunservice.utils.streamApi.AuthValidator;
 
 @Slf4j
 @Service
 public class RegisterService {
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
+    private final UserRepository userRepo;
+    private final UserDatumRepo userDatumRepo;
+    private final EncryptedKeyService encryptedKeyService;
 
-    @Autowired
-    private UserRepository userRepo;
-    @Autowired
-    private UserDatumRepo userDatumRepo;
-    @Autowired
-    private EncryptedKeyService encryptedKeyService;
+    public RegisterService(AuthService as,UserRepository ur,UserDatumRepo udr,EncryptedKeyService edks) {
+        this.authService = as;
+        this.userRepo = ur;
+        this.userDatumRepo = udr;
+        this.encryptedKeyService = edks;
+    }
 
     @Transactional
     public ApiResponse<LoginServiceResponse> register(RegisterRequest request, String uuid) {
@@ -86,7 +86,7 @@ public class RegisterService {
                                 userDatumRepo.save(userDatum);
                                 user.setAccountStatus(AccountStatus.ACTIVE);
                                 userRepo.save(user);
-                                return authService.validateTokens(null,null,user);
+                                return ApiResponse.success(new LoginServiceResponse(user.getId()));
                             }
                     ).orElse(ApiResponse.failure(ResponseCode.INTERNAL_SERVER_ERROR));
                 });

@@ -9,6 +9,7 @@ public class RegisterRequest {
     private String phoneNumber;
     private String username;
     private String smsCode;
+    private String deviceFp;
 
     private String password;
     private String email;

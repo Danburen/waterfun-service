@@ -3,15 +3,12 @@ package org.waterwood.waterfunservice.service.authServices;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.waterwood.waterfunservice.DTO.common.ApiResponse;
 import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
-import org.waterwood.waterfunservice.DTO.common.ErrorType;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.service.dto.EmailCodeResult;
-import org.waterwood.waterfunservice.service.dto.OpResult;
-import org.waterwood.waterfunservice.repository.RedisRepository;
 import org.waterwood.waterfunservice.service.EmailService;
-import org.waterwood.waterfunservice.service.RedisServiceBase;
-import org.waterwood.waterfunservice.service.common.ServiceErrorCode;
+import org.waterwood.waterfunservice.service.RedisHelper;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -22,34 +19,27 @@ import static org.waterwood.waterfunservice.utils.ValidateUtil.validateEmail;
 
 @Getter
 @Service
-public class EmailCodeService extends RedisServiceBase<String> implements VerifyServiceBase{
-    private static final String redisKeyPrefix = "verify:email-code";
-    @Value("${expiration.email-code}")
+public class EmailCodeService implements VerifyServiceBase{
+    private static final String REDIS_KEY_PREFIX = "verify:email-code";
+    private final RedisHelper<String> redisHelper;
+    @Value("${expire.email-code}")
     private Long expireDuration;
     @Value("${mail.support.email}")
     private String supportEmail;
     private final EmailService emailService;
 
-    protected EmailCodeService(RedisRepository<String> redisRepository, EmailService emailService) {
-        super(redisKeyPrefix, redisRepository);
+    protected EmailCodeService(RedisHelper<String> redisHelper, EmailService emailService) {
+        this.redisHelper = redisHelper;
         this.emailService = emailService;
+        redisHelper.setRedisKeyPrefix(REDIS_KEY_PREFIX);
     }
 
-    public OpResult<EmailCodeResult> sendEmailCode(String emailTo, EmailTemplateType type) {
+    public ApiResponse<EmailCodeResult> sendEmailCode(String emailTo, EmailTemplateType type) {
         if(! validateEmail(emailTo)) {
-            return OpResult.<EmailCodeResult>builder()
-                    .errorType(ErrorType.CLIENT)
-                    .responseCode(ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID)
-                    .build();
-        }
-        if(emailService == null) {
-            return OpResult.<EmailCodeResult>builder()
-                    .errorType(ErrorType.SERVER)
-                    .serviceErrorCode(ServiceErrorCode.EMAIL_SERVICE_NOT_AVAILABLE)
-                    .build();
+            return ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID.toApiResponse();
         }
         String code = generateVerifyCode();
-        String uuid = generateKey();
+        String uuid = redisHelper.generateKey();
 
         Map<String,Object> templateData = new HashMap<>();
         templateData.put("verificationCode",code);
@@ -58,17 +48,16 @@ public class EmailCodeService extends RedisServiceBase<String> implements Verify
 
         EmailCodeResult sendResult= emailService.sendHtmlEmail(emailTo, type, templateData);
         sendResult.setKey(uuid);
-
-        if (sendResult.isSendSuccess()){ saveValue(emailTo + "_" + uuid,code, Duration.ofMinutes(expireDuration)); }
-        return OpResult.<EmailCodeResult>builder()
-                .trySuccess(true)
-                .resultData(sendResult)
-                .responseCode(sendResult.isSendSuccess() ? ResponseCode.OK : ResponseCode.INTERNAL_SERVER_ERROR)
-                .build();
+        if (sendResult.isSendSuccess()){
+            redisHelper.saveValue(emailTo + "_" + uuid,code, Duration.ofMinutes(expireDuration));
+            return ApiResponse.success(sendResult);
+        }else{
+            return ApiResponse.failure(sendResult);
+        }
     }
 
     public boolean verifyEmailCode(String email,String uuid, String code) {
-        return validate(email + "_" + uuid, code);
+        return redisHelper.validate(email + "_" + uuid, code);
     }
 
     @Override

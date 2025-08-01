@@ -1,9 +1,9 @@
-package org.waterwood.waterfunservice.utils.streamApi;
+package org.waterwood.waterfunservice.service.authServices;
 
+import lombok.extern.slf4j.Slf4j;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
 import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
-import org.waterwood.waterfunservice.service.RedisServiceBase;
 import org.waterwood.waterfunservice.utils.ValidateUtil;
 
 import java.util.function.Supplier;
@@ -13,6 +13,7 @@ import java.util.function.Supplier;
  * <p>It provides a fluent interface for chaining validation checks and returning results.</p>
  * <p>Will construct a result where the first condition is not met</p>
  */
+@Slf4j
 public class AuthValidator {
     /**
      * Static method to start the validation process chain.
@@ -46,12 +47,13 @@ public class AuthValidator {
         return this;
     }
 
-    public AuthValidator ifValidThen(Supplier<ApiResponse<LoginServiceResponse>> supplier) {
+    public AuthValidator then(Supplier<ApiResponse<LoginServiceResponse>> supplier) {
         if(result != null && ! result.isSuccess()) {
             return this; // If already failed, skip further checks
         }
         ApiResponse<LoginServiceResponse> r = supplier.get();
-        if (! r.isSuccess()) {
+        log.info(r.getData().toString());
+        if (r.isSuccess()) {
             result = r;
         }
         return this;
@@ -64,17 +66,6 @@ public class AuthValidator {
      */
     public AuthValidator checkEmpty(String value, ResponseCode responseCode) {
         return check(value != null && !value.isEmpty(), responseCode);
-    }
-
-    /**
-     * Validates the provided code against the saved ID in Redis using the specified service.
-     * @param redisSavedID the ID under which the code is saved in Redis.
-     * @param code the code to validate.
-     * @param responseCode the error code to return if validation fails.
-     * @return current AuthValidator instance for method chaining.
-     */
-    public AuthValidator validateCode(String redisSavedID, String code, RedisServiceBase<String> storeService, ResponseCode responseCode) {
-        return check(storeService.validate(redisSavedID, code), responseCode);
     }
 
     /**
