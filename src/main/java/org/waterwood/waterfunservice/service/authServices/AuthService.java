@@ -5,7 +5,6 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.InvalidClaimException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
 import org.waterwood.waterfunservice.repository.UserProfileRepo;
@@ -47,14 +46,14 @@ public class AuthService {
         TokenResult accessToken = tokenService.generateAndStoreAccessToken(userId,deviceId);
         TokenResult refreshToken = tokenService.generateAndStoreRefreshToken(userId,deviceId);
         return new TokenPair(
-                accessToken.accessToken(), accessToken.expire(),
-                refreshToken.accessToken(), refreshToken.expire());
+                accessToken.tokenValue(), accessToken.expire(),
+                refreshToken.tokenValue(), refreshToken.expire());
     }
 
     @Deprecated
     public ApiResponse<Long> validateAccessToken(String accessToken) {
         if(accessToken != null && ! accessToken.isEmpty()) {
-            // validate the content of the access accessToken
+            // validate the content of the access tokenValue
             try{
                 Claims claims = tokenService.parseToken(accessToken);
                 tokenService.validateAccessToken(claims);
@@ -75,10 +74,10 @@ public class AuthService {
     }
 
     /**
-     * Return the api response of refresh access accessToken operation.
+     * Return the api response of refresh access tokenValue operation.
      * <p>for future extension or refactor , we temporarily use api response instead of OpResult</p>
-     * @param refreshToken refresh accessToken
-     * @return ApiResponse type Token result that contains accessToken and expirations.
+     * @param refreshToken refresh tokenValue
+     * @return ApiResponse type Token result that contains tokenValue and expirations.
      *
      */
     public ApiResponse<TokenResult> refreshAccessToken(String refreshToken,String dfp) {

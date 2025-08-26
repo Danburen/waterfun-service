@@ -12,7 +12,7 @@ public class CookieUtil {
     private static final String COOKIE_SAME_SITE_CONFIG = "Strict";
     private static final boolean COOKIE_SECURE = false;
     public static void setTokenCookie(HttpServletResponse response, TokenPair tokenPair) {
-        //setAccessTokenCookie(response, tokenPair.accessToken(), tokenPair.accessExp()); // Cookie AccessToken
+        //setAccessTokenCookie(response, tokenPair.tokenValue(), tokenPair.accessExp()); // Cookie AccessToken
         setRefreshTokenCookie(response, tokenPair.refreshToken(), (long) (7 * 24 * 60 * 60));
     }
 
@@ -32,30 +32,29 @@ public class CookieUtil {
                 .httpOnly(true)
                 .secure(COOKIE_SECURE)
                 .sameSite(COOKIE_SAME_SITE_CONFIG)
-                .maxAge(expireIn)  // same with jwt refresh accessToken
-                .path("/auth/refresh")
+                .maxAge(expireIn)  // same with jwt refresh tokenValue
+                .path("/api/auth")
                 .build();
         response.addHeader("Set-Cookie", refreshCookie.toString());
     }
 
-    public static void clearTokenCookie(HttpServletResponse response) {
-        ResponseCookie accessCookie = ResponseCookie.from("ACCESS_TOKEN", "")
-                .httpOnly(true)
-                .secure(COOKIE_SECURE)
-                .sameSite(COOKIE_SAME_SITE_CONFIG)
-                .maxAge(0)  // Instance expired
-                .path("/")
-                .build();
-
+    public static void cleanTokenCookie(HttpServletResponse response) {
+//        ResponseCookie accessCookie = ResponseCookie.from("ACCESS_TOKEN", "")
+//                .httpOnly(true)
+//                .secure(COOKIE_SECURE)
+//                .sameSite(COOKIE_SAME_SITE_CONFIG)
+//                .maxAge(0)  // Instance expired
+//                .path("/")
+//                .build();
+//        response.addHeader("Set-Cookie", accessCookie.toString());
         ResponseCookie refreshCookie = ResponseCookie.from("REFRESH_TOKEN", "")
                 .httpOnly(true)
                 .secure(COOKIE_SECURE)
                 .sameSite(COOKIE_SAME_SITE_CONFIG)
                 .maxAge(0)  // Instance expired
-                .path("/auth/refresh")
+                .path("/api/auth")
                 .build();
 
-        response.addHeader("Set-Cookie", accessCookie.toString());
         response.addHeader("Set-Cookie", refreshCookie.toString());
     }
 

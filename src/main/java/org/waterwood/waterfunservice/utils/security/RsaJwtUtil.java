@@ -38,11 +38,11 @@ public class RsaJwtUtil {
     }
 
     /**
-     * Parses the JWT accessToken and returns the claims.
-     * This will validate the accessToken signature and expiration first.
-     * @param JwToken the JWT accessToken to parse
+     * Parses the JWT tokenValue and returns the claims.
+     * This will validate the tokenValue signature and expiration first.
+     * @param JwToken the JWT tokenValue to parse
      * @return Claims Instance
-     * @throws JwtException if the accessToken is invalid or expired
+     * @throws JwtException if the tokenValue is invalid or expired
      */
     public Claims parseToken(String JwToken) throws JwtException {
         return Jwts.parser()

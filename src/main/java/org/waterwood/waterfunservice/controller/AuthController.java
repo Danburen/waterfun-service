@@ -53,7 +53,7 @@ public class AuthController {
                 dfp);
         TokenResult res = accessTokenRes.getData();
         if(res == null) return accessTokenRes.toResponseEntity();
-        return ApiResponse.success(new LoginClientData(res.accessToken(),res.expire())).toResponseEntity();
+        return ApiResponse.success(new LoginClientData(res.tokenValue(),res.expire())).toResponseEntity();
     }
 
     @GetMapping("/captcha")
@@ -142,10 +142,11 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestBody String dfp,HttpServletRequest request,HttpServletResponse response) {
-        CookieUtil.clearTokenCookie(response);
+    public ResponseEntity<?> logout(@RequestBody String deviceFp,HttpServletRequest request,HttpServletResponse response) {
         String refreshToken = CookieUtil.getCookieValue(request.getCookies(),"REFRESH_TOKEN");
-        return loginService.logout(dfp,refreshToken).toResponseEntity();
+        ApiResponse<Void> result = loginService.logout(refreshToken, deviceFp);
+        if(result.isSuccess()) CookieUtil.cleanTokenCookie(response);
+        return result.toResponseEntity();
     }
 
 

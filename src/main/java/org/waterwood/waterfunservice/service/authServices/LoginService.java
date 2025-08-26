@@ -1,9 +1,7 @@
 package org.waterwood.waterfunservice.service.authServices;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
 import org.waterwood.waterfunservice.repository.UserDatumRepo;
@@ -15,7 +13,6 @@ import org.waterwood.waterfunservice.DTO.request.SmsLoginRequestBody;
 import org.waterwood.waterfunservice.repository.UserRepository;
 import org.waterwood.waterfunservice.service.TokenService;
 import org.waterwood.waterfunservice.service.dto.RefreshTokenPayload;
-import org.waterwood.waterfunservice.utils.CookieUtil;
 import org.waterwood.waterfunservice.utils.ValidateUtil;
 import org.waterwood.waterfunservice.utils.security.HashUtil;
 import org.waterwood.waterfunservice.utils.security.PartialEncryptionHelper;
@@ -52,6 +49,7 @@ public class LoginService {
                                     if (!user.checkPassword(requestBody.getPassword())) {
                                         return ApiResponse.failure(ResponseCode.USERNAME_OR_PASSWORD_INCORRECT);
                                     }
+                                    log.info(new LoginServiceResponse(user.getId()).toString());
                                     return ApiResponse.success(new LoginServiceResponse(user.getId()));
                                 }).buildResult())
                 .orElse(ApiResponse.failure(ResponseCode.INTERNAL_SERVER_ERROR));
@@ -98,7 +96,7 @@ public class LoginService {
                 .orElse(ApiResponse.failure(ResponseCode.INTERNAL_SERVER_ERROR));
     }
 
-    public ApiResponse<Void> logout(String dfp, String refreshToken) {
+    public ApiResponse<Void> logout(String refreshToken, String dfp) {
         ApiResponse<RefreshTokenPayload> res = tokenService.validateRefreshToken(refreshToken,dfp);
         if(res.isSuccess()){
             tokenService.removeAccessToken(res.getData().userId(), res.getData().deviceId());

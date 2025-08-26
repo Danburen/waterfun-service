@@ -69,6 +69,7 @@ public class TokenService {
                 gson.toJson(Map.of("userId",userId,
                         "did",deviceId)),
                 Duration.ofSeconds(expireInSeconds));
+        log.info("Refresh token: {}", refreshToken);
         return new TokenResult(refreshToken,expireInSeconds);
     }
 
@@ -82,10 +83,10 @@ public class TokenService {
     }
 
     /**
-     * Validates the refresh accessToken and returns the userId if valid.
+     * Validates the refresh tokenValue and returns the userId if valid.
      * <p><b>Refresh Token will be removed </b>after validate</p>
-     * @param refreshToken the refresh accessToken to validate
-     * @return Long of <b>UserID</b> if the accessToken is valid
+     * @param refreshToken the refresh tokenValue to validate
+     * @return Long of <b>UserID</b> if the tokenValue is valid
      */
     public ApiResponse<RefreshTokenPayload> validateRefreshToken(String refreshToken, String dfp) {
         String key = redisHelper.buildRedisKey(REFRESH_TOKEN_KEY,refreshToken);
@@ -97,7 +98,7 @@ public class TokenService {
         if (expireTime == null || expireTime <= 0) {
             return ApiResponse.failure(ResponseCode.REFRESH_TOKEN_EXPIRED);
         }
-        long userId = (long) gson.fromJson(jsonRes, Map.class).get("userId");
+        long userId = Double.valueOf((double)gson.fromJson(jsonRes, Map.class).get("userId")).longValue();
         String originalDid = (String) gson.fromJson(jsonRes, Map.class).get("did");
         String did = deviceService.generateDeviceId(userId,dfp);
         if(! did.equals(originalDid)) { // Device Fingerprint changed
