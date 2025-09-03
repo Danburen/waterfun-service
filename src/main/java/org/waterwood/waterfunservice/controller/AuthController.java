@@ -118,6 +118,15 @@ public class AuthController {
         return BuildLoginResponse(response, apiResponse,body.getDeviceFp());
     }
 
+    @PostMapping("/admin/login/password")
+    public ResponseEntity<?> adminLoginByPassword(@RequestBody PwdLoginRequestBody body, HttpServletRequest request, HttpServletResponse response) {
+        Cookie[] cookies = request.getCookies();
+        ApiResponse<LoginServiceResponse> apiResponse = loginService.verifyPasswordLogin(body,
+                CookieUtil.getCookieValue(cookies, "CAPTCHA_KEY"));
+        log.info(apiResponse.getData().getUserId().toString());
+        return BuildLoginResponse(response, apiResponse,body.getDeviceFp());
+    }
+
     @PostMapping("/login/sms")
     public ResponseEntity<?> loginBySms(@RequestBody SmsLoginRequestBody body, HttpServletRequest request, HttpServletResponse response) {
         Cookie[] cookies = request.getCookies();
