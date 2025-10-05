@@ -1,8 +1,6 @@
 package org.waterwood.waterfunservice.service.authServices;
 
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.TestOnly;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
@@ -18,7 +16,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static org.waterwood.waterfunservice.utils.ValidateUtil.validatePhone;
 
-@Slf4j
 @Getter
 @Service
 public class SmsCodeService implements VerifyServiceBase {
@@ -46,7 +43,7 @@ public class SmsCodeService implements VerifyServiceBase {
         result.setKey(uuid);
         if(result.isSendSuccess()){
             redisHelper.saveValue(redisHelper.buildRedisKey(phoneNumber,uuid),code, Duration.ofMinutes(expireDuration));
-        };
+        }
         return result.isSendSuccess() ? ApiResponse.success(result) : ApiResponse.failure(result);
     }
 

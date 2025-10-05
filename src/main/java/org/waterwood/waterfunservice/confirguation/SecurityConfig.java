@@ -24,7 +24,7 @@ import java.time.Duration;
 import java.util.List;
 
 @Configuration
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity(debug=false)
 public class SecurityConfig {
     private final JwtConverter jwtConverter;
 
