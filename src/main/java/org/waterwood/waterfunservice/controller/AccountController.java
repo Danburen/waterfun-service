@@ -4,17 +4,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.service.AccountService;
-import org.waterwood.waterfunservice.service.TokenService;
+import org.waterwood.waterfunservice.service.Impl.RSAJwtTokenService;
 import org.waterwood.waterfunservice.service.authServices.AuthService;
-import org.waterwood.waterfunservice.utils.CookieUtil;
 
 @Slf4j
 @Controller
@@ -22,9 +18,9 @@ import org.waterwood.waterfunservice.utils.CookieUtil;
 public class AccountController {
     private final AuthService authService;
     private final AccountService accountService;
-    private final TokenService tokenService;
+    private final RSAJwtTokenService tokenService;
 
-    public AccountController(AuthService authService, AccountService accountService, TokenService tokenService) {
+    public AccountController(AuthService authService, AccountService accountService, RSAJwtTokenService tokenService) {
         this.authService = authService;
         this.accountService = accountService;
         this.tokenService = tokenService;

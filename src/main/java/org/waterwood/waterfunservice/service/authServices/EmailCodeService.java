@@ -7,7 +7,7 @@ import org.waterwood.waterfunservice.DTO.common.ApiResponse;
 import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.service.dto.EmailCodeResult;
-import org.waterwood.waterfunservice.service.EmailService;
+import org.waterwood.waterfunservice.service.Impl.ResendEmailService;
 import org.waterwood.waterfunservice.service.RedisHelper;
 
 import java.time.Duration;
@@ -26,9 +26,9 @@ public class EmailCodeService implements VerifyServiceBase{
     private Long expireDuration;
     @Value("${mail.support.email}")
     private String supportEmail;
-    private final EmailService emailService;
+    private final ResendEmailService emailService;
 
-    protected EmailCodeService(RedisHelper<String> redisHelper, EmailService emailService) {
+    protected EmailCodeService(RedisHelper<String> redisHelper, ResendEmailService emailService) {
         this.redisHelper = redisHelper;
         this.emailService = emailService;
         redisHelper.setRedisKeyPrefix(REDIS_KEY_PREFIX);

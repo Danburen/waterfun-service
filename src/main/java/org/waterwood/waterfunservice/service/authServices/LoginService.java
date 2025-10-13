@@ -11,7 +11,7 @@ import org.waterwood.waterfunservice.DTO.request.EmailLoginRequestBody;
 import org.waterwood.waterfunservice.DTO.request.PwdLoginRequestBody;
 import org.waterwood.waterfunservice.DTO.request.SmsLoginRequestBody;
 import org.waterwood.waterfunservice.repository.UserRepository;
-import org.waterwood.waterfunservice.service.TokenService;
+import org.waterwood.waterfunservice.service.Impl.RSAJwtTokenService;
 import org.waterwood.waterfunservice.service.dto.RefreshTokenPayload;
 import org.waterwood.waterfunservice.utils.ValidateUtil;
 import org.waterwood.waterfunservice.utils.security.HashUtil;
@@ -22,12 +22,12 @@ import org.waterwood.waterfunservice.utils.security.PartialEncryptionHelper;
 public class LoginService {
     private final UserRepository userRepo;
     private final AuthService authService;
-    private final TokenService tokenService;
+    private final RSAJwtTokenService tokenService;
     private final UserDatumRepo userDatumRepo;
     private final EncryptedKeyService encryptedKeyService;
     private final CaptchaService captchaService;
 
-    public LoginService(UserRepository ur,AuthService as,TokenService ts,CaptchaService cs,EncryptedKeyService edks,UserDatumRepo udr) {
+    public LoginService(UserRepository ur, AuthService as, RSAJwtTokenService ts, CaptchaService cs, EncryptedKeyService edks, UserDatumRepo udr) {
         this.userRepo = ur;
         this.authService = as;
         this.tokenService = ts;

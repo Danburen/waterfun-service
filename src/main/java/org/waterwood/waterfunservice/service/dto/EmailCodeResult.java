@@ -9,9 +9,20 @@ import org.jetbrains.annotations.Nullable;
 @Setter
 public class EmailCodeResult {
     private boolean sendSuccess;
-    private final String email;
+    private @Nullable final String email;
     private @Nullable String message;
     private @Nullable String responseRaw;
 
-    protected String key;
+    private String key;
+    public static EmailCodeResult success() {
+        return new EmailCodeResult(true,null,null,null,null);
+    }
+
+    public static EmailCodeResult success(String target) {
+        return new EmailCodeResult(true,target,null,null,null);
+    }
+
+    public static EmailCodeResult fail(){
+        return new EmailCodeResult(false,null,null,null,null);
+    }
 }

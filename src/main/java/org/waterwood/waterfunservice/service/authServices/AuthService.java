@@ -13,7 +13,7 @@ import org.waterwood.waterfunservice.service.DeviceService;
 import org.waterwood.waterfunservice.service.UserManagerService;
 import org.waterwood.waterfunservice.service.common.TokenPair;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.service.TokenService;
+import org.waterwood.waterfunservice.service.Impl.RSAJwtTokenService;
 import org.waterwood.waterfunservice.service.common.TokenResult;
 import org.waterwood.waterfunservice.service.dto.RefreshTokenPayload;
 
@@ -24,13 +24,13 @@ public class AuthService {
     private final CaptchaService captchaService;
     private final SmsCodeService smsCodeService;
     private final EmailCodeService emailCodeService;
-    private final TokenService tokenService;
+    private final RSAJwtTokenService tokenService;
     private final UserManagerService userManagerService;
     private final UserProfileRepo userProfileRepo;
     private final DeviceService deviceService;
     private final UserRepository userRepository;
 
-    public AuthService(CaptchaService cs, SmsCodeService smcs, EmailCodeService emc, TokenService ts, UserManagerService us, UserProfileRepo up, DeviceService ds, UserRepository ur) {
+    public AuthService(CaptchaService cs, SmsCodeService smcs, EmailCodeService emc, RSAJwtTokenService ts, UserManagerService us, UserProfileRepo up, DeviceService ds, UserRepository ur) {
         this.captchaService = cs;
         this.smsCodeService = smcs;
         this.emailCodeService = emc;

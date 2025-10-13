@@ -5,14 +5,14 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
-import org.waterwood.waterfunservice.service.TokenService;
+import org.waterwood.waterfunservice.service.Impl.RSAJwtTokenService;
 
 @Component
 public class JwtConverter implements Converter<String, Jwt> {
     private final RsaJwtUtil rsaJwtUtil;
-    private final TokenService tokenService;
+    private final RSAJwtTokenService tokenService;
 
-    public JwtConverter(RsaJwtUtil rsaJwtUtil, TokenService tokenService) {
+    public JwtConverter(RsaJwtUtil rsaJwtUtil, RSAJwtTokenService tokenService) {
         this.rsaJwtUtil = rsaJwtUtil;
         this.tokenService = tokenService;
     }
