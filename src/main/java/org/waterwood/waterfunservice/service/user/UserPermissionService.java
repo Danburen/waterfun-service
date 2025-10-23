@@ -3,7 +3,7 @@ package org.waterwood.waterfunservice.service.user;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.entity.permission.Permission;
 import org.waterwood.waterfunservice.entity.permission.UserPermission;
@@ -34,29 +34,29 @@ public class UserPermissionService {
     }
 
     @Transactional
-    public ApiResponse<Void> addUserPermission(long userId,int permId){
+    public ServiceResult<Void> addUserPermission(long userId,int permId){
         return userService.getUserById(userId).map(user->
                 permService.getPermission(permId).map(perm->{
                     UserPermission userPermission = new UserPermission();
                     userPermission.setUser(user);
                     userPermission.setPermission(perm);
                     userPermRepo.save(userPermission);
-                    return ApiResponse.accept();
-                }).orElse(ApiResponse.failure(ResponseCode.PERMISSION_NOT_FOUND)))
-                .orElse(ApiResponse.failure(ResponseCode.USER_NOT_FOUND));
+                    return ServiceResult.accept();
+                }).orElse(ServiceResult.failure(ResponseCode.PERMISSION_NOT_FOUND)))
+                .orElse(ServiceResult.failure(ResponseCode.USER_NOT_FOUND));
     }
 
     @Transactional
-    public ApiResponse<Void> removeUserPermission(long userId, int permId){
+    public ServiceResult<Void> removeUserPermission(long userId, int permId){
         return userService.getUserById(userId).map(user->
                         permService.getPermission(permId).map(perm->{
                             if(!userPermRepo.existsByUserIdAndPermissionId(userId,permId)){
-                                return ApiResponse.<Void>failure(ResponseCode.PERMISSION_NOT_FOUND,
+                                return ServiceResult.<Void>failure(ResponseCode.PERMISSION_NOT_FOUND,
                                         "User ID "+userId +"doesn't have permission ID" + permId);
                             }
                             userPermRepo.deleteByUserIdAndPermissionId(userId,permId);
-                            return ApiResponse.accept();
-                        }).orElse(ApiResponse.failure(ResponseCode.PERMISSION_NOT_FOUND)))
-                .orElse(ApiResponse.failure(ResponseCode.USER_NOT_FOUND));
+                            return ServiceResult.accept();
+                        }).orElse(ServiceResult.failure(ResponseCode.PERMISSION_NOT_FOUND)))
+                .orElse(ServiceResult.failure(ResponseCode.USER_NOT_FOUND));
     }
 }

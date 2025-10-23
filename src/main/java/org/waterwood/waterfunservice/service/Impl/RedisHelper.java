@@ -1,7 +1,8 @@
-package org.waterwood.waterfunservice.service;
+package org.waterwood.waterfunservice.service.Impl;
 
 import org.springframework.stereotype.Component;
 import org.waterwood.waterfunservice.repository.RedisRepository;
+import org.waterwood.waterfunservice.service.CacheService;
 import org.waterwood.waterfunservice.utils.StringUtil;
 
 import java.time.Duration;
@@ -11,7 +12,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Component
-public class RedisHelper<T> {
+public class RedisHelper<T> implements CacheService<T> {
     private final RedisRepository<T> redisRepository;
     private String redisKeyPrefix="";
 
@@ -19,56 +20,71 @@ public class RedisHelper<T> {
         this.redisRepository = redisRepository;
     }
 
-    public void setRedisKeyPrefix(String redisKeyPrefix) {
+    @Override
+    public void setKeyPrefix(String redisKeyPrefix) {
         this.redisKeyPrefix = redisKeyPrefix.replace(":", "");
     }
 
+    @Override
     public void setExpiration(String key, Duration ttl) {
         redisRepository.setExpiration(key, ttl);
     }
 
+    @Override
     public void saveValue(String key, T value, Duration expire) {
-        redisRepository.save(getRedisKey(key), value, expire);
+        redisRepository.save(getCurrentKey(key), value, expire);
     }
 
+    @Override
     public void saveMapValue(String key, String field, T value, Duration expire) {
-        redisRepository.hashMapSave(getRedisKey(key),field ,value, expire);
+        redisRepository.hashMapSave(getCurrentKey(key),field ,value, expire);
     }
 
+    @Override
     public void addMapValue(String key, String field, T value) {
-        redisRepository.hashMapAdd(getRedisKey(key),field,value);
+        redisRepository.hashMapAdd(getCurrentKey(key),field,value);
     }
 
+    @Override
     public void removeMapFields(String key, String... fields) {
-        redisRepository.removeField(getRedisKey(key), List.of(fields));
+        redisRepository.removeField(getCurrentKey(key), List.of(fields));
     }
 
+    @Override
     public T getValue(String key) {
-        return redisRepository.get(getRedisKey(key));
+        return redisRepository.get(getCurrentKey(key));
     }
 
+    @Override
     public Map<String,Object> getMapValue(String key) {
         return redisRepository.getAll(key);
     }
 
+    @Override
     public Set<T> getSetValue(String key) { return redisRepository.getSetValue(redisKeyPrefix+key); }
 
-    public Map<String,Object> getAll(String key) { return redisRepository.getAll(getRedisKey(key));}
+    @Override
+    public Map<String,Object> getAll(String key) { return redisRepository.getAll(getCurrentKey(key));}
 
-    public T getValue(String key, String field) { return (T) redisRepository.get(getRedisKey(key),field); }
+    @Override
+    public T getValue(String key, String field) { return (T) redisRepository.get(getCurrentKey(key),field); }
 
+    @Override
     public void removeValue(String key) {
-        redisRepository.delete(getRedisKey(key));
+        redisRepository.delete(getCurrentKey(key));
     }
 
+    @Override
     public boolean exists(String key) {
-        return redisRepository.exists(getRedisKey(key));
+        return redisRepository.exists(getCurrentKey(key));
     }
 
+    @Override
     public boolean fieldExists(String key, String field) {
-        return redisRepository.fieldExists(getRedisKey(key) ,field);
+        return redisRepository.fieldExists(getCurrentKey(key) ,field);
     }
 
+    @Override
     public boolean validate(String key, T value) {
         T stored = getValue(key);
         if (stored == null || !stored.equals(value)) {
@@ -78,10 +94,12 @@ public class RedisHelper<T> {
         return true;
     }
 
+    @Override
     public Long getExpire(String key) {
-        return redisRepository.getExpire(getRedisKey(key));
+        return redisRepository.getExpire(getCurrentKey(key));
     }
 
+    @Override
     public String generateKey() {
         return generateNewUUID();
     }
@@ -91,14 +109,17 @@ public class RedisHelper<T> {
      * @param keys redis keys
      * @return joint redis key prefix
      */
-    public String buildRedisKey(String... keys) {
+    @Override
+    public String buildKeys(String... keys) {
         return String.join(":", StringUtil.noNullStringArray(keys));
     }
 
-    public String getRedisKey(String... keys) {
+    @Override
+    public String getCurrentKey(String... keys) {
         return redisKeyPrefix.concat(":").concat(String.join(":", keys));
     }
 
+    @Override
     public String generateNewUUID() {
         return UUID.randomUUID().toString();
     }

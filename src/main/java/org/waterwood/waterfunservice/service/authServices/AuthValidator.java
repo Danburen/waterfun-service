@@ -2,7 +2,7 @@ package org.waterwood.waterfunservice.service.authServices;
 
 import lombok.extern.slf4j.Slf4j;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
 import org.waterwood.waterfunservice.utils.ValidateUtil;
 
@@ -21,11 +21,11 @@ public class AuthValidator {
      */
     public static AuthValidator start(){
         AuthValidator validator = new AuthValidator();
-        validator.result = ApiResponse.success();
+        validator.result = ServiceResult.success();
         return validator;
     }
 
-    private ApiResponse<LoginServiceResponse> result;
+    private ServiceResult<LoginServiceResponse> result;
 
     /**
      * Checks a condition and sets the result if the condition is false.
@@ -35,23 +35,23 @@ public class AuthValidator {
      */
     public AuthValidator check(boolean condition, ResponseCode responseCode) {
         if(result == null){
-            result = ApiResponse.success();
+            result = ServiceResult.success();
         }else{
             if(! result.isSuccess()){
                 return this; // If already failed, skip further checks
             }
         }
         if(!condition){
-            result = ApiResponse.failure(responseCode);
+            result = ServiceResult.failure(responseCode);
         }
         return this;
     }
 
-    public AuthValidator then(Supplier<ApiResponse<LoginServiceResponse>> supplier) {
+    public AuthValidator then(Supplier<ServiceResult<LoginServiceResponse>> supplier) {
         if(result != null && ! result.isSuccess()) {
             return this; // If already failed, skip further checks
         }
-        ApiResponse<LoginServiceResponse> r = supplier.get();
+        ServiceResult<LoginServiceResponse> r = supplier.get();
         log.info(r.getData().toString());
         if (r.isSuccess()) {
             result = r;
@@ -73,7 +73,7 @@ public class AuthValidator {
      * @param defaultResult the default AuthResult to return
      * @return current AuthResult if it exists, otherwise the default result.
      */
-    public ApiResponse<LoginServiceResponse> orElse(ApiResponse<LoginServiceResponse> defaultResult) {
+    public ServiceResult<LoginServiceResponse> orElse(ServiceResult<LoginServiceResponse> defaultResult) {
         return result != null ? result : defaultResult;
     }
 
@@ -99,16 +99,16 @@ public class AuthValidator {
      * a new AuthResult indicating failure if no checks were performed.
      * @return result of the validation
      */
-    public ApiResponse<LoginServiceResponse> buildResult() {
-        return result == null ? ResponseCode.BAD_REQUEST.toApiResponse() : result;
+    public ServiceResult<LoginServiceResponse> buildResult() {
+        return result == null ? ResponseCode.BAD_REQUEST.toServiceResult() : result;
     }
 
-    public ApiResponse<LoginServiceResponse> buildResult(boolean success) {
+    public ServiceResult<LoginServiceResponse> buildResult(boolean success) {
         if(result == null){
             if(success){
-                result = ApiResponse.success();
+                result = ServiceResult.success();
             }else{
-                result = ApiResponse.failure(ResponseCode.BAD_REQUEST);
+                result = ServiceResult.failure(ResponseCode.BAD_REQUEST);
             }
         }
         return result;

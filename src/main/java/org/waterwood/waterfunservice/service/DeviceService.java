@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.repository.UserRepository;
+import org.waterwood.waterfunservice.service.Impl.RedisHelper;
 import org.waterwood.waterfunservice.utils.security.HashUtil;
 
 import java.util.Base64;
@@ -32,7 +33,7 @@ public class DeviceService{
     private Long deviceExpireMaxTimeMillis;
     protected DeviceService(RedisHelper<String> redisHelper, UserRepository userRepository) {
         this.redisHelper = redisHelper;
-        redisHelper.setRedisKeyPrefix(REDIS_KEY_PREFIX);
+        redisHelper.setKeyPrefix(REDIS_KEY_PREFIX);
         this.userRepository = userRepository;
     }
 

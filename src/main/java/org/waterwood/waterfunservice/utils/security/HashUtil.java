@@ -16,18 +16,41 @@ public class HashUtil {
     private static final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
     private static final SecureRandom secureRandom = new SecureRandom();
 
+    private static final ThreadLocal<MessageDigest> MD5_DIGEST = ThreadLocal.withInitial(() -> {
+        try {
+            return MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    });
+
+    private static final ThreadLocal<MessageDigest> SHA256_DIGEST = ThreadLocal.withInitial(() -> {
+        try {
+            return MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    });
+
+    private static final ThreadLocal<Mac> SHA256_HMAC = ThreadLocal.withInitial(() -> {
+        try {
+            return Mac.getInstance("HmacSHA256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    });
+
     public static BCryptPasswordEncoder getBCryptPasswordEncoder() {
         return bCryptPasswordEncoder;
     }
 
     public static String calculateHmac(String data, String key) {
         try {
-            Mac hmac = Mac.getInstance("HmacSHA256");
             SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(), "HmacSHA256");
-            hmac.init(secretKey);
-            byte[] hmacBytes = hmac.doFinal(data.getBytes(StandardCharsets.UTF_8));
+            SHA256_HMAC.get().init(secretKey);
+            byte[] hmacBytes = SHA256_HMAC.get().doFinal(data.getBytes(StandardCharsets.UTF_8));
             return DataAdapter.bytesToHex(hmacBytes);
-        }catch (NoSuchAlgorithmException | InvalidKeyException e){
+        }catch (InvalidKeyException e){
             throw new RuntimeException(e);
         }
     }
@@ -39,22 +62,28 @@ public class HashUtil {
     }
 
     public static String hashWithSalt(String original,String salt){
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(salt.concat(original).getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+        byte[] hash = SHA256_DIGEST.get().digest(salt.concat(original).getBytes(StandardCharsets.UTF_8));
+        return Base64.getEncoder().encodeToString(hash);
     }
 
     public static String hashWithRandomSalt(String original){
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(getRandomSalt(32).concat(original).getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+        byte[] hash = SHA256_DIGEST.get()
+                .digest(getRandomSalt(32)
+                        .concat(original)
+                        .getBytes(StandardCharsets.UTF_8)
+                );
+        return Base64.getEncoder().encodeToString(hash);
+    }
+
+    public static MessageDigest getSHA256Digest() {
+        return SHA256_DIGEST.get();
+    }
+
+    public static MessageDigest getMD5Digest() {
+        return MD5_DIGEST.get();
+    }
+
+    public static Mac getSHA256Hmac() {
+        return SHA256_HMAC.get();
     }
 }

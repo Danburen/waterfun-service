@@ -1,7 +1,7 @@
 package org.waterwood.waterfunservice.service;
 
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.response.UserInfo;
 import org.waterwood.waterfunservice.DTO.response.UserProfile;
@@ -18,15 +18,15 @@ public class AccountService {
         this.userProfileRepo = userProfileRepo;
     }
 
-    public ApiResponse<UserInfo> getUserInfo(Long userId) {
-        if(userId==null) return ResponseCode.USER_NOT_FOUND.toApiResponse();
+    public ServiceResult<UserInfo> getUserInfo(Long userId) {
+        if(userId==null) return ResponseCode.USER_NOT_FOUND.toServiceResult();
         return userRepository.findById(userId).map(user->{
             String username = user.getUsername();
-            return ApiResponse.success( userProfileRepo.findById(userId).map(userProfile -> {
+            return ServiceResult.success( userProfileRepo.findById(userId).map(userProfile -> {
                 String avatarUrl = userProfile.getAvatarUrl();
                 String nickname = userProfile.getNickname();
                 return new UserInfo(userId, username, avatarUrl, nickname);
             }).orElse(new UserInfo(userId, username, null, null)));
-        }).orElse(ResponseCode.NOT_FOUND.toApiResponse());
+        }).orElse(ResponseCode.NOT_FOUND.toServiceResult());
     }
 }

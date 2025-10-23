@@ -3,7 +3,7 @@ package org.waterwood.waterfunservice.service.authServices;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.repository.UserDatumRepo;
 import org.waterwood.waterfunservice.service.EncryptedKeyService;
 import org.waterwood.waterfunservice.service.dto.LoginServiceResponse;
@@ -37,7 +37,7 @@ public class LoginService {
 
     }
 
-    public ApiResponse<LoginServiceResponse> verifyPasswordLogin(PwdLoginRequestBody requestBody, String captchaUUID) {
+    public ServiceResult<LoginServiceResponse> verifyPasswordLogin(PwdLoginRequestBody requestBody, String captchaUUID) {
         return userRepo.findByUsername(requestBody.getUsername()).map(
                         user-> AuthValidator.start()
                                 .checkEmpty(requestBody.getUsername(),ResponseCode.USERNAME_EMPTY_OR_INVALID)
@@ -47,18 +47,18 @@ public class LoginService {
                                 .check(captchaService.validateCaptcha(captchaUUID,requestBody.getCaptcha()), ResponseCode.CAPTCHA_INCORRECT)
                                 .then(() -> {
                                     if (!user.checkPassword(requestBody.getPassword())) {
-                                        return ApiResponse.failure(ResponseCode.USERNAME_OR_PASSWORD_INCORRECT);
+                                        return ServiceResult.failure(ResponseCode.USERNAME_OR_PASSWORD_INCORRECT);
                                     }
                                     log.info(new LoginServiceResponse(user.getId()).toString());
-                                    return ApiResponse.success(new LoginServiceResponse(user.getId()));
+                                    return ServiceResult.success(new LoginServiceResponse(user.getId()));
                                 }).buildResult())
-                .orElse(ApiResponse.failure(ResponseCode.INTERNAL_SERVER_ERROR));
+                .orElse(ServiceResult.failure(ResponseCode.INTERNAL_SERVER_ERROR));
     }
 
-    public  ApiResponse<LoginServiceResponse> verifySmsCodeLogin(SmsLoginRequestBody requestBody, String uuid) {
+    public  ServiceResult<LoginServiceResponse> verifySmsCodeLogin(SmsLoginRequestBody requestBody, String uuid) {
         String phone = requestBody.getPhoneNumber();
         String phonePrefix = PartialEncryptionHelper.getPhonePrefix(phone);
-        if(!ValidateUtil.validatePhone(phone)) return ApiResponse.failure(ResponseCode.PHONE_NUMBER_EMPTY_OR_INVALID);
+        if(!ValidateUtil.validatePhone(phone)) return ServiceResult.failure(ResponseCode.PHONE_NUMBER_EMPTY_OR_INVALID);
         return encryptedKeyService.pickEncryptionKey(1).map(
                 key-> userDatumRepo.findByPhonePrefixAndPhoneHash(phonePrefix, HashUtil.calculateHmac(phone,key.getEncryptedKey())).map(
                         userDatum -> userRepo.findById(userDatum.getId()).map(
@@ -68,17 +68,17 @@ public class LoginService {
                                                 .checkEmpty(requestBody.getDeviceFp(),ResponseCode.DEVICE_FINGERPRINT_REQUIRED)
                                                 .check(authService.getSmsCodeService()
                                                         .verifySmsCode(phone, uuid, requestBody.getSmsCode()), ResponseCode.SMS_CODE_INCORRECT)
-                                                .then(()-> ApiResponse.success(new LoginServiceResponse(user.getId())))
+                                                .then(()-> ServiceResult.success(new LoginServiceResponse(user.getId())))
                                                 .buildResult())
-                                .orElse(ResponseCode.USER_NOT_FOUND.toApiResponse()))
-                        .orElse(ApiResponse.failure(ResponseCode.INTERNAL_SERVER_ERROR)))
-                .orElse(ApiResponse.failure(ResponseCode.INTERNAL_SERVER_ERROR));
+                                .orElse(ResponseCode.USER_NOT_FOUND.toServiceResult()))
+                        .orElse(ServiceResult.failure(ResponseCode.INTERNAL_SERVER_ERROR)))
+                .orElse(ServiceResult.failure(ResponseCode.INTERNAL_SERVER_ERROR));
     }
 
-    public  ApiResponse<LoginServiceResponse> verifyEmailLogin(EmailLoginRequestBody requestBody, String uuid) {
+    public  ServiceResult<LoginServiceResponse> verifyEmailLogin(EmailLoginRequestBody requestBody, String uuid) {
         String email = requestBody.getEmail();
         String emailDisplay = PartialEncryptionHelper.getEmailDisplay(email);
-        if(!ValidateUtil.validateEmail(email)) return ApiResponse.failure(ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID);
+        if(!ValidateUtil.validateEmail(email)) return ServiceResult.failure(ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID);
         return encryptedKeyService.pickEncryptionKey(1).map(
                 key-> userDatumRepo.findByEmailDisplayAndEmailHash(emailDisplay,HashUtil.calculateHmac(email,key.getEncryptedKey())).map(
                         userDatum -> userRepo.findById(userDatum.getId()).map(
@@ -88,22 +88,22 @@ public class LoginService {
                                         .checkEmpty(requestBody.getDeviceFp(),ResponseCode.DEVICE_FINGERPRINT_REQUIRED)
                                         .check(authService.getEmailCodeService().verifyEmailCode(
                                                 requestBody.getEmail(),uuid,requestBody.getEmailCode()), ResponseCode.EMAIL_CODE_INCORRECT)
-                                        .then(()-> ApiResponse.success(new LoginServiceResponse(user.getId())))
+                                        .then(()-> ServiceResult.success(new LoginServiceResponse(user.getId())))
                                         .buildResult()
                                 )
-                                .orElse(ResponseCode.USER_NOT_FOUND.toApiResponse()))
-                        .orElseGet(ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID::toApiResponse))
-                .orElse(ApiResponse.failure(ResponseCode.INTERNAL_SERVER_ERROR));
+                                .orElse(ResponseCode.USER_NOT_FOUND.toServiceResult()))
+                        .orElseGet(ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID::toServiceResult))
+                .orElse(ServiceResult.failure(ResponseCode.INTERNAL_SERVER_ERROR));
     }
 
-    public ApiResponse<Void> logout(String refreshToken, String dfp) {
-        ApiResponse<RefreshTokenPayload> res = tokenService.validateRefreshToken(refreshToken,dfp);
+    public ServiceResult<Void> logout(String refreshToken, String dfp) {
+        ServiceResult<RefreshTokenPayload> res = tokenService.validateRefreshToken(refreshToken,dfp);
         if(res.isSuccess()){
             tokenService.removeAccessToken(res.getData().userId(), res.getData().deviceId());
             tokenService.removeRefreshToken(refreshToken);
-            return ApiResponse.success();
+            return ServiceResult.success();
         }else{
-            return ApiResponse.fail(res.getResponseCode());
+            return ServiceResult.fail(res.getResponseCode());
         }
     }
 }

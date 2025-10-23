@@ -8,11 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.service.DeviceService;
-import org.waterwood.waterfunservice.service.RedisHelper;
-import org.waterwood.waterfunservice.service.TokenService;
+import org.waterwood.waterfunservice.service.AuthTokenService;
 import org.waterwood.waterfunservice.service.common.TokenResult;
 import org.waterwood.waterfunservice.service.dto.RefreshTokenPayload;
 import org.waterwood.waterfunservice.utils.security.RsaJwtUtil;
@@ -23,7 +22,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
-public class RSAJwtTokenService implements TokenService {
+public class RSAJwtTokenService implements AuthTokenService {
     private final RsaJwtUtil rsaJwtUtil;
     private final RedisHelper<String> redisHelper;
 
@@ -42,7 +41,7 @@ public class RSAJwtTokenService implements TokenService {
     public RSAJwtTokenService(RedisHelper<String> redisHelper, RsaJwtUtil rsaJwtUtil, DeviceService deviceService) {
         this.redisHelper = redisHelper;
         this.rsaJwtUtil = rsaJwtUtil;
-        redisHelper.setRedisKeyPrefix(REDIS_TOKEN_KEY_PREFIX);
+        redisHelper.setKeyPrefix(REDIS_TOKEN_KEY_PREFIX);
         this.deviceService = deviceService;
     }
 
@@ -56,7 +55,7 @@ public class RSAJwtTokenService implements TokenService {
 
         Duration expire = Duration.ofSeconds(accessTokenExpire);
         TokenResult result = rsaJwtUtil.generateToken(claims,expire);
-        redisHelper.saveValue(redisHelper.buildRedisKey(ACCESS_TOKEN_KEY, userId.toString(),deviceId),jti,expire);
+        redisHelper.saveValue(redisHelper.buildKeys(ACCESS_TOKEN_KEY, userId.toString(),deviceId),jti,expire);
         return result;
     }
 
@@ -70,7 +69,7 @@ public class RSAJwtTokenService implements TokenService {
     @Override
     public TokenResult generateAndStoreRefreshToken(long userId, String deviceId, long expireInSeconds) {
         String refreshToken = redisHelper.generateNewUUID();
-        redisHelper.saveValue(redisHelper.buildRedisKey(REFRESH_TOKEN_KEY,refreshToken),
+        redisHelper.saveValue(redisHelper.buildKeys(REFRESH_TOKEN_KEY,refreshToken),
                 gson.toJson(Map.of("userId",userId,
                         "did",deviceId)),
                 Duration.ofSeconds(expireInSeconds));
@@ -85,7 +84,7 @@ public class RSAJwtTokenService implements TokenService {
 
     @Override
     public TokenResult RegenerateRefreshToken(String oldRefreshToken, long userId, String deviceId) {
-        long restExpire = redisHelper.getExpire(redisHelper.buildRedisKey(REFRESH_TOKEN_KEY,oldRefreshToken));
+        long restExpire = redisHelper.getExpire(redisHelper.buildKeys(REFRESH_TOKEN_KEY,oldRefreshToken));
         return generateAndStoreRefreshToken(userId,deviceId,restExpire);
     }
 
@@ -96,15 +95,15 @@ public class RSAJwtTokenService implements TokenService {
      * @return Long of <b>UserID</b> if the tokenValue is valid
      */
     @Override
-    public ApiResponse<RefreshTokenPayload> validateRefreshToken(String refreshToken, String dfp) {
-        String key = redisHelper.buildRedisKey(REFRESH_TOKEN_KEY,refreshToken);
+    public ServiceResult<RefreshTokenPayload> validateRefreshToken(String refreshToken, String dfp) {
+        String key = redisHelper.buildKeys(REFRESH_TOKEN_KEY,refreshToken);
         String jsonRes = redisHelper.getValue(key);
         if (jsonRes == null) {
-            return ApiResponse.failure(ResponseCode.REFRESH_TOKEN_INVALID);
+            return ServiceResult.failure(ResponseCode.REFRESH_TOKEN_INVALID);
         }
         Long expireTime = redisHelper.getExpire(key);
         if (expireTime == null || expireTime <= 0) {
-            return ApiResponse.failure(ResponseCode.REFRESH_TOKEN_EXPIRED);
+            return ServiceResult.failure(ResponseCode.REFRESH_TOKEN_EXPIRED);
         }
         long userId = Double.valueOf((double)gson.fromJson(jsonRes, Map.class).get("userId")).longValue();
         String originalDid = (String) gson.fromJson(jsonRes, Map.class).get("did");
@@ -112,7 +111,7 @@ public class RSAJwtTokenService implements TokenService {
         if(! did.equals(originalDid)) { // Device Fingerprint changed
             log.info("User ID: {} , device Fingerprint changed: {} -> {}",userId,originalDid,dfp);
         }
-        return ApiResponse.success(new RefreshTokenPayload(userId,dfp));
+        return ServiceResult.success(new RefreshTokenPayload(userId,dfp));
     }
 
     @Override
@@ -131,7 +130,7 @@ public class RSAJwtTokenService implements TokenService {
         String jti = claims.getId();
         String did = (String) claims.get("did");
         if(iss == null || !iss.equals(rsaJwtUtil.getIssuer())) throw new JwtException("Invalid issuer");
-        String jtiKey = redisHelper.buildRedisKey(redisHelper.buildRedisKey(ACCESS_TOKEN_KEY, userId,did));
+        String jtiKey = redisHelper.buildKeys(redisHelper.buildKeys(ACCESS_TOKEN_KEY, userId,did));
         String originalJti = redisHelper.getValue(jtiKey);
         if(originalJti == null || !originalJti.equals(jti)){
             throw new JwtException("Invalid token ID");
@@ -145,12 +144,12 @@ public class RSAJwtTokenService implements TokenService {
 
     @Override
     public void removeRefreshToken(String refreshToken) {
-        redisHelper.removeValue(redisHelper.buildRedisKey(REFRESH_TOKEN_KEY, refreshToken));
+        redisHelper.removeValue(redisHelper.buildKeys(REFRESH_TOKEN_KEY, refreshToken));
     }
 
     @Override
     public void removeAccessToken(Long userId, String deviceId) {
-        redisHelper.removeValue(redisHelper.buildRedisKey(ACCESS_TOKEN_KEY, userId.toString(),deviceId));
+        redisHelper.removeValue(redisHelper.buildKeys(ACCESS_TOKEN_KEY, userId.toString(),deviceId));
     }
 
     @Override

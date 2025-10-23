@@ -3,7 +3,7 @@ package org.waterwood.waterfunservice.service.user;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.entity.user.AccountStatus;
 import org.waterwood.waterfunservice.entity.user.User;
@@ -31,19 +31,19 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    public ApiResponse<Void> activateUser(long id) {
+    public ServiceResult<Void> activateUser(long id) {
         return findUserAndUpdateStatus(id, AccountStatus.ACTIVE);
     }
 
-    public ApiResponse<Void> deactivateUser(long id) {
+    public ServiceResult<Void> deactivateUser(long id) {
         return findUserAndUpdateStatus(id, AccountStatus.DEACTIVATED);
     }
 
-    public ApiResponse<Void> suspendUser(long id) {
+    public ServiceResult<Void> suspendUser(long id) {
         return findUserAndUpdateStatus(id, AccountStatus.SUSPENDED);
     }
 
-    public ApiResponse<Void> deleteUser(long id) {
+    public ServiceResult<Void> deleteUser(long id) {
         return findUserAndUpdateStatus(id, AccountStatus.DELETED);
 
     }
@@ -56,7 +56,12 @@ public class UserService {
         return PasswordUtil.matchPassword(rawPassword, hashedPassword);
     }
 
-    private ApiResponse<Void> findUserAndUpdateStatus(long userId, AccountStatus status) {
+    public ServiceResult<Void> addUser(User user) {
+        userRepository.save(user);
+        return ServiceResult.accept();
+    }
+
+    private ServiceResult<Void> findUserAndUpdateStatus(long userId, AccountStatus status) {
         return findUserAndUpdate(userId, user -> {
             user.setAccountStatus(status);
             user.setStatusChangedAt(Instant.now());
@@ -64,13 +69,13 @@ public class UserService {
         });
     }
 
-    private ApiResponse<Void> findUserAndUpdate(long userId, Consumer<User> updater) {
+    private ServiceResult<Void> findUserAndUpdate(long userId, Consumer<User> updater) {
         return userRepository.findById(userId).map(user -> {
             updater.accept(user);
             userRepository.save(user);
-            return ApiResponse.accept();
+            return ServiceResult.accept();
         }).orElse(
-                ApiResponse.failure(ResponseCode.USER_NOT_FOUND, "User "+ userId + " does not exist.")
+                ServiceResult.failure(ResponseCode.USER_NOT_FOUND, "User "+ userId + " does not exist.")
         );
     }
 }

@@ -3,9 +3,13 @@ package org.waterwood.waterfunservice.utils;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
+import org.waterwood.waterfunservice.service.MessageService;
 
+@Component
 public class ResponseUtil {
     public static void setCookieAndNoCache(HttpServletResponse response, String cookieName, String cookieValue, int maxAge) {
         Cookie cookie = new Cookie(cookieName, cookieValue);
@@ -21,6 +25,11 @@ public class ResponseUtil {
 
     public static <T> ResponseEntity<ApiResponse<T>> buildResponse(ApiResponse<T> response) {
         int httpStatus = ResponseCode.toHttpStatus(response.getCode());
+        return ResponseEntity.status(httpStatus).body(response);
+    }
+
+    public static <T> ResponseEntity<ServiceResult<T>> buildResponse(ServiceResult<T> response) {
+        int httpStatus = ResponseCode.toHttpStatus(response.getResponseCode().getCode());
         return ResponseEntity.status(httpStatus).body(response);
     }
 

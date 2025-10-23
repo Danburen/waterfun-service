@@ -2,11 +2,14 @@ package org.waterwood.waterfunservice.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.service.common.TokenResult;
 import org.waterwood.waterfunservice.service.dto.RefreshTokenPayload;
 
-public interface TokenService {
+/**
+ * A service for managing AUTH tokens.
+ */
+public interface AuthTokenService {
     TokenResult generateAndStoreAccessToken(Long userId, String deviceId);
 
     TokenResult generateAndStoreRefreshToken(long userId, String deviceId, long expireInSeconds);
@@ -15,7 +18,7 @@ public interface TokenService {
 
     TokenResult RegenerateRefreshToken(String oldRefreshToken, long userId, String deviceId);
 
-    ApiResponse<RefreshTokenPayload> validateRefreshToken(String refreshToken, String dfp);
+    ServiceResult<RefreshTokenPayload> validateRefreshToken(String refreshToken, String dfp);
 
     boolean validateAccessToken(String accessToken);
 

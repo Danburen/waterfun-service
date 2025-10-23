@@ -6,7 +6,7 @@ import io.jsonwebtoken.InvalidClaimException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.repository.UserProfileRepo;
 import org.waterwood.waterfunservice.repository.UserRepository;
 import org.waterwood.waterfunservice.service.DeviceService;
@@ -51,48 +51,48 @@ public class AuthService {
     }
 
     @Deprecated
-    public ApiResponse<Long> validateAccessToken(String accessToken) {
+    public ServiceResult<Long> validateAccessToken(String accessToken) {
         if(accessToken != null && ! accessToken.isEmpty()) {
             // validate the content of the access tokenValue
             try{
                 Claims claims = tokenService.parseToken(accessToken);
                 tokenService.validateAccessToken(claims);
                 Long userId = Long.parseLong(claims.getSubject());
-                return ApiResponse.success(userId);
+                return ServiceResult.success(userId);
             }catch (Exception e){
                 if(e instanceof ExpiredJwtException) {
-                    return ResponseCode.ACCESS_TOKEN_EXPIRED.toApiResponse();
+                    return ResponseCode.ACCESS_TOKEN_EXPIRED.toServiceResult();
                 } else if(e instanceof InvalidClaimException) {
-                    return ResponseCode.ACCESS_TOKEN_INVALID.toApiResponse();
+                    return ResponseCode.ACCESS_TOKEN_INVALID.toServiceResult();
                 }else{
                     log.info("An internal server error occurred {}",e.getMessage());
-                    return ResponseCode.INTERNAL_SERVER_ERROR.toApiResponse();
+                    return ResponseCode.INTERNAL_SERVER_ERROR.toServiceResult();
                 }
             }
         }
-        return ResponseCode.ACCESS_TOKEN_EXPIRED.toApiResponse();
+        return ResponseCode.ACCESS_TOKEN_EXPIRED.toServiceResult();
     }
 
     /**
      * Return the api response of refresh access tokenValue operation.
      * <p>for future extension or refactor , we temporarily use api response instead of OpResult</p>
      * @param refreshToken refresh tokenValue
-     * @return ApiResponse type Token result that contains tokenValue and expirations.
+     * @return ServiceResult type Token result that contains tokenValue and expirations.
      *
      */
-    public ApiResponse<TokenResult> refreshAccessToken(String refreshToken,String dfp) {
-        if(dfp == null || dfp.isEmpty()) return ResponseCode.DEVICE_FINGERPRINT_REQUIRED.toApiResponse();
-        if(refreshToken == null || refreshToken.isEmpty()) return ResponseCode.REFRESH_TOKEN_MISSING.toApiResponse();
-        ApiResponse<RefreshTokenPayload> validRes = tokenService.validateRefreshToken(refreshToken,dfp);
+    public ServiceResult<TokenResult> refreshAccessToken(String refreshToken,String dfp) {
+        if(dfp == null || dfp.isEmpty()) return ResponseCode.DEVICE_FINGERPRINT_REQUIRED.toServiceResult();
+        if(refreshToken == null || refreshToken.isEmpty()) return ResponseCode.REFRESH_TOKEN_MISSING.toServiceResult();
+        ServiceResult<RefreshTokenPayload> validRes = tokenService.validateRefreshToken(refreshToken,dfp);
         if(validRes.isSuccess()){
             RefreshTokenPayload payload = validRes.getData();
             long userId = payload.userId();
             String deviceId = payload.deviceId();
             return userRepository.findById(userId).map(user->
-                            ApiResponse.success(tokenService.RegenerateRefreshToken(refreshToken,userId,deviceId)))
-                    .orElse(ApiResponse.failure(ResponseCode.USER_NOT_FOUND));
+                            ServiceResult.success(tokenService.RegenerateRefreshToken(refreshToken,userId,deviceId)))
+                    .orElse(ServiceResult.failure(ResponseCode.USER_NOT_FOUND));
         }else{
-            return ApiResponse.failure(validRes.getResponseCode());
+            return ServiceResult.failure(validRes.getResponseCode());
         }
     }
 

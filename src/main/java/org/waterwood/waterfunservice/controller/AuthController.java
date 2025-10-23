@@ -8,7 +8,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.request.*;
@@ -48,12 +48,12 @@ public class AuthController {
 
     @PostMapping("/refresh-access-token")
     public ResponseEntity<?> refreshAccessToken(@RequestBody String dfp, HttpServletRequest request,HttpServletResponse response) {
-        ApiResponse<TokenResult> accessTokenRes = authService.refreshAccessToken(
+        ServiceResult<TokenResult> accessTokenRes = authService.refreshAccessToken(
                 CookieUtil.getCookieValue(request.getCookies(),"REFRESH_TOKEN"),
                 dfp);
         TokenResult res = accessTokenRes.getData();
         if(res == null) return accessTokenRes.toResponseEntity();
-        return ApiResponse.success(new LoginClientData(res.tokenValue(),res.expire())).toResponseEntity();
+        return ServiceResult.success(new LoginClientData(res.tokenValue(),res.expire())).toResponseEntity();
     }
 
     @GetMapping("/captcha")
@@ -89,7 +89,7 @@ public class AuthController {
 
     @PostMapping("/send-sms-code")
     public ResponseEntity<?> sendSmsCode(@RequestBody SendSmsCodeRequest requestBody, HttpServletResponse response) {
-        ApiResponse<SmsCodeResult> smsCodeResult = smsCodeService.sendSmsCode(requestBody.getPhoneNumber());
+        ServiceResult<SmsCodeResult> smsCodeResult = smsCodeService.sendSmsCode(requestBody.getPhoneNumber());
         if(! smsCodeResult.isSuccess()) {
             log.warn("Failed to send sms code to {} , {}",requestBody.getPhoneNumber(),smsCodeResult.getData().getResponseRaw());
             return ResponseCode.INTERNAL_SERVER_ERROR.toResponseEntity();
@@ -100,7 +100,7 @@ public class AuthController {
 
     @PostMapping("/send-email-code")
     public ResponseEntity<?> sendEmailCode(@RequestBody SendEmailCodeRequest requestBody, HttpServletResponse response) {
-        ApiResponse<EmailCodeResult> emailCodeResult = emailCodeService.sendEmailCode(requestBody.getEmail(), EmailTemplateType.VERIFY_CODE);
+        ServiceResult<EmailCodeResult> emailCodeResult = emailCodeService.sendEmailCode(requestBody.getEmail(), EmailTemplateType.VERIFY_CODE);
         if(! emailCodeResult.getData().isSendSuccess()) {
             log.warn("Failed to send email code to {},{}",requestBody.getEmail(),emailCodeResult.getData().getResponseRaw());
             return ResponseCode.INTERNAL_SERVER_ERROR.toResponseEntity();
@@ -112,56 +112,56 @@ public class AuthController {
     @PostMapping("/login/password")
     public ResponseEntity<?> loginByPassword(@RequestBody PwdLoginRequestBody body, HttpServletRequest request, HttpServletResponse response) {
         Cookie[] cookies = request.getCookies();
-        ApiResponse<LoginServiceResponse> apiResponse = loginService.verifyPasswordLogin(body,
+        ServiceResult<LoginServiceResponse> ServiceResult = loginService.verifyPasswordLogin(body,
                 CookieUtil.getCookieValue(cookies, "CAPTCHA_KEY"));
-        log.info(apiResponse.getData().getUserId().toString());
-        return BuildLoginResponse(response, apiResponse,body.getDeviceFp());
+        log.info(ServiceResult.getData().getUserId().toString());
+        return BuildLoginResponse(response, ServiceResult,body.getDeviceFp());
     }
 
     @PostMapping("/admin/login/password")
     public ResponseEntity<?> adminLoginByPassword(@RequestBody PwdLoginRequestBody body, HttpServletRequest request, HttpServletResponse response) {
         Cookie[] cookies = request.getCookies();
-        ApiResponse<LoginServiceResponse> apiResponse = loginService.verifyPasswordLogin(body,
+        ServiceResult<LoginServiceResponse> ServiceResult = loginService.verifyPasswordLogin(body,
                 CookieUtil.getCookieValue(cookies, "CAPTCHA_KEY"));
-        log.info(apiResponse.getData().getUserId().toString());
-        return BuildLoginResponse(response, apiResponse,body.getDeviceFp());
+        log.info(ServiceResult.getData().getUserId().toString());
+        return BuildLoginResponse(response, ServiceResult,body.getDeviceFp());
     }
 
     @PostMapping("/login/sms")
     public ResponseEntity<?> loginBySms(@RequestBody SmsLoginRequestBody body, HttpServletRequest request, HttpServletResponse response) {
         Cookie[] cookies = request.getCookies();
-        ApiResponse<LoginServiceResponse> apiResponse = loginService.verifySmsCodeLogin(body,
+        ServiceResult<LoginServiceResponse> ServiceResult = loginService.verifySmsCodeLogin(body,
                 CookieUtil.getCookieValue(cookies, "SMS_CODE_KEY"));
-        return BuildLoginResponse(response, apiResponse,body.getDeviceFp());
+        return BuildLoginResponse(response, ServiceResult,body.getDeviceFp());
     }
 
     @PostMapping("/login/email")
     public ResponseEntity<?> loginByEmail(@RequestBody EmailLoginRequestBody body, HttpServletRequest request, HttpServletResponse response) {
         Cookie[] cookies = request.getCookies();
-        ApiResponse<LoginServiceResponse> apiResponse = loginService.verifyEmailLogin(body,
+        ServiceResult<LoginServiceResponse> ServiceResult = loginService.verifyEmailLogin(body,
                 CookieUtil.getCookieValue(cookies, "EMAIL_CODE_KEY"));
-        return BuildLoginResponse(response, apiResponse,body.getDeviceFp());
+        return BuildLoginResponse(response, ServiceResult,body.getDeviceFp());
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest body, HttpServletRequest request, HttpServletResponse response) {
-        ApiResponse<LoginServiceResponse> apiResponse = registerService.register(body,
+        ServiceResult<LoginServiceResponse> ServiceResult = registerService.register(body,
                 CookieUtil.getCookieValue(request.getCookies(), "SMS_CODE_KEY"));
-        return BuildLoginResponse(response, apiResponse,body.getDeviceFp());
+        return BuildLoginResponse(response, ServiceResult,body.getDeviceFp());
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestBody String deviceFp,HttpServletRequest request,HttpServletResponse response) {
         String refreshToken = CookieUtil.getCookieValue(request.getCookies(),"REFRESH_TOKEN");
-        ApiResponse<Void> result = loginService.logout(refreshToken, deviceFp);
+        ServiceResult<Void> result = loginService.logout(refreshToken, deviceFp);
         if(result.isSuccess()) CookieUtil.cleanTokenCookie(response);
-        return result.toResponseEntity();
+        return result.toApiResponse().toResponseEntity();
     }
 
 
-    private ResponseEntity<?> BuildLoginResponse(HttpServletResponse response, ApiResponse<LoginServiceResponse> apiResponse,String dfp) {
-        if(! apiResponse.isSuccess() || apiResponse.getData() == null) return apiResponse.toResponseEntity();
-        LoginServiceResponse data = apiResponse.getData();
+    private ResponseEntity<?> BuildLoginResponse(HttpServletResponse response, ServiceResult<LoginServiceResponse> ServiceResult,String dfp) {
+        if(! ServiceResult.isSuccess() || ServiceResult.getData() == null) return ServiceResult.toApiResponse().toResponseEntity();
+        LoginServiceResponse data = ServiceResult.getData();
         TokenPair tokenPair = authService.createNewTokens(data.getUserId(),dfp);
         CookieUtil.setTokenCookie(response,tokenPair);
         response.setContentType("application/json");
@@ -169,6 +169,6 @@ public class AuthController {
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response.setHeader("X-Content-Type-Options", "nosniff");
         response.setHeader("X-Frame-Options", "DENY");
-        return  ResponseUtil.buildResponse(ApiResponse.success(new LoginClientData(tokenPair.accessToken(),tokenPair.accessExp())));
+        return  ResponseUtil.buildResponse(ServiceResult.success(new LoginClientData(tokenPair.accessToken(),tokenPair.accessExp())));
     }
 }

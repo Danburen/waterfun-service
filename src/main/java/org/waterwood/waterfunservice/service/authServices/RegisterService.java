@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.entity.security.EncryptionDataKey;
 import org.waterwood.waterfunservice.entity.user.AccountStatus;
 import org.waterwood.waterfunservice.repository.UserDatumRepo;
@@ -33,10 +33,10 @@ public class RegisterService {
     }
 
     @Transactional
-    public ApiResponse<LoginServiceResponse> register(RegisterRequest request, String uuid) {
+    public ServiceResult<LoginServiceResponse> register(RegisterRequest request, String uuid) {
         boolean isPasswordEmpty = request.getPassword() == null || request.getPassword().isEmpty();
         boolean isEmailEmpty = request.getEmail() == null || request.getEmail().isEmpty();
-        ApiResponse<LoginServiceResponse> result = AuthValidator.start()
+        ServiceResult<LoginServiceResponse> result = AuthValidator.start()
                 .checkEmpty(request.getSmsCode(), ResponseCode.SMS_CODE_EMPTY)
                 .checkEmpty(request.getUsername(),ResponseCode.USERNAME_EMPTY_OR_INVALID)
                 .checkEmpty(request.getPhoneNumber(),ResponseCode.PHONE_NUMBER_EMPTY_OR_INVALID)
@@ -51,7 +51,7 @@ public class RegisterService {
                 .buildResult();
         if(! result.isSuccess()) return result;
         return userRepo.findByUsername(request.getUsername()).map(
-                        user -> ApiResponse.<LoginServiceResponse>failure(ResponseCode.USER_ALREADY_EXISTS))
+                        user -> ServiceResult.<LoginServiceResponse>failure(ResponseCode.USER_ALREADY_EXISTS))
                 .orElseGet(() -> {
                     // Create a new user
                     User user = new User();
@@ -86,9 +86,9 @@ public class RegisterService {
                                 userDatumRepo.save(userDatum);
                                 user.setAccountStatus(AccountStatus.ACTIVE);
                                 userRepo.save(user);
-                                return ApiResponse.success(new LoginServiceResponse(user.getId()));
+                                return ServiceResult.success(new LoginServiceResponse(user.getId()));
                             }
-                    ).orElse(ApiResponse.failure(ResponseCode.INTERNAL_SERVER_ERROR));
+                    ).orElse(ServiceResult.failure(ResponseCode.INTERNAL_SERVER_ERROR));
                 });
     }
 }

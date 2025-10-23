@@ -17,4 +17,8 @@ public class SmsCodeResult {
     private final @Nullable String responseRaw;
 
     protected String key;
+
+    public static SmsCodeResult success() {
+        return new SmsCodeResult(true,null,null,null,null);
+    }
 }

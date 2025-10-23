@@ -3,12 +3,12 @@ package org.waterwood.waterfunservice.service.authServices;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.service.dto.EmailCodeResult;
 import org.waterwood.waterfunservice.service.Impl.ResendEmailService;
-import org.waterwood.waterfunservice.service.RedisHelper;
+import org.waterwood.waterfunservice.service.Impl.RedisHelper;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -31,12 +31,12 @@ public class EmailCodeService implements VerifyServiceBase{
     protected EmailCodeService(RedisHelper<String> redisHelper, ResendEmailService emailService) {
         this.redisHelper = redisHelper;
         this.emailService = emailService;
-        redisHelper.setRedisKeyPrefix(REDIS_KEY_PREFIX);
+        redisHelper.setKeyPrefix(REDIS_KEY_PREFIX);
     }
 
-    public ApiResponse<EmailCodeResult> sendEmailCode(String emailTo, EmailTemplateType type) {
+    public ServiceResult<EmailCodeResult> sendEmailCode(String emailTo, EmailTemplateType type) {
         if(! validateEmail(emailTo)) {
-            return ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID.toApiResponse();
+            return ResponseCode.EMAIL_ADDRESS_EMPTY_OR_INVALID.toServiceResult();
         }
         String code = generateVerifyCode();
         String uuid = redisHelper.generateKey();
@@ -50,9 +50,9 @@ public class EmailCodeService implements VerifyServiceBase{
         sendResult.setKey(uuid);
         if (sendResult.isSendSuccess()){
             redisHelper.saveValue(emailTo + "_" + uuid,code, Duration.ofMinutes(expireDuration));
-            return ApiResponse.success(sendResult);
+            return ServiceResult.success(sendResult);
         }else{
-            return ApiResponse.failure(sendResult);
+            return ServiceResult.failure(sendResult);
         }
     }
 

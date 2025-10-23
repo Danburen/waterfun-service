@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.response.MiniFileResData;
 import org.waterwood.waterfunservice.service.ResourceService;
@@ -44,7 +44,7 @@ public class ResourceController {
             return ResponseCode.INVALID_PATH.toResponseEntity();
         }
         try {
-            ApiResponse<MiniFileResData> res = resourceService.getLegalFileContent(type, lang, fileName);
+            ServiceResult<MiniFileResData> res = resourceService.getLegalFileContent(type, lang, fileName);
             if(! res.isSuccess()) return res.toResponseEntity();
 
             MiniFileResData data = res.getData();

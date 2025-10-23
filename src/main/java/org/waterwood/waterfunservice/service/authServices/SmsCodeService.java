@@ -2,14 +2,13 @@ package org.waterwood.waterfunservice.service.authServices;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.TestOnly;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.service.dto.SmsCodeResult;
-import org.waterwood.waterfunservice.service.SmsService;
-import org.waterwood.waterfunservice.service.RedisHelper;
+import org.waterwood.waterfunservice.service.Impl.AliyunSmsService;
+import org.waterwood.waterfunservice.service.Impl.RedisHelper;
 
 import java.time.Duration;
 import java.util.Map;
@@ -29,29 +28,29 @@ public class SmsCodeService implements VerifyServiceBase {
     private Long expireDuration;
     @Value("${aliyun.sms.verify-code.template-name}")
     private String smsCodeTemplate;
-    private final SmsService smsService;
+    private final AliyunSmsService smsService;
 
-    protected SmsCodeService(RedisHelper<String> redisHelper, SmsService smsService) {
+    protected SmsCodeService(RedisHelper<String> redisHelper, AliyunSmsService smsService) {
         this.redisHelper = redisHelper;
         this.smsService = smsService;
-        redisHelper.setRedisKeyPrefix(SMS_KEY_PREFIX);
+        redisHelper.setKeyPrefix(SMS_KEY_PREFIX);
     }
 
-    public ApiResponse<SmsCodeResult> sendSmsCode(String phoneNumber) {
-        if (! validatePhone(phoneNumber)) return ResponseCode.PHONE_NUMBER_EMPTY_OR_INVALID.toApiResponse();
+    public ServiceResult<SmsCodeResult> sendSmsCode(String phoneNumber) {
+        if (! validatePhone(phoneNumber)) return ResponseCode.PHONE_NUMBER_EMPTY_OR_INVALID.toServiceResult();
         String code = generateVerifyCode();
         String uuid = UUID.randomUUID().toString();
         SmsCodeResult result = smsService.sendSms(phoneNumber, smsCodeTemplate,
                 Map.of("code", code, "time", expireDuration));
         result.setKey(uuid);
         if(result.isSendSuccess()){
-            redisHelper.saveValue(redisHelper.buildRedisKey(phoneNumber,uuid),code, Duration.ofMinutes(expireDuration));
+            redisHelper.saveValue(redisHelper.buildKeys(phoneNumber,uuid),code, Duration.ofMinutes(expireDuration));
         };
-        return result.isSendSuccess() ? ApiResponse.success(result) : ApiResponse.failure(result);
+        return result.isSendSuccess() ? ServiceResult.success(result) : ServiceResult.failure(result);
     }
 
     public boolean verifySmsCode(String phoneNumber,String uuid, String code) {
-        return redisHelper.validate(redisHelper.buildRedisKey(phoneNumber,uuid), code);
+        return redisHelper.validate(redisHelper.buildKeys(phoneNumber,uuid), code);
     }
 
     @Override

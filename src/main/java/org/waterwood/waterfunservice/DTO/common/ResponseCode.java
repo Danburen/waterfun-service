@@ -1,83 +1,116 @@
 package org.waterwood.waterfunservice.DTO.common;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
+import org.waterwood.waterfunservice.utils.MessageHelper;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * An enum class to store all the response codes
+ */
 @Getter
-@AllArgsConstructor
 public enum ResponseCode {
-    OK(200, "SUCCESS"),
-    BAD_REQUEST(400, "BAD_REQUEST"),
-    UNAUTHORIZED(401, "UNAUTHORIZED"),
-    FORBIDDEN(403, "FORBIDDEN"),
-    NOT_FOUND(404, "NOT_FOUND"),
-    INTERNAL_SERVER_ERROR(500, "INTERNAL_SERVER_ERROR"),
+    // General HTTP Status
+    OK(200, "general.success"),
+    BAD_REQUEST(400, "general.bad_request"),
+    UNAUTHORIZED(401, "general.unauthorized"),
+    FORBIDDEN(403, "general.forbidden"),
+    NOT_FOUND(404, "general.not_found"),
+    INTERNAL_SERVER_ERROR(500, "general.internal_server_error"),
+    UNKNOWN_ERROR(50000, "general.unknown_error"),
 
-    UNKNOWN_ERROR(50000, "UNKNOWN_ERROR"),
+    // User Validation
+    USERNAME_EMPTY_OR_INVALID(40001, "user.validation.username_invalid"),
+    PASSWORD_EMPTY_OR_INVALID(40002, "user.validation.password_invalid"),
+    USERNAME_OR_PASSWORD_INCORRECT(40003, "user.validation.credentials_incorrect"),
+    USER_ALREADY_EXISTS(40017, "user.validation.already_exists"),
+    USER_NOT_FOUND(40018, "user.validation.not_found"),
 
-    // User-info-related Errors
-    USERNAME_EMPTY_OR_INVALID(40001, "USERNAME_EMPTY_OR_INVALID"),
-    PASSWORD_EMPTY_OR_INVALID(40002, "PASSWORD_EMPTY_OR_INVALID"),
-    USERNAME_OR_PASSWORD_INCORRECT(40003, "USERNAME_OR_PASSWORD_INCORRECT"),
-    CAPTCHA_EXPIRED(40004,"CAPTCHA_EXPIRED"),
-    CAPTCHA_INCORRECT(40005, "CAPTCHA_INCORRECT"),
-    VERIFY_CODE_EXPIRED(40006, "VERIFY_CODE_EXPIRED"),
-    VERIFY_CODE_INCORRECT(40007, "VERIFY_CODE_INCORRECT"),
-    SMS_CODE_EXPIRED(40008, "SMS_CODE_EXPIRED"),
-    SMS_CODE_INCORRECT(40009, "SMS_CODE_INCORRECT"),
-    EMAIL_CODE_EXPIRED(40010, "EMAIL_CODE_EXPIRED"),
-    EMAIL_CODE_INCORRECT(40011, "EMAIL_CODE_INCORRECT"),
-    CAPTCHA_EMPTY(40012, "CAPTCHA_EMPTY"),
-    SMS_CODE_EMPTY(40013, "SMS_CODE_EMPTY"),
-    EMAIL_CODE_EMPTY(40014, "EMAIL_CODE_EMPTY"),
-    PHONE_NUMBER_EMPTY_OR_INVALID(40015, "PHONE_NUMBER_EMPTY_OR_INVALID"),
-    EMAIL_ADDRESS_EMPTY_OR_INVALID(40016, "EMAIL_ADDRESS_EMPTY_OR_INVALID"),
-    USER_ALREADY_EXISTS(40017, "USER_ALREADY_EXISTS"),
-    USER_NOT_FOUND(40018, "USER_NOT_FOUND"),
-    ROLE_NOT_FOUND(40019, "ROLE_NOT_FOUND"),
-    ROLE_ALREADY_EXISTS(40020, "ROLE_ALREADY_EXISTS"),
-    PERMISSION_NOT_FOUND(40021, "PERMISSION_NOT_FOUND"),
-    PERMISSION_ALREADY_EXISTS(40022, "PERMISSION_ALREADY_EXISTS"),
+    // Verification Codes
+    CAPTCHA_EXPIRED(40004, "verification.captcha.expired"),
+    CAPTCHA_INCORRECT(40005, "verification.captcha.incorrect"),
+    CAPTCHA_EMPTY(40012, "verification.captcha.empty"),
+    VERIFY_CODE_EXPIRED(40006, "verification.code.expired"),
+    VERIFY_CODE_INCORRECT(40007, "verification.code.incorrect"),
 
-    REDUNDANT_OPERATION(40023, "REDUNDANT_OPERATION"),
+    // SMS Verification
+    SMS_CODE_EXPIRED(40008, "verification.sms.expired"),
+    SMS_CODE_INCORRECT(40009, "verification.sms.incorrect"),
+    SMS_CODE_EMPTY(40013, "verification.sms.empty"),
+    PHONE_NUMBER_EMPTY_OR_INVALID(40015, "verification.phone.invalid"),
 
-    INVALID_PATH(40024, "INVALID_PATH"),
-    REQUEST_NOT_IN_WHITELIST(40025, "REQUEST_NOT_IN_WHITELIST"),
-    INVALID_CONTENT_TYPE(40026, "INVALID_CONTENT_TYPE"),
+    // Email Verification
+    EMAIL_CODE_EXPIRED(40010, "verification.email.expired"),
+    EMAIL_CODE_INCORRECT(40011, "verification.email.incorrect"),
+    EMAIL_CODE_EMPTY(40014, "verification.email.empty"),
+    EMAIL_ADDRESS_EMPTY_OR_INVALID(40016, "verification.email_address.invalid"),
 
-    // Authentication Errors
-    ACCESS_TOKEN_EXPIRED(40101, "ACCESS_TOKEN_EXPIRED"),
-    ACCESS_TOKEN_INVALID(40102, "ACCESS_TOKEN_INVALID"),
-    ACCESS_TOKEN_MISSING(40103, "ACCESS_TOKEN_MISSING"),
-    REFRESH_TOKEN_EXPIRED(40104, "REFRESH_TOKEN_EXPIRED"),
-    REFRESH_TOKEN_INVALID(40105, "REFRESH_TOKEN_INVALID"),
-    REFRESH_TOKEN_MISSING(40106, "REFRESH_TOKEN_MISSING"),
-    DEVICE_FINGERPRINT_REQUIRED(40107, "DEVICE_FINGERPRINT_REQUIRED"),;
+    // Role & Permissions
+    ROLE_NOT_FOUND(40019, "permission.role.not_found"),
+    ROLE_ALREADY_EXISTS(40020, "permission.role.already_exists"),
+    PERMISSION_NOT_FOUND(40021, "permission.permission.not_found"),
+    PERMISSION_ALREADY_EXISTS(40022, "permission.permission.already_exists"),
+
+    // System
+    REDUNDANT_OPERATION(40023, "system.redundant_operation"),
+    INVALID_PATH(40024, "system.invalid_path"),
+    REQUEST_NOT_IN_WHITELIST(40025, "system.request_not_in_whitelist"),
+    INVALID_CONTENT_TYPE(40026, "system.invalid_content_type"),
+
+    // Authentication
+    ACCESS_TOKEN_EXPIRED(40101, "auth.access_token.expired"),
+    ACCESS_TOKEN_INVALID(40102, "auth.access_token.invalid"),
+    ACCESS_TOKEN_MISSING(40103, "auth.access_token.missing"),
+    REFRESH_TOKEN_EXPIRED(40104, "auth.refresh_token.expired"),
+    REFRESH_TOKEN_INVALID(40105, "auth.refresh_token.invalid"),
+    REFRESH_TOKEN_MISSING(40106, "auth.refresh_token.missing"),
+    DEVICE_FINGERPRINT_REQUIRED(40107, "auth.device_fingerprint.required");
 
     private final int code;    // error code
-    private final String msg; // error message
+    private final String msgKey;
+
+    ResponseCode(int code, String msgKey) {
+        this.code = code;
+        this.msgKey = msgKey;
+    }
+
+
     public ResponseEntity<?> toResponseEntity() {
         Map<String,Object> body = new HashMap<>();
         body.put("code", this.code);
-        body.put("message", this.msg);
+        body.put("message", getMsgKey());
         return ResponseEntity.status(getHttpStatus()).body(body);
     }
 
+    private String getMessage() {
+        return MessageHelper.resolveMessage(getMsgKey(),null);
+    }
+
+    private String getMessage(Object... args) {
+        return MessageHelper.resolveMessage(getMsgKey(),args);
+    }
+
     public <T> ApiResponse<T> toApiResponse(){
-        return new ApiResponse<>(this.getCode(),this.getMsg(),null);
+        return new ApiResponse<>(this.getCode(), getMessage(),null);
     }
 
-    public <T> ApiResponse<T> toApiResponse(String msg){
-        return new ApiResponse<>(this.getCode(),msg,null);
+    public <T> ApiResponse<T> toApiResponse(Object args){
+        return new ApiResponse<>(this.getCode(), getMessage(args),null);
     }
 
-    public <T> ApiResponse<T> toApiResponse(T data){
-        return new ApiResponse<>(this.getCode(),this.getMsg(),data);
+    public <T> ServiceResult<T> toServiceResult(){
+        return new ServiceResult<>(this, this.getCode() == 200, null, null);
+    }
+
+    public <T> ServiceResult<T> toServiceResult(String msg){
+        return new ServiceResult<>(this, this.getCode() == 200, msg, null);
+    }
+
+    public <T> ServiceResult<T> toServiceResult(T data){
+        return new ServiceResult<>(this, this.getCode() == 200,null,data);
     }
 
     public static int toHttpStatus(int code) {
@@ -88,8 +121,7 @@ public enum ResponseCode {
         return toHttpStatus(this.code);
     }
 
-    public @Nullable
-    static ResponseCode fromCode(int code) {
+    public @Nullable static ResponseCode fromCode(int code) {
         for (ResponseCode responseCode : ResponseCode.values()) {
             if (responseCode.getCode() == code) {
                 return responseCode;
@@ -97,4 +129,14 @@ public enum ResponseCode {
         }
         return null;
     }
+
+    public @Nullable static ResponseCode fromMsgKey(String msgKey) {
+        for (ResponseCode responseCode : ResponseCode.values()) {
+            if (responseCode.getMsgKey().equals(msgKey)) {
+                return responseCode;
+            }
+        }
+        return null;
+    }
+
 }

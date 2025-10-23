@@ -5,7 +5,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.DTO.response.MiniFileResData;
 import org.waterwood.waterfunservice.service.common.LegalResourceConstants;
@@ -34,13 +34,13 @@ public class ResourceService {
         return getContent(filePath, StandardCharsets.UTF_8);
     }
 
-    public ApiResponse<MiniFileResData> getLegalFileContent(String type, String lang, String fileName) throws IOException {
+    public ServiceResult<MiniFileResData> getLegalFileContent(String type, String lang, String fileName) throws IOException {
         String relativePath = "legal/" + type + "/" + lang + "/" + fileName;
         Resource resource = resourceLoader.getResource("classpath:" + relativePath);
-        if (!resource.exists()) return ApiResponse.failure(ResponseCode.NOT_FOUND);
+        if (!resource.exists()) return ServiceResult.failure(ResponseCode.NOT_FOUND);
 
         String contentType = detectContentType(fileName);
-        return ApiResponse.success(new MiniFileResData(resource.getFile().toPath(), contentType));
+        return ServiceResult.success(new MiniFileResData(resource.getFile().toPath(), contentType));
     }
 
     public boolean isPathValid(String type, String lang) {

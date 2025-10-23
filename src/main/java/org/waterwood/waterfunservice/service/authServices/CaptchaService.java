@@ -4,7 +4,7 @@ import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.LineCaptcha;
 import lombok.Getter;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.service.RedisHelper;
+import org.waterwood.waterfunservice.service.Impl.RedisHelper;
 
 import java.time.Duration;
 
@@ -16,7 +16,7 @@ public class CaptchaService implements VerifyServiceBase{
 
     protected CaptchaService(RedisHelper<String> redisHelper) {
         this.redisHelper = redisHelper;
-        redisHelper.setRedisKeyPrefix(REDIS_KEY_PREFIX);
+        redisHelper.setKeyPrefix(REDIS_KEY_PREFIX);
     }
 
     public LineCaptchaResult generateCaptcha(){

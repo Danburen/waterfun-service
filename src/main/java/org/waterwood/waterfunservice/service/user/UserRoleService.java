@@ -3,7 +3,7 @@ package org.waterwood.waterfunservice.service.user;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.DTO.common.ApiResponse;
+import org.waterwood.waterfunservice.DTO.common.ServiceResult;
 import org.waterwood.waterfunservice.DTO.common.ResponseCode;
 import org.waterwood.waterfunservice.entity.permission.Role;
 import org.waterwood.waterfunservice.entity.permission.UserRole;
@@ -33,29 +33,29 @@ public class UserRoleService {
     }
 
     @Transactional
-    public ApiResponse<Void> addUserRole(long userId, int roleId){
+    public ServiceResult<Void> addUserRole(long userId, int roleId){
         return userService.getUserById(userId).map(user ->
                 roleService.getRole(roleId).map(role->{
                     UserRole userRole = new UserRole();
                     userRole.setUser(user);
                     userRole.setRole(role);
                     userRoleRepo.save(userRole);
-                    return ApiResponse.accept();
-        }).orElse(ApiResponse.failure(ResponseCode.ROLE_NOT_FOUND)))
-                .orElse(ApiResponse.failure(ResponseCode.USER_NOT_FOUND));
+                    return ServiceResult.accept();
+        }).orElse(ServiceResult.failure(ResponseCode.ROLE_NOT_FOUND)))
+                .orElse(ServiceResult.failure(ResponseCode.USER_NOT_FOUND));
     }
 
     @Transactional
-    public ApiResponse<Void> removeUserRole(long userId, int roleId) {
+    public ServiceResult<Void> removeUserRole(long userId, int roleId) {
         return userService.getUserById(userId).map(user->
                 roleService.getRole(roleId).map(role->{
                     if(!userRoleRepo.existsByUserIdAndRoleId(userId, roleId)){
-                        return ApiResponse.fail(ResponseCode.ROLE_NOT_FOUND,
+                        return ServiceResult.fail(ResponseCode.ROLE_NOT_FOUND,
                                 "User " + user.getId() + " does not have role " + roleId);
                     }
                     userRoleRepo.deleteByUserIdAndRoleId(userId, roleId);
-                    return ApiResponse.accept();
-                }).orElse(ApiResponse.failure(ResponseCode.ROLE_NOT_FOUND)))
-                .orElse(ApiResponse.failure(ResponseCode.USER_NOT_FOUND));
+                    return ServiceResult.accept();
+                }).orElse(ServiceResult.failure(ResponseCode.ROLE_NOT_FOUND)))
+                .orElse(ServiceResult.failure(ResponseCode.USER_NOT_FOUND));
     }
 }
