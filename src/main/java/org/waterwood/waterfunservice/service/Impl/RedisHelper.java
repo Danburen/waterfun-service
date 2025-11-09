@@ -116,6 +116,9 @@ public class RedisHelper<T> implements CacheService<T> {
 
     @Override
     public String getCurrentKey(String... keys) {
+        if(StringUtil.isBlank(redisKeyPrefix)){
+            return String.join(":", keys);
+        }
         return redisKeyPrefix.concat(":").concat(String.join(":", keys));
     }
 
