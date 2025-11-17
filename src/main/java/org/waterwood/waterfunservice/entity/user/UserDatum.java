@@ -44,17 +44,11 @@ public class UserDatum {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
-    @Column(name = "email_display", length = 10)
-    private String emailDisplay;
-
     @Column(name = "email_encrypted", length = 50)
     private String emailEncrypted;
 
     @Column(name = "email_hash", length = 65)
     private String emailHash;
-
-    @Column(name = "phone_prefix", length = 3)
-    private String phonePrefix;
 
     @Column(name = "phone_encrypted", length = 50)
     private String phoneEncrypted;

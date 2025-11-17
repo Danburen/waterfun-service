@@ -3,9 +3,6 @@ package org.waterwood.waterfunservice;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.waterwood.waterfunservice.service.EmailService;
-import org.waterwood.waterfunservice.service.Impl.SpringEmailService;
-import org.waterwood.waterfunservice.service.dto.EmailCodeResult;
 
 @SpringBootApplication
 public class WaterfunServiceApplication {

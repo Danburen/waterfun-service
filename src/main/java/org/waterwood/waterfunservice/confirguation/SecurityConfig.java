@@ -1,30 +1,21 @@
 package org.waterwood.waterfunservice.confirguation;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.waterwood.waterfunservice.utils.security.JwtConverter;
+import org.waterwood.waterfunservice.infrastructure.utils.security.JwtConverter;
 
-import javax.crypto.SecretKey;
-import java.security.PublicKey;
-import java.security.interfaces.RSAPublicKey;
-import java.time.Duration;
 import java.util.List;
 
 @Configuration
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity(debug = false)
 public class SecurityConfig {
     private final JwtConverter jwtConverter;
 
@@ -35,14 +26,21 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .requireCsrfProtectionMatcher(request -> !request.getMethod().equals("GET"))
-                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                )
+                .csrf(csrf -> csrf.disable())
+//                .csrf(csrf -> csrf
+//                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+//                        .requireCsrfProtectionMatcher(request -> !request.getMethod().equals("GET"))
+//                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+//                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/resource/**").permitAll()
+                        .requestMatchers("/api/dashboard/**").permitAll()
+                        .requestMatchers("/api/user/**").authenticated()
+                        .requestMatchers("/api/post/**").authenticated()
+                        .requestMatchers("/api/role/**").authenticated()
+                        .requestMatchers("/api/permission/**").authenticated()
+                        .requestMatchers("/upload").authenticated()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/account/**").authenticated()
                         .requestMatchers("/api/content/**").authenticated()
@@ -59,7 +57,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000", "http://localhost:63342"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

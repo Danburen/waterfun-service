@@ -1,0 +1,44 @@
+package org.waterwood.waterfunservice.infrastructure.utils.context;
+
+
+import org.waterwood.waterfunservice.dto.response.context.LoginUser;
+
+/**
+ * ThreadLocal Util
+ */
+public class ThreadLocalUtil {
+    private static final ThreadLocal<LoginUser> THREAD_LOCAL = new ThreadLocal<>();
+    public static LoginUser get(){
+        return THREAD_LOCAL.get();
+    }
+
+    /**
+     * Set value to ThreadLocal
+     */
+    public static void set(LoginUser context){
+        THREAD_LOCAL.set(context);
+    }
+
+    /**
+     * Get userId
+     * @return userId
+     */
+    public static long getCurrentUserId(){
+        return get().getUserId();
+    }
+
+    /**
+     * Get jwt identify.
+     * @return the java web token id.
+     */
+    public static String getJti(){
+        return get().getJti();
+    }
+
+    /**
+     * Remoce ThreadLocal to avoid memory leak.
+     */
+    public static void remove(){
+        THREAD_LOCAL.remove();
+    }
+}

@@ -1,0 +1,56 @@
+package org.waterwood.waterfunservice.service.perm;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.waterwood.waterfunservice.dto.response.ResponseCode;
+import org.waterwood.waterfunservice.entity.Permission;
+import org.waterwood.waterfunservice.infrastructure.exception.business.BusinessException;
+import org.waterwood.waterfunservice.infrastructure.persistence.PermissionRepo;
+import org.waterwood.waterfunservice.infrastructure.utils.context.ThreadLocalUtil;
+
+@Service
+@RequiredArgsConstructor
+public class PermissionServiceImpl implements PermissionService {
+    private final PermissionRepo permissionRepo;
+    @Transactional(readOnly = true)
+    @Override
+    public Permission getPermission(int PermId){
+        return permissionRepo.findById(PermId)
+                .orElseThrow(() -> new BusinessException(ResponseCode.PERMISSION_NOT_FOUND));
+    }
+
+    @Override
+    public Page<Permission> listPermissions(Specification<Permission> spec, Pageable pageable) {
+        long id = ThreadLocalUtil.getCurrentUserId();
+        // TODO: check permission
+        return permissionRepo.findAll(spec, pageable);
+    }
+
+    @Override
+    public void addPermission(Permission perm) {
+        // TODO: check permission
+        permissionRepo.findByCode(perm.getCode()).ifPresent(_ -> {
+            throw new BusinessException(ResponseCode.PERMISSION_ALREADY_EXISTS);
+        });
+        permissionRepo.save(perm);
+    }
+
+    @Override
+    public void update(Permission perm) {
+        // TODO: check permission
+        if (perm.getParent() != null && perm.getParent().getId() != null) {
+            perm.setParent(permissionRepo.getReferenceById(perm.getParent().getId()));
+        }
+        permissionRepo.save(perm);
+    }
+
+    @Override
+    public void deleteUser(int id) {
+        // TODO: check permission
+        permissionRepo.deleteById(id);
+    }
+}

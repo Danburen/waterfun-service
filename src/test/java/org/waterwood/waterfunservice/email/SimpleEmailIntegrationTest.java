@@ -3,12 +3,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
-import org.waterwood.waterfunservice.service.EmailService;
-import org.waterwood.waterfunservice.service.Impl.SpringEmailService;
-import org.waterwood.waterfunservice.service.dto.EmailCodeResult;
+import org.waterwood.waterfunservice.dto.common.enums.EmailTemplateType;
+import org.waterwood.waterfunservice.service.email.SpringEmailService;
+import org.waterwood.waterfunservice.dto.response.auth.EmailCodeResult;
 
 import java.util.Map;
 @SpringBootTest

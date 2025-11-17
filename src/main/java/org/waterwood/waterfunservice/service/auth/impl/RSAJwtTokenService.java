@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.service.Impl;
+package org.waterwood.waterfunservice.service.auth.impl;
 
 import com.google.gson.Gson;
 import io.jsonwebtoken.Claims;
@@ -8,16 +8,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.DTO.common.ServiceResult;
-import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.service.DeviceService;
-import org.waterwood.waterfunservice.service.AuthTokenService;
-import org.waterwood.waterfunservice.service.common.TokenResult;
+import org.waterwood.waterfunservice.dto.response.ResponseCode;
+import org.waterwood.waterfunservice.infrastructure.exception.business.BusinessException;
+import org.waterwood.waterfunservice.dto.common.TokenResult;
+import org.waterwood.waterfunservice.infrastructure.security.RsaJwtUtil;
+import org.waterwood.waterfunservice.service.auth.DeviceService;
 import org.waterwood.waterfunservice.service.dto.RefreshTokenPayload;
-import org.waterwood.waterfunservice.utils.security.RsaJwtUtil;
+import org.waterwood.waterfunservice.service.auth.AuthTokenService;
+import org.waterwood.waterfunservice.infrastructure.cache.RedisHelper;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -28,7 +30,7 @@ public class RSAJwtTokenService implements AuthTokenService {
 
     private static final String REDIS_TOKEN_KEY_PREFIX = "token";
     private static final String REFRESH_TOKEN_KEY = "ref";
-    private static final String ACCESS_TOKEN_KEY = "jti";
+    private static final String ACCESS_TOKEN_JTI = "jti";
 
     private final Gson gson = new Gson();
     private final DeviceService deviceService;
@@ -38,7 +40,7 @@ public class RSAJwtTokenService implements AuthTokenService {
     private Long refreshTokenExpire;
     @Value("${token.access.expiration:3600}") // Default to 1 hour in seconds
     private Long accessTokenExpire;
-    public RSAJwtTokenService(RedisHelper<String> redisHelper, RsaJwtUtil rsaJwtUtil, DeviceService deviceService) {
+    public RSAJwtTokenService(RedisHelper<String> redisHelper, RsaJwtUtil rsaJwtUtil, DeviceServiceImpl deviceService) {
         this.redisHelper = redisHelper;
         this.rsaJwtUtil = rsaJwtUtil;
         redisHelper.setKeyPrefix(REDIS_TOKEN_KEY_PREFIX);
@@ -46,7 +48,7 @@ public class RSAJwtTokenService implements AuthTokenService {
     }
 
     @Override
-    public TokenResult generateAndStoreAccessToken(Long userId, String deviceId) {
+    public TokenResult generateStoreNewAndRevokeOthers(Long userId, String deviceId) {
         String jti = redisHelper.generateNewUUID();
         Map<String, Object> claims = new HashMap<>();
         claims.put(Claims.SUBJECT,String.valueOf(userId));
@@ -82,7 +84,7 @@ public class RSAJwtTokenService implements AuthTokenService {
                 gson.toJson(Map.of("userId",userId,
                         "did",deviceId)),
                 Duration.ofSeconds(expireInSeconds));
-        log.info("Refresh token: {}", refreshToken);
+//        log.info("Refresh token: {}", refreshToken);
         return new TokenResult(refreshToken,expireInSeconds);
     }
 
@@ -104,15 +106,11 @@ public class RSAJwtTokenService implements AuthTokenService {
      * @return Long of <b>UserID</b> if the tokenValue is valid
      */
     @Override
-    public ServiceResult<RefreshTokenPayload> validateRefreshToken(String refreshToken, String dfp) {
+    public RefreshTokenPayload validateRefreshToken(String refreshToken, String dfp) {
         String key = redisHelper.buildKeys(REFRESH_TOKEN_KEY,refreshToken);
         String jsonRes = redisHelper.getValue(key);
-        if (jsonRes == null) {
-            return ServiceResult.failure(ResponseCode.REFRESH_TOKEN_INVALID);
-        }
-        Long expireTime = redisHelper.getExpire(key);
-        if (expireTime == null || expireTime <= 0) {
-            return ServiceResult.failure(ResponseCode.REFRESH_TOKEN_EXPIRED);
+        if (jsonRes == null) { // MISSING Refresh token
+            throw new BusinessException(ResponseCode.REAUTHENTICATE_REQUIRED);
         }
         long userId = Double.valueOf((double)gson.fromJson(jsonRes, Map.class).get("userId")).longValue();
         String originalDid = (String) gson.fromJson(jsonRes, Map.class).get("did");
@@ -120,28 +118,19 @@ public class RSAJwtTokenService implements AuthTokenService {
         if(! did.equals(originalDid)) { // Device Fingerprint changed
             log.info("User ID: {} , device Fingerprint changed: {} -> {}",userId,originalDid,dfp);
         }
-        return ServiceResult.success(new RefreshTokenPayload(userId,dfp));
+        return new RefreshTokenPayload(userId,did);
     }
 
     @Override
-    public boolean validateAccessToken(String accessToken) {
-        try {
-            return rsaJwtUtil.validateToken(accessToken); // Token is invalid
-        } catch (Exception e) {
-            return false; // Token is invalid or expired
-        }
-    }
-
-    @Override
-    public void validateAccessToken(Claims claims) {
+    public void validateAccessTokenAndRejectOld(Claims claims) {
         String userId = claims.getSubject();
         String iss = claims.getIssuer();
         String jti = claims.getId();
         String did = (String) claims.get("did");
         if(iss == null || !iss.equals(rsaJwtUtil.getIssuer())) throw new JwtException("Invalid issuer");
-        String jtiKey = redisHelper.buildKeys(redisHelper.buildKeys(ACCESS_TOKEN_KEY, userId,did));
-        String originalJti = redisHelper.getValue(jtiKey);
-        if(originalJti == null || !originalJti.equals(jti)){
+        String jtiKey = redisHelper.buildKeys(redisHelper.buildKeys(ACCESS_TOKEN_JTI, userId,did));
+        String savedJti = redisHelper.getValue(jtiKey);
+        if(savedJti == null || !savedJti.equals(jti)){
             throw new JwtException("Invalid token ID");
         }
     }
@@ -158,7 +147,7 @@ public class RSAJwtTokenService implements AuthTokenService {
 
     @Override
     public void removeAccessToken(Long userId, String deviceId) {
-        redisHelper.removeValue(redisHelper.buildKeys(ACCESS_TOKEN_KEY, userId.toString(),deviceId));
+        redisHelper.removeValue(redisHelper.buildKeys(ACCESS_TOKEN_JTI, userId.toString(),deviceId));
     }
 
     @Override

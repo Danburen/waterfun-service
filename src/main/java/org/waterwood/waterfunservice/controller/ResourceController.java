@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.waterwood.waterfunservice.DTO.common.ServiceResult;
-import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.DTO.response.MiniFileResData;
-import org.waterwood.waterfunservice.service.ResourceService;
-import org.waterwood.waterfunservice.service.common.LegalResourceConstants;
+import org.waterwood.waterfunservice.dto.common.ServiceResult;
+import org.waterwood.waterfunservice.dto.response.ResponseCode;
+import org.waterwood.waterfunservice.dto.response.MiniFileResData;
+import org.waterwood.waterfunservice.service.resource.ResourceService;
+import org.waterwood.waterfunservice.service.resource.LegalResourceConstants;
 
 import java.io.IOException;
 import java.nio.file.Files;

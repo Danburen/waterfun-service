@@ -1,81 +1,44 @@
 package org.waterwood.waterfunservice.service.user;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.DTO.common.ServiceResult;
-import org.waterwood.waterfunservice.DTO.common.ResponseCode;
-import org.waterwood.waterfunservice.entity.user.AccountStatus;
+import org.waterwood.waterfunservice.entity.Permission;
 import org.waterwood.waterfunservice.entity.user.User;
-import org.waterwood.waterfunservice.repository.*;
-import org.waterwood.waterfunservice.utils.security.PasswordUtil;
+import org.waterwood.waterfunservice.dto.response.user.UserInfoResponse;
+import org.waterwood.waterfunservice.dto.request.user.UserPwdUpdateRequestBody;
+import org.waterwood.waterfunservice.infrastructure.exception.business.BusinessException;
 
-import java.time.Instant;
-import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.Set;
 
-@Service
-@Slf4j
-public class UserService {
-    private final UserRepository userRepository;
+public interface UserService {
+    User getUserByUsername(String username);
 
-    public UserService(UserRepository userRepository, RoleService roleService) {
-        this.userRepository = userRepository;
-    }
+    /**
+     * Get user by id
+     * @param id user id
+     * @throws BusinessException if user not found
+     * @return userinfo response dto of {@link UserInfoResponse}
+     */
+    User getUserById(long id);
 
-    public Optional<User> getUserByUsername(String username) {
-        return userRepository.findByUsername(username);
-    }
+    boolean activateUser(long id);
 
-    public Optional<User> getUserById(long id) {
-        return userRepository.findById(id);
-    }
+    boolean deactivateUser(long id);
 
-    public ServiceResult<Void> activateUser(long id) {
-        return findUserAndUpdateStatus(id, AccountStatus.ACTIVE);
-    }
+    boolean suspendUser(long id);
 
-    public ServiceResult<Void> deactivateUser(long id) {
-        return findUserAndUpdateStatus(id, AccountStatus.DEACTIVATED);
-    }
+    boolean deleteUser(long id);
 
-    public ServiceResult<Void> suspendUser(long id) {
-        return findUserAndUpdateStatus(id, AccountStatus.SUSPENDED);
-    }
+    boolean isUserExist(long userId);
 
-    public ServiceResult<Void> deleteUser(long id) {
-        return findUserAndUpdateStatus(id, AccountStatus.DELETED);
+    User addUser(User user);
 
-    }
+    User update(User user);
 
-    public boolean isUserExist(long userId) {
-        return userRepository.existsById(userId);
-    }
+    void updatePwd(UserPwdUpdateRequestBody userPwdUpdateRequestBody);
 
-    private boolean checkPassword(String rawPassword, String hashedPassword) {
-        return PasswordUtil.matchPassword(rawPassword, hashedPassword);
-    }
-
-    public ServiceResult<Void> addUser(User user) {
-        userRepository.save(user);
-        return ServiceResult.accept();
-    }
-
-    private ServiceResult<Void> findUserAndUpdateStatus(long userId, AccountStatus status) {
-        return findUserAndUpdate(userId, user -> {
-            user.setAccountStatus(status);
-            user.setStatusChangedAt(Instant.now());
-            user.setStatusChangeReason("Status changed to " + status.name());
-        });
-    }
-
-    private ServiceResult<Void> findUserAndUpdate(long userId, Consumer<User> updater) {
-        return userRepository.findById(userId).map(user -> {
-            updater.accept(user);
-            userRepository.save(user);
-            return ServiceResult.accept();
-        }).orElse(
-                ServiceResult.failure(ResponseCode.USER_NOT_FOUND, "User "+ userId + " does not exist.")
-        );
-    }
+    /**
+     * Get user permissions
+     * @param userId user id
+     * @return Set of permissions.
+     */
+    Set<Permission> getUserPermissions(long userId);
 }

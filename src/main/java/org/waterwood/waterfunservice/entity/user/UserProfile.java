@@ -1,17 +1,17 @@
 package org.waterwood.waterfunservice.entity.user;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.validation.constraints.*;
+import lombok.Data;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-@Getter
-@Setter
+@Data
 @Entity
 @Table(name = "user_profile", schema = "waterfun")
 public class UserProfile {
+    @NotNull
     @Id
     @Column(name = "user_id", nullable = false)
     private Long id;
@@ -22,7 +22,9 @@ public class UserProfile {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "nickname", length = 50)
+
+    @Size(max = 12)
+    @Column(name = "nickname", length = 12)
     private String nickname;
 
     @Column(name = "avatar_url")

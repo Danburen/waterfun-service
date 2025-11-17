@@ -8,12 +8,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.thymeleaf.spring6.SpringTemplateEngine;
-import org.waterwood.waterfunservice.DTO.common.EmailTemplateType;
-import org.waterwood.waterfunservice.service.Impl.SpringEmailService;
-import org.waterwood.waterfunservice.service.dto.EmailCodeResult;
+import org.waterwood.waterfunservice.dto.common.enums.EmailTemplateType;
+import org.waterwood.waterfunservice.service.email.SpringEmailService;
+import org.waterwood.waterfunservice.dto.response.auth.EmailCodeResult;
 
 import java.util.Map;
 
