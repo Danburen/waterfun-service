@@ -55,7 +55,16 @@ public class RSAJwtTokenService implements AuthTokenService {
 
         Duration expire = Duration.ofSeconds(accessTokenExpire);
         TokenResult result = rsaJwtUtil.generateToken(claims,expire);
-        redisHelper.saveValue(redisHelper.buildKeys(ACCESS_TOKEN_KEY, userId.toString(),deviceId),jti,expire);
+        // Store the access token jti to redis repository
+        redisHelper.saveValue(redisHelper.buildKeys(ACCESS_TOKEN_JTI, userId.toString(),deviceId),jti,expire);
+
+        // Revoke other access tokens and device
+        List<String>  userDevices = deviceService.getUserDeviceIds(userId);
+        for (String did : userDevices) {
+            if(did.equals(deviceId)) continue; // skip current device
+            redisHelper.removeValue(redisHelper.buildKeys(ACCESS_TOKEN_JTI, userId.toString(),did));
+            deviceService.removeUserDevice(userId,did);
+        }
         return result;
     }
 
