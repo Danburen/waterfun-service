@@ -7,7 +7,7 @@ import org.waterwood.waterfunservice.dto.common.enums.PostStatus;
 import org.waterwood.waterfunservice.dto.common.enums.PostVisibility;
 import org.waterwood.waterfunservice.entity.post.Post;
 import org.waterwood.waterfunservice.entity.post.Tag;
-import org.waterwood.waterfunservice.infrastructure.utils.context.ThreadLocalUtil;
+import org.waterwood.waterfunservice.infrastructure.utils.security.AuthContextHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +57,7 @@ public final class PostSpec {
             }
 
             // Current user id
-            preds.add(criteriaBuilder.equal(root.get("author").get("id"), ThreadLocalUtil.getCurrentUserId()));
+            preds.add(criteriaBuilder.equal(root.get("author").get("id"), AuthContextHelper.getCurrentUserId()));
             return criteriaBuilder.and(preds.toArray(new Predicate[0]));
         };
     }

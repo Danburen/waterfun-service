@@ -8,9 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.waterfunservice.dto.response.ResponseCode;
 import org.waterwood.waterfunservice.entity.Permission;
-import org.waterwood.waterfunservice.infrastructure.exception.business.BusinessException;
+import org.waterwood.waterfunservice.infrastructure.exception.BusinessException;
 import org.waterwood.waterfunservice.infrastructure.persistence.PermissionRepo;
-import org.waterwood.waterfunservice.infrastructure.utils.context.ThreadLocalUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +24,6 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     public Page<Permission> listPermissions(Specification<Permission> spec, Pageable pageable) {
-        long id = ThreadLocalUtil.getCurrentUserId();
         // TODO: check permission
         return permissionRepo.findAll(spec, pageable);
     }

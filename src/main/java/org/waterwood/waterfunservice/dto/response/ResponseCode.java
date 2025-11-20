@@ -66,9 +66,14 @@ public enum ResponseCode {
 
     // Role & Permissions
     ROLE_NOT_FOUND(400019, "permission.role.not_found"),
+    ROLE_NOT_FOUND_WITH_ARGS(400019, "permission.role.not_found.args"),
+
     ROLE_ALREADY_EXISTS(400020, "permission.role.already_exists"),
+    ROLE_ALREADY_EXISTS_WITH_ARGS(400020, "permission.role.already_exists.args"),
+
     PERMISSION_NOT_FOUND(400021, "permission.permission.not_found"),
     PERMISSION_ALREADY_EXISTS(400022, "permission.permission.already_exists"),
+    PERMISSION_ALREADY_EXISTS_WITH_ARGS(400022, "permission.permission.already_exists.args"),
 
     // System
     REDUNDANT_OPERATION(400023, "system.redundant_operation"),

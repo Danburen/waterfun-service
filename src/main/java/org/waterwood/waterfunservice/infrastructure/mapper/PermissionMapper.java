@@ -2,7 +2,7 @@ package org.waterwood.waterfunservice.infrastructure.mapper;
 
 import org.mapstruct.*;
 import org.waterwood.waterfunservice.dto.request.perm.CreatePermRequest;
-import org.waterwood.waterfunservice.dto.request.perm.updatePermRequest;
+import org.waterwood.waterfunservice.dto.request.perm.UpdatePermRequest;
 import org.waterwood.waterfunservice.dto.response.PermissionResp;
 import org.waterwood.waterfunservice.dto.request.perm.PatchPermRequest;
 import org.waterwood.waterfunservice.entity.Permission;
@@ -28,9 +28,9 @@ public interface PermissionMapper {
     Permission partialUpdate(PatchPermRequest patchPermRequest, @MappingTarget Permission permission);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_NULL)
-    Permission fullUpdate(updatePermRequest updatePermRequest, @MappingTarget Permission entity);
+    Permission fullUpdate(UpdatePermRequest updatePermRequest, @MappingTarget Permission entity);
 
     @Mapping(source = "parent.id", target = "parentId")
-    updatePermRequest toPermUpdateRequest(Permission permission);
+    UpdatePermRequest toPermUpdateRequest(Permission permission);
 
 }

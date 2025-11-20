@@ -10,9 +10,9 @@ import org.waterwood.waterfunservice.infrastructure.utils.security.EncryptionHel
 import org.waterwood.waterfunservice.infrastructure.utils.security.PasswordUtil;
 import org.waterwood.waterfunservice.infrastructure.security.EncryptionDataKey;
 import org.waterwood.waterfunservice.entity.user.AccountStatus;
-import org.waterwood.waterfunservice.infrastructure.exception.business.AuthException;
-import org.waterwood.waterfunservice.infrastructure.exception.business.BusinessException;
-import org.waterwood.waterfunservice.infrastructure.exception.service.ServiceException;
+import org.waterwood.waterfunservice.infrastructure.exception.AuthException;
+import org.waterwood.waterfunservice.infrastructure.exception.BusinessException;
+import org.waterwood.waterfunservice.infrastructure.exception.ServiceException;
 import org.waterwood.waterfunservice.infrastructure.persistence.user.UserDatumRepo;
 import org.waterwood.waterfunservice.infrastructure.security.EncryptedKeyService;
 import org.waterwood.waterfunservice.dto.request.auth.RegisterRequest;
@@ -20,7 +20,7 @@ import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.entity.user.UserDatum;
 import org.waterwood.waterfunservice.infrastructure.persistence.user.UserRepository;
 import org.waterwood.waterfunservice.infrastructure.utils.codec.HashUtil;
-import org.waterwood.waterfunservice.infrastructure.utils.StringUtil;
+import org.waterwood.utils.StringUtil;
 import org.waterwood.waterfunservice.infrastructure.utils.generator.UidGenerator;
 
 import java.util.List;

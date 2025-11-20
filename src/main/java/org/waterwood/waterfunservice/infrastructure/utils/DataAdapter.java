@@ -11,8 +11,8 @@ import java.util.List;
 public class DataAdapter {
     /**
      * Adapter the original data to another type of data
-     * @param value original value
-     * @param defaultVal default value if can't adapter
+     * @param value original values
+     * @param defaultVal default values if can't adapter
      * @return adapted data
      */
     public static <T> T toValue(Object value, T defaultVal){
@@ -43,7 +43,7 @@ public class DataAdapter {
                 }
             }
 
-            // Long value
+            // Long values
             if (targetType == Long.class) {
                 if (value instanceof Double) {
                     return (T) Long.valueOf(((Double) value).longValue());  // Double -> Long
@@ -54,23 +54,23 @@ public class DataAdapter {
                 }
             }
 
-            // String value
+            // String values
             if (targetType == String.class) {
-                return (T) value.toString();  // to String value
+                return (T) value.toString();  // to String values
             }
 
             // default Value
             return (T) value;
         } catch (ClassCastException e) {
-            System.err.println("Invalid type " + value.getClass().getSimpleName() + ". Returning default value.");
+            System.err.println("Invalid type " + value.getClass().getSimpleName() + ". Returning default values.");
             return  defaultVal;
         }
     }
 
     /**
-     * Adapted object value to String value
-     * @param value Object original value
-     * @param defaultVal default value if can't be adapted
+     * Adapted object values to String values
+     * @param value Object original values
+     * @param defaultVal default values if can't be adapted
      * @return adapted data
      */
     public static List<String> stringListVal(Object value, List<String> defaultVal){
@@ -86,16 +86,16 @@ public class DataAdapter {
     }
 
     /**
-     * Round value to one decimal
-     * @param value original Double value
-     * @return only one decimal value
+     * Round values to one decimal
+     * @param value original Double values
+     * @return only one decimal values
      */
     public static Double roundToOneDecimal(Double value){
         return Math.round(value * 10.0) / 10.0;
     }
 
     /**
-     * parse dotStr like(1.x.x) to double version value -> 1.xx
+     * parse dotStr like(1.x.x) to double version values -> 1.xx
      * @param dotStr String that contains dot.
      * @return double version
      */

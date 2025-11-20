@@ -3,14 +3,14 @@ package org.waterwood.waterfunservice.service.auth.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.infrastructure.exception.business.AuthException;
+import org.waterwood.waterfunservice.infrastructure.exception.AuthException;
 import org.waterwood.waterfunservice.infrastructure.persistence.user.UserRepository;
 import org.waterwood.waterfunservice.dto.common.TokenPair;
 import org.waterwood.waterfunservice.dto.response.ResponseCode;
 import org.waterwood.waterfunservice.dto.common.TokenResult;
 import org.waterwood.waterfunservice.service.auth.AuthService;
 import org.waterwood.waterfunservice.service.dto.RefreshTokenPayload;
-import org.waterwood.waterfunservice.infrastructure.utils.StringUtil;
+import org.waterwood.utils.StringUtil;
 
 @Service
 @Slf4j

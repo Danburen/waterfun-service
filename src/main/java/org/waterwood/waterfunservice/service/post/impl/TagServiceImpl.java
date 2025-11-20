@@ -5,14 +5,16 @@ import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.dto.response.ResponseCode;
 import org.waterwood.waterfunservice.entity.post.Tag;
 import org.waterwood.waterfunservice.entity.user.User;
-import org.waterwood.waterfunservice.infrastructure.exception.business.BusinessException;
+import org.waterwood.waterfunservice.infrastructure.exception.BusinessException;
 import org.waterwood.waterfunservice.infrastructure.persistence.TagRepository;
 import org.waterwood.waterfunservice.service.post.TagService;
 import org.waterwood.waterfunservice.service.user.UserService;
 import org.waterwood.waterfunservice.infrastructure.utils.generator.SlugGenerator;
-import org.waterwood.waterfunservice.infrastructure.utils.security.JwtHelper;
+import org.waterwood.waterfunservice.infrastructure.utils.security.AuthContextHelper;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +29,7 @@ public class TagServiceImpl implements TagService {
         // Generate slug && check
         String slug = slugGenerator.generateSlug(tag.getName(), tagRepository);
         tag.setSlug(slug);
-        User u = userService.getUserById(JwtHelper.getCurrentUserId());
+        User u = userService.getUserById(AuthContextHelper.getCurrentUserId());
         tag.setCreator(u);
 
         if(tag.getUsageCount() == null) tag.setUsageCount(0L);
@@ -36,11 +38,11 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public List<Tag> getTags() {
-        return tagRepository.findAllByCreatorId(JwtHelper.getCurrentUserId());
+        return tagRepository.findAllByCreatorId(AuthContextHelper.getCurrentUserId());
     }
 
     @Override
-    public Tag getTag(Long id) {
+    public Tag getTag(Integer id) {
         return tagRepository.findById(id).orElseThrow(
                 () -> new BusinessException(ResponseCode.NOT_FOUND, "Tag ID: " + id)
         );
@@ -60,15 +62,20 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    public void deleteTag(Long id) {
+    public void deleteTag(Integer id) {
         Tag t = tagRepository.findById(id).orElseThrow(
                 () -> new BusinessException(ResponseCode.HTTP_NOT_FOUND)
         );
 
-        if(! t.getCreator().getId().equals(JwtHelper.getCurrentUserId())){
+        if(! t.getCreator().getId().equals(AuthContextHelper.getCurrentUserId())){
             throw new BusinessException(ResponseCode.FORBIDDEN);
         }
 
         tagRepository.delete(t);
+    }
+
+    @Override
+    public Set<Tag> getTags(Iterable<Integer> tagIds, boolean strict) {
+        return new HashSet<>(tagRepository.findAllById(tagIds));
     }
 }

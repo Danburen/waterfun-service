@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.dto.response.auth.SmsCodeResult;
 import org.waterwood.waterfunservice.service.auth.VerifyServiceBase;
 import org.waterwood.waterfunservice.service.sms.AliyunSmsService;
-import org.waterwood.waterfunservice.infrastructure.exception.service.ServiceException;
+import org.waterwood.waterfunservice.infrastructure.exception.ServiceException;
 import org.waterwood.waterfunservice.infrastructure.cache.RedisHelper;
 
 import java.time.Duration;
@@ -19,7 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @Getter
 @Service
 public class SmsCodeService implements VerifyServiceBase {
-    private final RedisHelper<String> redisHelper;
+    private final RedisHelper redisHelper;
     private static final String SMS_KEY_PREFIX = "verify:sms_code";
 
     @Value("${expire.sms-code}")
@@ -28,7 +28,7 @@ public class SmsCodeService implements VerifyServiceBase {
     private String smsCodeTemplate;
     private final AliyunSmsService smsService;
 
-    protected SmsCodeService(RedisHelper<String> redisHelper, AliyunSmsService smsService) {
+    protected SmsCodeService(RedisHelper redisHelper, AliyunSmsService smsService) {
         this.redisHelper = redisHelper;
         this.smsService = smsService;
         redisHelper.setKeyPrefix(SMS_KEY_PREFIX);
@@ -41,7 +41,7 @@ public class SmsCodeService implements VerifyServiceBase {
                 Map.of("code", code, "time", expireDuration));
         result.setKey(uuid);
         if(result.isSendSuccess()) {
-            redisHelper.saveValue(redisHelper.buildKeys(phoneNumber, uuid), code, Duration.ofMinutes(expireDuration));
+            redisHelper.set(redisHelper.buildKeys(phoneNumber, uuid), code, Duration.ofMinutes(expireDuration));
         }else{
             throw new ServiceException("SMS Send Failed" + result.getMessage());
         }
@@ -49,7 +49,7 @@ public class SmsCodeService implements VerifyServiceBase {
     }
 
     public boolean verifySmsCode(String phoneNumber,String uuid, String code) {
-        return redisHelper.validate(redisHelper.buildKeys(phoneNumber,uuid), code);
+        return redisHelper.validateAndRemove(redisHelper.buildKeys(phoneNumber,uuid), code);
     }
 
     @Override

@@ -33,5 +33,5 @@ public class CreatePostRequest implements Serializable {
     private String coverImg;
     @PostState
     private String status;
-    private Set<Long> tagIds;
+    private Set<Integer> tagIds;
 }

@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
+import org.waterwood.waterfunservice.dto.request.role.RolePermItemDTO;
 import org.waterwood.waterfunservice.entity.Permission;
 import org.waterwood.waterfunservice.entity.Role;
 
@@ -50,4 +51,26 @@ public interface RoleService {
      * @param id role ID
      */
     void deleteRole(int id);
+
+    /**
+     * Assign one or more permissions to a role
+     * @param id role ID
+     * @param permissionIds permission IDs
+     */
+    void assignPerms(int id, List<RolePermItemDTO> permissionIds);
+
+    /**
+     * Update role permissions for a role
+     * @param id role ID
+     * @param permsDto  permission
+     */
+    void replaceAllRolePerms(int id, List<RolePermItemDTO> permsDto);
+
+    /**
+     * Add or update and remove permissions for a role
+     * @param id role ID
+     * @param updates list of updates
+     * @param deletePermIds list of permission id which needs to be deleted
+     */
+    void changeRolePerms(int id, List<RolePermItemDTO> updates, List<Integer> deletePermIds);
 }

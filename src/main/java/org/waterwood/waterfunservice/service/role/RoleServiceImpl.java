@@ -6,21 +6,31 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.waterwood.waterfunservice.dto.request.role.RolePermItemDTO;
 import org.waterwood.waterfunservice.dto.response.ResponseCode;
 import org.waterwood.waterfunservice.entity.Permission;
 import org.waterwood.waterfunservice.entity.Role;
 import org.waterwood.waterfunservice.entity.RolePermission;
-import org.waterwood.waterfunservice.infrastructure.exception.business.BusinessException;
+import org.waterwood.waterfunservice.infrastructure.exception.BusinessException;
+import org.waterwood.waterfunservice.infrastructure.persistence.PermissionRepo;
 import org.waterwood.waterfunservice.infrastructure.persistence.RolePermRepo;
 import org.waterwood.waterfunservice.infrastructure.persistence.RoleRepo;
+import org.waterwood.waterfunservice.infrastructure.utils.CollectionUtil;
+import org.waterwood.waterfunservice.service.perm.PermissionService;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class RoleServiceImpl implements RoleService {
     private final RoleRepo roleRepo;
     private final RolePermRepo rolePermRepo;
+    private final PermissionService permissionService;
+    private final PermissionRepo permissionRepo;
 
 
     @Transactional(readOnly = true)
@@ -68,5 +78,63 @@ public class RoleServiceImpl implements RoleService {
     public void deleteRole(int id) {
         // TODO: check permission
         roleRepo.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public void assignPerms(int id, List<RolePermItemDTO> assignments) {
+        Role role = this.getRole(id);
+       rolePermRepo.saveAll(toRolePermissions(role, assignments, true));
+    }
+
+    @Override
+    @Transactional
+    public void replaceAllRolePerms(int id, List<RolePermItemDTO> replacements) {
+        Role role = this.getRole(id);
+        rolePermRepo.deleteByRoleId(id);
+        if(CollectionUtil.isEmpty(replacements)) return;
+        rolePermRepo.saveAll(toRolePermissions(role, replacements, false));
+    }
+
+    @Override
+    @Transactional
+    public void changeRolePerms(int id, List<RolePermItemDTO> updates, List<Integer> deletePermIds) {
+        Role role = this.getRole(id);
+        if(! CollectionUtil.isEmpty(deletePermIds)) {
+            rolePermRepo.deleteByRoleIdAndPermissionIdIn(id,deletePermIds);
+        };
+        if(! CollectionUtil.isEmpty(updates)) {
+            rolePermRepo.saveAll(toRolePermissions(role, updates, false));
+        }
+    }
+
+    /**
+     * convert RolePermItemDTO to RolePermission
+     * @param role  role
+     * @param items  items
+     * @param strict whether check and throw the error of missing permissions.
+     * @return role permissions
+     */
+    private List<RolePermission> toRolePermissions(Role role, List<RolePermItemDTO> items, boolean strict){
+        Set<Integer> permIds = items.stream()
+                .map(RolePermItemDTO::getPermissionId)
+                .collect(Collectors.toSet());
+        List<Permission> permEntities = permissionRepo.findAllById(permIds);
+
+        Map<Integer, Permission> permMap = permEntities.stream()
+                .collect(Collectors.toMap(Permission::getId, p -> p));
+        if(strict && permIds.size() != permEntities.size()){
+            List<Integer> notFounds = permIds.stream().filter(pId -> !permMap.containsKey(pId)).toList();
+            throw new BusinessException(ResponseCode.PERMISSION_NOT_FOUND, notFounds);
+        }
+        return items.stream()
+                .filter(dto -> permMap.containsKey(dto.getPermissionId()))
+                .map(dto -> {
+                    RolePermission rolePerm = new RolePermission();
+                    rolePerm.setRole(role);
+                    rolePerm.setPermission(permMap.get(dto.getPermissionId()));
+                    rolePerm.setExpiresAt(dto.getExpiresAt() == null ? null : Instant.from(dto.getExpiresAt()));
+                    return rolePerm;
+                }).toList();
     }
 }

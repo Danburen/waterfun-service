@@ -7,7 +7,7 @@ import org.waterwood.waterfunservice.dto.response.ResponseCode;
 import org.waterwood.waterfunservice.entity.Permission;
 import org.waterwood.waterfunservice.entity.user.UserPermission;
 import org.waterwood.waterfunservice.entity.user.User;
-import org.waterwood.waterfunservice.infrastructure.exception.business.BusinessException;
+import org.waterwood.waterfunservice.infrastructure.exception.BusinessException;
 import org.waterwood.waterfunservice.infrastructure.persistence.user.UserPermRepo;
 import org.waterwood.waterfunservice.service.perm.PermissionServiceImpl;
 import org.waterwood.waterfunservice.service.user.UserService;

@@ -5,13 +5,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.waterfunservice.dto.response.ResponseCode;
 import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.entity.user.UserProfile;
-import org.waterwood.waterfunservice.infrastructure.exception.business.AuthException;
+import org.waterwood.waterfunservice.infrastructure.exception.AuthException;
 import org.waterwood.waterfunservice.infrastructure.mapper.UserMapper;
 import org.waterwood.waterfunservice.infrastructure.mapper.UserProfileMapper;
 import org.waterwood.waterfunservice.infrastructure.persistence.user.UserProfileRepo;
 import org.waterwood.waterfunservice.infrastructure.persistence.user.UserRepository;
 import org.waterwood.waterfunservice.service.user.UserProfileService;
-import org.waterwood.waterfunservice.infrastructure.utils.security.JwtHelper;
+import org.waterwood.waterfunservice.infrastructure.utils.security.AuthContextHelper;
 import org.waterwood.waterfunservice.infrastructure.security.RsaJwtUtil;
 
 @Service
@@ -37,7 +37,7 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     @Override
     public void updateProfile(UserProfile profile) {
-        User u = userRepository.findUserById(JwtHelper.getCurrentUserId()).orElseThrow(
+        User u = userRepository.findUserById(AuthContextHelper.getCurrentUserId()).orElseThrow(
                 ()-> new AuthException(ResponseCode.USER_NOT_FOUND)
         );
         profile.setUser(u);
@@ -53,12 +53,12 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     @Override
     public UserProfile getUserProfile() {
-        return upRepo.findUserProfileByUserId(JwtHelper.getCurrentUserId()).orElseThrow(()-> new AuthException(ResponseCode.USER_NOT_FOUND));
+        return upRepo.findUserProfileByUserId(AuthContextHelper.getCurrentUserId()).orElseThrow(()-> new AuthException(ResponseCode.USER_NOT_FOUND));
     }
 
     @Transactional
     @Override
     public void updateAvatar(String avatarUrl) {
-        upRepo.updateAvatarUrl( JwtHelper.getCurrentUserId(), avatarUrl);
+        upRepo.updateAvatarUrl( AuthContextHelper.getCurrentUserId(), avatarUrl);
     }
 }

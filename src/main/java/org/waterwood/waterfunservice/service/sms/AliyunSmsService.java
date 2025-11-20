@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.dto.response.auth.SmsCodeResult;
 import org.waterwood.waterfunservice.confirguation.AliyunSmsConfig;
-import org.waterwood.waterfunservice.infrastructure.utils.JsonUtil;
+import org.waterwood.utils.JsonUtil;
 
 import static com.aliyun.teautil.Common.toJSONString;
 

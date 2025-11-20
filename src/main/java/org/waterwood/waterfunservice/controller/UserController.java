@@ -13,7 +13,7 @@ import org.waterwood.waterfunservice.dto.response.user.UserProfileResponse;
 import org.waterwood.waterfunservice.entity.Permission;
 import org.waterwood.waterfunservice.infrastructure.mapper.UserMapper;
 import org.waterwood.waterfunservice.infrastructure.mapper.UserProfileMapper;
-import org.waterwood.waterfunservice.infrastructure.utils.context.ThreadLocalUtil;
+import org.waterwood.waterfunservice.infrastructure.utils.security.AuthContextHelper;
 import org.waterwood.waterfunservice.service.user.impl.UserProfileServiceImpl;
 import org.waterwood.waterfunservice.service.user.UserService;
 
@@ -66,7 +66,7 @@ public class UserController {
 
     @GetMapping("/permissions")
     public ApiResponse<Set<String>> getPermissions(){
-        long userId = ThreadLocalUtil.getCurrentUserId();
+        long userId = AuthContextHelper.getCurrentUserId();
         Set<String> permCodes = userService.getUserPermissions(userId)
                 .stream().map(Permission::getCode)
                 .collect(Collectors.toSet());

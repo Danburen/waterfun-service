@@ -8,13 +8,14 @@ import org.waterwood.waterfunservice.service.dto.LineCaptchaResult;
 import org.waterwood.waterfunservice.infrastructure.cache.RedisHelper;
 
 import java.time.Duration;
+import java.util.UUID;
 
 @Service
 public class CaptchaServiceImpl implements CaptchaService {
     private static final String REDIS_KEY_PREFIX = "verify:captcha";
-    private final RedisHelper<String> redisHelper;
+    private final RedisHelper redisHelper;
 
-    protected CaptchaServiceImpl(RedisHelper<String> redisHelper) {
+    protected CaptchaServiceImpl(RedisHelper redisHelper) {
         this.redisHelper = redisHelper;
         redisHelper.setKeyPrefix(REDIS_KEY_PREFIX);
     }
@@ -22,9 +23,9 @@ public class CaptchaServiceImpl implements CaptchaService {
     @Override
     public LineCaptchaResult generateCaptcha(){
         LineCaptcha lineCaptcha = generateVerifyCode();
-        String uuid = redisHelper.generateKey();
+        String uuid = UUID.randomUUID().toString();
         String code = lineCaptcha.getCode();
-        redisHelper.saveValue(uuid,code, Duration.ofMinutes(2));
+        redisHelper.set(uuid,code, Duration.ofMinutes(2));
         return new LineCaptchaResult(uuid,lineCaptcha);
     }
 
@@ -35,6 +36,6 @@ public class CaptchaServiceImpl implements CaptchaService {
 
     @Override
     public boolean validateCaptcha(String uuid, String code){
-        return redisHelper.validate(uuid,code);
+        return redisHelper.validateAndRemove(uuid,code);
     }
 }

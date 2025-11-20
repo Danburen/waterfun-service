@@ -1,14 +1,25 @@
 package org.waterwood.waterfunservice.infrastructure.mapper;
 
+import org.jetbrains.annotations.NotNull;
 import org.mapstruct.*;
+import org.waterwood.waterfunservice.dto.request.post.PatchUserPostReq;
+import org.waterwood.waterfunservice.entity.post.Category;
 import org.waterwood.waterfunservice.entity.post.Post;
 import org.waterwood.waterfunservice.dto.response.post.PostResponse;
 import org.waterwood.waterfunservice.dto.request.post.CreatePostRequest;
+import org.waterwood.waterfunservice.entity.post.Tag;
+import org.waterwood.waterfunservice.infrastructure.persistence.CategoryRepository;
+
+import java.util.Collection;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE,
         componentModel = MappingConstants.ComponentModel.SPRING,
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface PostMapper {
+
+
     Post toEntity(CreatePostRequest createPostRequest);
 
     CreatePostRequest toCreatePostDto(Post post);
@@ -18,8 +29,21 @@ public interface PostMapper {
 
     Post toEntity(PostResponse postResponse);
 
+    @Mapping(target = "categoryId", source = "category.id")
+    @Mapping(target = "tagIds",
+            expression = "java(tagsToTagIds(post.getTags()))")
     PostResponse toPostResponseDto(Post post);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     Post partialUpdate(PostResponse postResponse, @MappingTarget Post post);
+
+    Post toEntity(PatchUserPostReq patchUserPostReq);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    Post partialUpdate(PatchUserPostReq patchUserPostReq, @MappingTarget Post post);
+
+    default Set<Integer> tagsToTagIds(Collection<Tag> tags) {
+        return tags.stream().map(Tag::getId).collect(Collectors.toSet());
+    }
+
 }

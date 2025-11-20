@@ -7,11 +7,11 @@ import org.waterwood.waterfunservice.infrastructure.persistence.constraint.SlugU
 import java.util.List;
 import java.util.Optional;
 
-public interface CategoryRepository extends JpaRepository<Category, Long>, SlugUniquenessChecker {
+public interface CategoryRepository extends JpaRepository<Category, Integer>, SlugUniquenessChecker {
     boolean existsTagBySlug(String slug);
     List<Category> findAllByCreatorId(Long creatorId);
 
     Optional<Category> findByName(String name);
 
-    int removeCategoryById(Long id);
+    void removeCategoryById(Integer id);
 }

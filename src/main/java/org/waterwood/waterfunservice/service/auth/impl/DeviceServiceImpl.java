@@ -20,7 +20,7 @@ import java.util.Map;
 @Service
 public class DeviceServiceImpl implements DeviceService {
     private static final String REDIS_KEY_PREFIX = "device";
-    private final RedisHelper<String> redisHelper;
+    private final RedisHelper redisHelper;
     @Getter
     private final String deviceHashSalt;
 
@@ -34,7 +34,7 @@ public class DeviceServiceImpl implements DeviceService {
     private Long device_long_ttl;
     @Value("#{${clean-up.device.max-days} * 24 * 60 * 60 * 1000}")
     private Long deviceExpireMaxTimeMillis;
-    protected DeviceServiceImpl(@Value("${device.salt}")String salt,RedisHelper<String> redisHelper, UserRepository userRepository) {
+    protected DeviceServiceImpl(@Value("${device.salt}")String salt,RedisHelper redisHelper, UserRepository userRepository) {
         this.deviceHashSalt = Base64.getEncoder().encodeToString(salt.getBytes());
         this.redisHelper = redisHelper;
         redisHelper.setKeyPrefix(REDIS_KEY_PREFIX);
@@ -44,13 +44,13 @@ public class DeviceServiceImpl implements DeviceService {
     @Override
     public String generateAndStoreDeviceId(Long userId, String dfp) {
         String deviceId = this.generateDeviceId(userId,dfp);
-        redisHelper.addMapValue(userId.toString(),deviceId, String.valueOf(System.currentTimeMillis()));
+        redisHelper.hSet(userId.toString(),deviceId, String.valueOf(System.currentTimeMillis()));
         return deviceId;
     }
 
     @Override
     public void removeUserDevice(Long userId, String deviceId){
-        redisHelper.removeMapFields(userId.toString(),deviceId);
+        redisHelper.hDel(userId.toString(),deviceId);
     }
 
     @Override
@@ -65,11 +65,11 @@ public class DeviceServiceImpl implements DeviceService {
         while(!users.getContent().isEmpty()){
             users.forEach(user->{
                 String userId = user.getId().toString();
-                Map<String,Object> devices = redisHelper.getAll(userId);
+                Map<Object,Object> devices = redisHelper.hGetAll(userId);
                 // Get all the devices that are older than the max expire time
                 devices.entrySet().removeIf(
                         entry-> (System.currentTimeMillis() - (long) entry.getValue()) < deviceExpireMaxTimeMillis);
-                redisHelper.removeMapFields(userId, devices.keySet().toArray(new String[0]));
+                redisHelper.hDel(userId, devices.keySet().toArray(new String[0]));
             });
         }
     }
@@ -82,6 +82,6 @@ public class DeviceServiceImpl implements DeviceService {
 
     @Override
     public List<String> getUserDeviceIds(Long userId) {
-        return redisHelper.getMapValue(userId.toString()).keySet().stream().toList();
+        return redisHelper.hGetAll(userId.toString()).keySet().stream().map(Object::toString).toList();
     }
 }

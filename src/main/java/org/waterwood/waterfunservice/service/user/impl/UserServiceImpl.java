@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.waterwood.waterfunservice.dto.request.user.UserRoleItemDto;
 import org.waterwood.waterfunservice.dto.response.ResponseCode;
 import org.waterwood.waterfunservice.dto.request.user.UserPwdUpdateRequestBody;
 import org.waterwood.waterfunservice.entity.Permission;
@@ -12,12 +13,13 @@ import org.waterwood.waterfunservice.entity.user.AccountStatus;
 import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.entity.user.UserPermission;
 import org.waterwood.waterfunservice.entity.user.UserRole;
+import org.waterwood.waterfunservice.infrastructure.persistence.RoleRepo;
 import org.waterwood.waterfunservice.infrastructure.persistence.user.UserPermRepo;
 import org.waterwood.waterfunservice.infrastructure.persistence.user.UserRepository;
-import org.waterwood.waterfunservice.infrastructure.exception.business.BusinessException;
-import org.waterwood.waterfunservice.infrastructure.mapper.UserMapper;
+import org.waterwood.waterfunservice.infrastructure.exception.BusinessException;
 import org.waterwood.waterfunservice.infrastructure.persistence.user.UserRoleRepo;
-import org.waterwood.waterfunservice.infrastructure.utils.context.ThreadLocalUtil;
+import org.waterwood.waterfunservice.infrastructure.utils.CollectionUtil;
+import org.waterwood.waterfunservice.infrastructure.utils.security.AuthContextHelper;
 import org.waterwood.waterfunservice.service.role.RoleServiceImpl;
 import org.waterwood.waterfunservice.service.user.UserService;
 import org.waterwood.waterfunservice.infrastructure.utils.security.PasswordUtil;
@@ -25,6 +27,7 @@ import org.waterwood.waterfunservice.infrastructure.utils.security.PasswordUtil;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -37,6 +40,7 @@ public class UserServiceImpl implements UserService {
     private final UserRoleRepo userRoleRepo;
     private final RoleServiceImpl roleService;
     private final UserPermRepo userPermRepo;
+    private final RoleRepo roleRepo;
 
     @Override
     public User getUserByUsername(String username) {
@@ -99,7 +103,7 @@ public class UserServiceImpl implements UserService {
         String confirmPwd = userPwdUpdateRequestBody.getConfirmPwd();
         if(oldPwd.equals(newPwd)) throw new BusinessException(ResponseCode.PASSWORD_TWO_PASSWORD_MUST_DIFFERENT);
         if(! newPwd.equals(confirmPwd)) throw new BusinessException(ResponseCode.PASSWORD_TWO_PASSWORD_NOT_EQUAL);
-        User u = userRepository.findUserById(ThreadLocalUtil.getCurrentUserId()).orElseThrow(
+        User u = userRepository.findUserById(AuthContextHelper.getCurrentUserId()).orElseThrow(
                 ()-> new BusinessException(ResponseCode.USER_NOT_FOUND)
         );
         if(checkPassword(newPwd, u.getPasswordHash())) throw  new BusinessException(ResponseCode.PASSWORD_TWO_PASSWORD_MUST_DIFFERENT);
@@ -109,7 +113,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Set<Permission> getUserPermissions(long userId) {
-        if(userId != ThreadLocalUtil.getCurrentUserId()){
+        if(userId != AuthContextHelper.getCurrentUserId()){
            // TODO: check permission
         }
         List<Role> roles = userRoleRepo.findByUserId(userId).stream().map(UserRole::getRole).toList();
@@ -125,6 +129,38 @@ public class UserServiceImpl implements UserService {
         permissions.addAll(userPermission);
         return permissions;
     }
+
+    @Override
+    public Set<Role> getRoles(long userId) {
+        return userRoleRepo.findByUserId(userId).stream().map(UserRole::getRole).collect(Collectors.toSet());
+    }
+
+    @Override
+    @Transactional
+    public void assignRoles(long id, List<UserRoleItemDto> userRoleItemDtos) {
+        User user = this.getUserById(id);
+        userRoleRepo.saveAll(toUserRoles(user, userRoleItemDtos, true));
+    }
+
+    @Override
+    public void replace(long id, List<UserRoleItemDto> replacements) {
+        User user = this.getUserById(id);
+        userRoleRepo.deleteByUserId(id);
+        if(CollectionUtil.isEmpty(replacements)) return;
+        userRoleRepo.saveAll(toUserRoles(user, replacements, false));
+    }
+
+    @Override
+    public void change(long id, List<UserRoleItemDto> adds, List<Integer> deletePermIds) {
+        User user = this.getUserById(id);
+        if(! CollectionUtil.isEmpty(deletePermIds)){
+            userRoleRepo.deleteByUserIdAndRoleIdIn(id, deletePermIds);
+        }
+        if(! CollectionUtil.isEmpty(adds)){
+            userRoleRepo.saveAll(toUserRoles(user, adds, false));
+        };
+    }
+
     @Transactional
     protected boolean findUserAndUpdateStatus(long userId, AccountStatus status) {
         return findUserAndUpdate(userId, user -> {
@@ -140,5 +176,38 @@ public class UserServiceImpl implements UserService {
             userRepository.save(user);
             return true;
         }).orElse(false);
+    }
+
+    /**
+     * Convert userRoleItemDtos to UserRoles Entities
+     * @param user  user
+     * @param items userRoleItemDtos
+     * @param strict whether missing roles should be strict and throw errors
+     * @return List of UserRoles
+     */
+    private List<UserRole> toUserRoles(User user, List<UserRoleItemDto> items, boolean strict){
+        Set<Integer> roleIds = items.stream()
+                .map(UserRoleItemDto::getRoleId)
+                .collect(Collectors.toSet());
+        List<Role> roleEntities = roleRepo.findAllById(roleIds);
+        Map<Integer, Role> roleMap = roleEntities.stream()
+                .collect(Collectors.toMap(Role::getId, r -> r));
+
+        if(strict && roleIds.size() != roleEntities.size()){
+            List<Integer> notFounds = roleIds.stream()
+                    .filter(id -> !roleMap.containsKey(id))
+                    .toList();
+            throw new BusinessException(ResponseCode.ROLE_NOT_FOUND_WITH_ARGS, notFounds);
+        }
+
+        return items.stream()
+                .filter(item -> roleMap.containsKey(item.getRoleId()))
+                .map(item ->{
+                    UserRole userRole = new UserRole();
+                    userRole.setUser(user);
+                    userRole.setRole(roleMap.get(item.getRoleId()));
+                    userRole.setExpiresAt(item.getExpiresAt() == null ? null : Instant.from(item.getExpiresAt()));
+                    return userRole;
+                }).toList();
     }
 }

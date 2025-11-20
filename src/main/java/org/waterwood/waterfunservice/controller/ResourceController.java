@@ -34,7 +34,7 @@ public class ResourceController {
             @PathVariable String type,
             @PathVariable String lang,
             @PathVariable String fileName) {
-        // White list validate path
+        // White list validateAndRemove path
         if (! LegalResourceConstants.VALID_TYPES.contains(type)
                 || !LegalResourceConstants.VALID_LANGS.contains(lang)) {
             return ResponseCode.REQUEST_NOT_IN_WHITELIST.toResponseEntity();

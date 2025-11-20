@@ -9,7 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.waterwood.waterfunservice.dto.response.ResponseCode;
-import org.waterwood.waterfunservice.infrastructure.exception.business.BusinessException;
+import org.waterwood.waterfunservice.infrastructure.exception.BusinessException;
 import org.waterwood.waterfunservice.dto.common.TokenResult;
 import org.waterwood.waterfunservice.infrastructure.security.RsaJwtUtil;
 import org.waterwood.waterfunservice.service.auth.DeviceService;
@@ -21,12 +21,13 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @Slf4j
 public class RSAJwtTokenService implements AuthTokenService {
     private final RsaJwtUtil rsaJwtUtil;
-    private final RedisHelper<String> redisHelper;
+    private final RedisHelper redisHelper;
 
     private static final String REDIS_TOKEN_KEY_PREFIX = "token";
     private static final String REFRESH_TOKEN_KEY = "ref";
@@ -40,7 +41,7 @@ public class RSAJwtTokenService implements AuthTokenService {
     private Long refreshTokenExpire;
     @Value("${token.access.expiration:3600}") // Default to 1 hour in seconds
     private Long accessTokenExpire;
-    public RSAJwtTokenService(RedisHelper<String> redisHelper, RsaJwtUtil rsaJwtUtil, DeviceServiceImpl deviceService) {
+    public RSAJwtTokenService(RedisHelper redisHelper, RsaJwtUtil rsaJwtUtil, DeviceServiceImpl deviceService) {
         this.redisHelper = redisHelper;
         this.rsaJwtUtil = rsaJwtUtil;
         redisHelper.setKeyPrefix(REDIS_TOKEN_KEY_PREFIX);
@@ -49,7 +50,7 @@ public class RSAJwtTokenService implements AuthTokenService {
 
     @Override
     public TokenResult generateStoreNewAndRevokeOthers(Long userId, String deviceId) {
-        String jti = redisHelper.generateNewUUID();
+        String jti = UUID.randomUUID().toString();
         Map<String, Object> claims = new HashMap<>();
         claims.put(Claims.SUBJECT,String.valueOf(userId));
         claims.put(Claims.ID,jti);
@@ -58,13 +59,13 @@ public class RSAJwtTokenService implements AuthTokenService {
         Duration expire = Duration.ofSeconds(accessTokenExpire);
         TokenResult result = rsaJwtUtil.generateToken(claims,expire);
         // Store the access token jti to redis repository
-        redisHelper.saveValue(redisHelper.buildKeys(ACCESS_TOKEN_JTI, userId.toString(),deviceId),jti,expire);
+        redisHelper.set(redisHelper.buildKeys(ACCESS_TOKEN_JTI, userId.toString(),deviceId),jti,expire);
 
         // Revoke other access tokens and device
         List<String>  userDevices = deviceService.getUserDeviceIds(userId);
         for (String did : userDevices) {
             if(did.equals(deviceId)) continue; // skip current device
-            redisHelper.removeValue(redisHelper.buildKeys(ACCESS_TOKEN_JTI, userId.toString(),did));
+            redisHelper.del(redisHelper.buildKeys(ACCESS_TOKEN_JTI, userId.toString(),did));
             deviceService.removeUserDevice(userId,did);
         }
         return result;
@@ -79,8 +80,8 @@ public class RSAJwtTokenService implements AuthTokenService {
      */
     @Override
     public TokenResult generateAndStoreRefreshToken(long userId, String deviceId, long expireInSeconds) {
-        String refreshToken = redisHelper.generateNewUUID();
-        redisHelper.saveValue(redisHelper.buildKeys(REFRESH_TOKEN_KEY,refreshToken),
+        String refreshToken = UUID.randomUUID().toString();
+        redisHelper.set(redisHelper.buildKeys(REFRESH_TOKEN_KEY,refreshToken),
                 gson.toJson(Map.of("userId",userId,
                         "did",deviceId)),
                 Duration.ofSeconds(expireInSeconds));
@@ -101,8 +102,8 @@ public class RSAJwtTokenService implements AuthTokenService {
 
     /**
      * Validates the refresh tokenValue and returns the userId if valid.
-     * <p><b>Refresh Token will be removed </b>after validate</p>
-     * @param refreshToken the refresh tokenValue to validate
+     * <p><b>Refresh Token will be removed </b>after validateAndRemove</p>
+     * @param refreshToken the refresh tokenValue to validateAndRemove
      * @return Long of <b>UserID</b> if the tokenValue is valid
      */
     @Override
@@ -142,12 +143,12 @@ public class RSAJwtTokenService implements AuthTokenService {
 
     @Override
     public void removeRefreshToken(String refreshToken) {
-        redisHelper.removeValue(redisHelper.buildKeys(REFRESH_TOKEN_KEY, refreshToken));
+        redisHelper.del(redisHelper.buildKeys(REFRESH_TOKEN_KEY, refreshToken));
     }
 
     @Override
     public void removeAccessToken(Long userId, String deviceId) {
-        redisHelper.removeValue(redisHelper.buildKeys(ACCESS_TOKEN_JTI, userId.toString(),deviceId));
+        redisHelper.del(redisHelper.buildKeys(ACCESS_TOKEN_JTI, userId.toString(),deviceId));
     }
 
     @Override

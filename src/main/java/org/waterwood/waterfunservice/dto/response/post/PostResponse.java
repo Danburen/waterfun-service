@@ -9,6 +9,8 @@ import org.waterwood.waterfunservice.entity.post.Post;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.List;
+import java.util.Set;
 
 /**
  * DTO for {@link Post}
@@ -24,6 +26,8 @@ public class PostResponse implements Serializable {
     private String coverImg;
     private PostStatus status;
     private PostVisibility visibility;
+    private Integer categoryId;
+    private Set<Integer> tagIds;
     private Long viewCount;
     private Long likeCount;
     private Long commentCount;

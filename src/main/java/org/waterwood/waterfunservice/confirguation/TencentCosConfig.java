@@ -7,7 +7,7 @@ import com.qcloud.cos.auth.COSCredentials;
 import com.qcloud.cos.region.Region;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.waterwood.waterfunservice.infrastructure.exception.service.ServiceException;
+import org.waterwood.waterfunservice.infrastructure.exception.ServiceException;
 
 @Configuration
 public class TencentCosConfig {

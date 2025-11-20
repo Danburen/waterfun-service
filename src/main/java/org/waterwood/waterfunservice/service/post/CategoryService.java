@@ -26,7 +26,7 @@ public interface CategoryService {
      * @param id the category id
      * @return {@link Category}
      */
-    Category getCategory(Long id);
+    Category getCategory(Integer id);
 
     /**
      * Update a category
@@ -38,5 +38,5 @@ public interface CategoryService {
      * Delete a category
      * @param id the category id
      */
-    void deleteCategory(Long id);
+    void deleteCategory(Integer id);
 }

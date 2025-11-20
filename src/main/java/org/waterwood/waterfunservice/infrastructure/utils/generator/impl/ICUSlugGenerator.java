@@ -4,10 +4,10 @@ import com.ibm.icu.text.Transliterator;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.waterwood.waterfunservice.infrastructure.exception.service.ServiceException;
+import org.waterwood.waterfunservice.infrastructure.exception.ServiceException;
 import org.waterwood.waterfunservice.infrastructure.persistence.TagRepository;
 import org.waterwood.waterfunservice.infrastructure.persistence.constraint.SlugUniquenessChecker;
-import org.waterwood.waterfunservice.infrastructure.utils.StringUtil;
+import org.waterwood.utils.StringUtil;
 import org.waterwood.waterfunservice.infrastructure.utils.codec.HashUtil;
 import org.waterwood.waterfunservice.infrastructure.utils.generator.SlugGenerator;
 
@@ -39,7 +39,7 @@ public class ICUSlugGenerator implements SlugGenerator {
         for(int i = 0; i < 3; i++){
             if(i > 0) slug = base + "-" + HashUtil.next62_6();
             try{
-                if(! checker.existsTagBySlug(base)) return slug;
+                if(! checker.existsTagBySlug(slug)) return slug;
             }catch (DataIntegrityViolationException e){
                 continue;
             }

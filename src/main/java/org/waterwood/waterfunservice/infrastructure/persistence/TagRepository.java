@@ -6,7 +6,7 @@ import org.waterwood.waterfunservice.infrastructure.persistence.constraint.SlugU
 
 import java.util.List;
 
-public interface TagRepository extends JpaRepository<Tag, Long>, SlugUniquenessChecker {
+public interface TagRepository extends JpaRepository<Tag, Integer>, SlugUniquenessChecker {
   boolean existsTagBySlug(String slug);
 
   List<Tag> findAllByCreatorId(Long currentUserId);

@@ -3,6 +3,7 @@ package org.waterwood.waterfunservice.service.post;
 import org.waterwood.waterfunservice.entity.post.Tag;
 
 import java.util.List;
+import java.util.Set;
 
 public interface TagService {
     /**
@@ -22,7 +23,7 @@ public interface TagService {
      * @param id tag id
      * @return {@link Tag}
      */
-    Tag getTag(Long id);
+    Tag getTag(Integer id);
 
     /**
      * Update a tag
@@ -34,5 +35,12 @@ public interface TagService {
      * Delete a tag
      * @param id tag id
      */
-    void deleteTag(Long id);
+    void deleteTag(Integer id);
+
+    /**
+     * Get tags by tag ids
+     * @param tagIds tag ids
+     * @return list of {@link Tag}
+     */
+    Set<Tag> getTags(Iterable<Integer> tagIds, boolean strict);
 }

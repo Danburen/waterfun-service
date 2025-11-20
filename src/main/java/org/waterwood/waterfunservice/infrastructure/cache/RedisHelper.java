@@ -1,105 +1,83 @@
 package org.waterwood.waterfunservice.infrastructure.cache;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
-import org.waterwood.waterfunservice.infrastructure.utils.StringUtil;
+import org.waterwood.utils.JsonUtil;
+import org.waterwood.utils.StringUtil;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
+@Slf4j
 @Component
-public class RedisHelper<T> implements CacheService<T> {
-    private final RedisRepository<T> redisRepository;
+public class RedisHelper {
+    private final StringRedisTemplate redisTemplate;
     private String redisKeyPrefix="";
 
-    protected RedisHelper(RedisRepository<T> redisRepository) {
-        this.redisRepository = redisRepository;
+    protected RedisHelper(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
     }
 
-    @Override
     public void setKeyPrefix(String redisKeyPrefix) {
         this.redisKeyPrefix = redisKeyPrefix.replace(":", "");
     }
 
-    @Override
-    public void setExpiration(String key, Duration ttl) {
-        redisRepository.setExpiration(key, ttl);
+    public void del(String key) {
+        redisTemplate.delete(getCurrentKey(key));
     }
 
-    @Override
-    public void saveValue(String key, T value, Duration expire) {
-        redisRepository.save(getCurrentKey(key), value, expire);
+
+    public <T> void set(String key, T value, Duration expire) {
+        redisTemplate.opsForValue().set(getCurrentKey(key), JsonUtil.toJson(value), expire);
     }
 
-    @Override
-    public void saveMapValue(String key, String field, T value, Duration expire) {
-        redisRepository.hashMapSave(getCurrentKey(key),field ,value, expire);
+    public void set(String key, String value, Duration expire) {
+        redisTemplate.opsForValue().set(getCurrentKey(key), value, expire);
     }
 
-    @Override
-    public void addMapValue(String key, String field, T value) {
-        redisRepository.hashMapAdd(getCurrentKey(key),field,value);
+    public <T> void hSet(String key, String field, T value) {
+        redisTemplate.opsForHash().put(getCurrentKey(key), field, JsonUtil.toJson(value));
+    }
+    public <T> T hGet(String key, String field, Class<T> clazz) {
+        String json = (String) redisTemplate.opsForHash().get(key, field);
+        return JsonUtil.fromJson(json, clazz);
     }
 
-    @Override
-    public void removeMapFields(String key, String... fields) {
-        redisRepository.removeField(getCurrentKey(key), List.of(fields));
+    public Map<Object,Object> hGetAll(String key) {
+        return redisTemplate.opsForHash().entries(getCurrentKey(key));
     }
 
-    @Override
-    public T getValue(String key) {
-        return redisRepository.get(getCurrentKey(key));
+    public Set<Object> hKeys(String key) {
+        return redisTemplate.opsForHash().keys(getCurrentKey(key));
     }
 
-    @Override
-    public Map<String,Object> getMapValue(String key) {
-        return redisRepository.getAll(key);
+    public void hDel(String key, String... fields) {
+        redisTemplate.opsForHash().delete(getCurrentKey(key), List.of(fields));
     }
 
-    @Override
-    public Set<T> getSetValue(String key) { return redisRepository.getSetValue(redisKeyPrefix+key); }
-
-    @Override
-    public Map<String,Object> getAll(String key) { return redisRepository.getAll(getCurrentKey(key));}
-
-    @Override
-    public T getValue(String key, String field) { return (T) redisRepository.get(getCurrentKey(key),field); }
-
-    @Override
-    public void removeValue(String key) {
-        redisRepository.delete(getCurrentKey(key));
+    public <T> T getValue(String key, Class<T> clazz) {
+        return JsonUtil.fromJson(redisTemplate.opsForValue().get(getCurrentKey(key)), clazz);
     }
 
-    @Override
-    public boolean exists(String key) {
-        return redisRepository.exists(getCurrentKey(key));
+    public String getValue(String key) {
+        return redisTemplate.opsForValue().get(getCurrentKey(key));
     }
 
-    @Override
-    public boolean fieldExists(String key, String field) {
-        return redisRepository.fieldExists(getCurrentKey(key) ,field);
-    }
-
-    @Override
-    public boolean validate(String key, T value) {
-        T stored = getValue(key);
+    public <T> boolean validateAndRemove(String key, T value) {
+        String stored = getValue(key);
+        // log.info("stored: {}, value: {}, equal:{}", stored, value, stored.equals(value));
         if (stored == null || !stored.equals(value)) {
             return false;
         }
-        removeValue(key);
+        del(key);
         return true;
     }
 
-    @Override
     public Long getExpire(String key) {
-        return redisRepository.getExpire(getCurrentKey(key));
-    }
-
-    @Override
-    public String generateKey() {
-        return generateNewUUID();
+        return redisTemplate.getExpire(getCurrentKey(key));
     }
 
     /**
@@ -107,22 +85,13 @@ public class RedisHelper<T> implements CacheService<T> {
      * @param keys redis keys
      * @return joint redis key prefix
      */
-    @Override
     public String buildKeys(String... keys) {
         return String.join(":", StringUtil.noNullStringArray(keys));
     }
-
-    @Override
     public String getCurrentKey(String... keys) {
         if(StringUtil.isBlank(redisKeyPrefix)){
             return String.join(":", keys);
         }
         return redisKeyPrefix.concat(":").concat(String.join(":", keys));
     }
-
-    @Override
-    public String generateNewUUID() {
-        return UUID.randomUUID().toString();
-    }
-
 }

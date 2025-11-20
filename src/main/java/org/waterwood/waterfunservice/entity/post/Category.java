@@ -21,7 +21,7 @@ public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", columnDefinition = "int UNSIGNED not null")
-    private Long id;
+    private Integer id;
 
     @Size(max = 50)
     @NotEmpty
@@ -38,7 +38,7 @@ public class Category {
     private String description;
 
     @Column(name = "parent_id", columnDefinition = "int UNSIGNED")
-    private Long parentId;
+    private Integer parentId;
 
     @ColumnDefault("0")
     @Column(name = "sort_order")

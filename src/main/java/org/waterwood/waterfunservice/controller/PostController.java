@@ -2,6 +2,7 @@ package org.waterwood.waterfunservice.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -9,16 +10,20 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.waterwood.waterfunservice.dto.common.enums.PostStatus;
 import org.waterwood.waterfunservice.dto.common.enums.PostVisibility;
+import org.waterwood.waterfunservice.dto.request.post.PatchUserPostReq;
+import org.waterwood.waterfunservice.dto.response.ResponseCode;
 import org.waterwood.waterfunservice.dto.response.comm.ApiResponse;
 import org.waterwood.waterfunservice.entity.post.Post;
 import org.waterwood.waterfunservice.infrastructure.mapper.PostMapper;
 import org.waterwood.waterfunservice.dto.response.post.PostResponse;
 import org.waterwood.waterfunservice.infrastructure.persistence.utils.PostSpec;
+import org.waterwood.waterfunservice.infrastructure.utils.security.AuthContextHelper;
 import org.waterwood.waterfunservice.service.post.PostService;
 import org.waterwood.waterfunservice.dto.request.post.CreatePostRequest;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/post")
 @RequiredArgsConstructor
@@ -70,5 +75,22 @@ public class PostController {
         Page<Post> posts = postService.listPosts(spec, pageable);
         Page<PostResponse> postResponses = posts.map(postMapper::toPostResponseDto);
         return ApiResponse.success(postResponses);
+    }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deletePost(@PathVariable Long id){
+        postService.deletePost(id);
+        return ApiResponse.success();
+    }
+
+    @PatchMapping("/{id}")
+    public ApiResponse<Void> updatePost(@PathVariable Long id, @Valid @RequestBody PatchUserPostReq body){
+        Post post = postService.getPostById(id);
+        if(! AuthContextHelper.getCurrentUserId().equals(post.getAuthor().getId())){
+            return ApiResponse.response(ResponseCode.FORBIDDEN);
+        }
+        Post p = postMapper.partialUpdate(body, post);;
+        postService.updatePost(p, body.getTagIds(), body.getCategoryId());
+        return ApiResponse.success();
     }
 }

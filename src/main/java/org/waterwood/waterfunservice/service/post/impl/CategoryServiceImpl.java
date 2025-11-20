@@ -6,12 +6,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.waterfunservice.dto.response.ResponseCode;
 import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.entity.post.Category;
-import org.waterwood.waterfunservice.infrastructure.exception.business.BusinessException;
-import org.waterwood.waterfunservice.infrastructure.utils.context.ThreadLocalUtil;
+import org.waterwood.waterfunservice.infrastructure.exception.BusinessException;
 import org.waterwood.waterfunservice.infrastructure.utils.generator.SlugGenerator;
 import org.waterwood.waterfunservice.infrastructure.persistence.user.UserRepository;
 import org.waterwood.waterfunservice.infrastructure.mapper.CategoryMapper;
 import org.waterwood.waterfunservice.infrastructure.persistence.CategoryRepository;
+import org.waterwood.waterfunservice.infrastructure.utils.security.AuthContextHelper;
 import org.waterwood.waterfunservice.service.post.CategoryService;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class CategoryServiceImpl implements CategoryService {
         categoryRepository.findByName(category.getName()).ifPresent(_->{
             throw new BusinessException(ResponseCode.POST_CATEGORY_EXISTS);
         });
-        User u = userRepository.findUserById(ThreadLocalUtil.getCurrentUserId()).orElseThrow(
+        User u = userRepository.findUserById(AuthContextHelper.getCurrentUserId()).orElseThrow(
                 ()-> new BusinessException(ResponseCode.USER_NOT_FOUND)
         );
         category.setCreator(u);
@@ -44,12 +44,12 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<Category> getCategories() {
-        Long userId = ThreadLocalUtil.getCurrentUserId();
+        Long userId = AuthContextHelper.getCurrentUserId();
         return categoryRepository.findAllByCreatorId(userId);
     }
 
     @Override
-    public Category getCategory(Long id) {
+    public Category getCategory(Integer id) {
         return categoryRepository.findById(id).orElseThrow(
                 () -> new BusinessException(ResponseCode.NOT_FOUND, "Category ID: " + id)
         );
@@ -75,12 +75,13 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public void deleteCategory(Long id) {
+    @Transactional
+    public void deleteCategory(Integer id) {
         Category c = categoryRepository.findById(id).orElseThrow(
                 () -> new BusinessException(ResponseCode.NOT_FOUND)
         );
 
-        if(! c.getCreator().getId().equals(ThreadLocalUtil.getCurrentUserId())) {
+        if(! c.getCreator().getId().equals(AuthContextHelper.getCurrentUserId())) {
             throw new BusinessException(ResponseCode.FORBIDDEN);
         }
 

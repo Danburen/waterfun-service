@@ -1,11 +1,14 @@
 package org.waterwood.waterfunservice.service.user;
 
+import org.waterwood.waterfunservice.dto.request.user.UserRoleItemDto;
 import org.waterwood.waterfunservice.entity.Permission;
+import org.waterwood.waterfunservice.entity.Role;
 import org.waterwood.waterfunservice.entity.user.User;
 import org.waterwood.waterfunservice.dto.response.user.UserInfoResponse;
 import org.waterwood.waterfunservice.dto.request.user.UserPwdUpdateRequestBody;
-import org.waterwood.waterfunservice.infrastructure.exception.business.BusinessException;
+import org.waterwood.waterfunservice.infrastructure.exception.BusinessException;
 
+import java.util.List;
 import java.util.Set;
 
 public interface UserService {
@@ -41,4 +44,37 @@ public interface UserService {
      * @return Set of permissions.
      */
     Set<Permission> getUserPermissions(long userId);
+
+    /**
+     * Get user all roles
+     * @param userId user id
+     * @return Set of role
+     */
+    Set<Role> getRoles(long userId);
+
+    /**
+     * Assign role to user
+     * input params must not be null
+     * will check the old user role record whether in the database
+     * <p>If already exists</p> throw exception
+     * <p>If not exists</p> will create new record
+     * @param id user id
+     * @param userRoleItemDtos list of role item
+     */
+    void assignRoles(long id, List<UserRoleItemDto> userRoleItemDtos);
+
+    /**
+     * Replace all roles to user
+     * @param id user id
+     * @param userRoleItemDtos list of user role item dto.
+     */
+    void replace(long id, List<UserRoleItemDto> userRoleItemDtos);
+
+    /**
+     * Patch user roles
+     * @param id user id
+     * @param adds list of user role item to add or update
+     * @param deletePermIds list of permission id to delete
+     */
+    void change(long id, List<UserRoleItemDto> adds, List<Integer> deletePermIds);
 }
