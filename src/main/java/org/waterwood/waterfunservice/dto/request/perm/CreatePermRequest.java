@@ -3,7 +3,7 @@ package org.waterwood.waterfunservice.dto.request.perm;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import org.waterwood.waterfunservice.dto.common.enums.PermissionType;
+import org.waterwood.api.enums.PermissionType;
 
 import java.io.Serializable;
 

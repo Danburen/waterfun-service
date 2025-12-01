@@ -2,7 +2,7 @@ package org.waterwood.waterfunservice.dto.request.role;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.waterwood.waterfunservice.infrastructure.validation.AtLeastOneNotNull;
+import org.waterwood.waterfunservicecore.infrastructure.validation.AtLeastOneNotNull;
 
 import java.io.Serializable;
 import java.util.List;

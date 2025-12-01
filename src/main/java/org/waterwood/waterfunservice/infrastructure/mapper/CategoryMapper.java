@@ -6,7 +6,7 @@ import org.mapstruct.ReportingPolicy;
 import org.waterwood.waterfunservice.dto.response.post.CategoryResponse;
 import org.waterwood.waterfunservice.dto.request.post.CreateCategoryRequest;
 import org.waterwood.waterfunservice.dto.request.post.UpdateCategoryRequest;
-import org.waterwood.waterfunservice.entity.post.Category;
+import org.waterwood.waterfunservicecore.entity.post.Category;
 
 import java.util.List;
 

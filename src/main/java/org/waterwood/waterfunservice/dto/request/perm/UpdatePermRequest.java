@@ -3,12 +3,13 @@ package org.waterwood.waterfunservice.dto.request.perm;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.waterwood.waterfunservice.dto.common.enums.PermissionType;
+import org.waterwood.api.enums.PermissionType;
+import org.waterwood.waterfunservicecore.entity.Permission;
 
 import java.io.Serializable;
 
 /**
- * DTO for {@link org.waterwood.waterfunservice.entity.Permission}
+ * DTO for {@link Permission}
  */
 @Data
 @AllArgsConstructor

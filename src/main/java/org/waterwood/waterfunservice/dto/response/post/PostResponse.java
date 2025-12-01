@@ -3,13 +3,12 @@ package org.waterwood.waterfunservice.dto.response.post;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.waterwood.waterfunservice.dto.common.enums.PostStatus;
-import org.waterwood.waterfunservice.dto.common.enums.PostVisibility;
-import org.waterwood.waterfunservice.entity.post.Post;
+import org.waterwood.api.enums.PostStatus;
+import org.waterwood.api.enums.PostVisibility;
+import org.waterwood.waterfunservicecore.entity.post.Post;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.List;
 import java.util.Set;
 
 /**

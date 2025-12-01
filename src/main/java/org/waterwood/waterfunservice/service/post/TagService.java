@@ -1,6 +1,6 @@
 package org.waterwood.waterfunservice.service.post;
 
-import org.waterwood.waterfunservice.entity.post.Tag;
+import org.waterwood.waterfunservicecore.entity.post.Tag;
 
 import java.util.List;
 import java.util.Set;

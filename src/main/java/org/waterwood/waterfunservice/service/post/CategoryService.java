@@ -1,6 +1,6 @@
 package org.waterwood.waterfunservice.service.post;
 
-import org.waterwood.waterfunservice.entity.post.Category;
+import org.waterwood.waterfunservicecore.entity.post.Category;
 
 import java.util.List;
 

@@ -2,27 +2,27 @@ package org.waterwood.waterfunservice.service.user.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.waterfunservice.dto.request.user.UserRoleItemDto;
-import org.waterwood.waterfunservice.dto.response.ResponseCode;
+import org.waterwood.api.BaseResponseCode;
 import org.waterwood.waterfunservice.dto.request.user.UserPwdUpdateRequestBody;
-import org.waterwood.waterfunservice.entity.Permission;
-import org.waterwood.waterfunservice.entity.Role;
-import org.waterwood.waterfunservice.entity.user.AccountStatus;
-import org.waterwood.waterfunservice.entity.user.User;
-import org.waterwood.waterfunservice.entity.user.UserPermission;
-import org.waterwood.waterfunservice.entity.user.UserRole;
-import org.waterwood.waterfunservice.infrastructure.persistence.RoleRepo;
-import org.waterwood.waterfunservice.infrastructure.persistence.user.UserPermRepo;
-import org.waterwood.waterfunservice.infrastructure.persistence.user.UserRepository;
-import org.waterwood.waterfunservice.infrastructure.exception.BusinessException;
-import org.waterwood.waterfunservice.infrastructure.persistence.user.UserRoleRepo;
-import org.waterwood.waterfunservice.infrastructure.utils.CollectionUtil;
-import org.waterwood.waterfunservice.infrastructure.utils.security.AuthContextHelper;
+import org.waterwood.waterfunservicecore.entity.Permission;
+import org.waterwood.waterfunservicecore.entity.Role;
+import org.waterwood.waterfunservicecore.entity.user.AccountStatus;
+import org.waterwood.waterfunservicecore.entity.user.User;
+import org.waterwood.waterfunservicecore.entity.user.UserPermission;
+import org.waterwood.waterfunservicecore.entity.user.UserRole;
+import org.waterwood.waterfunservicecore.infrastructure.persistence.RoleRepo;
+import org.waterwood.waterfunservicecore.infrastructure.persistence.user.UserPermRepo;
+import org.waterwood.waterfunservicecore.infrastructure.persistence.user.UserRepository;
+import org.waterwood.common.exceptions.BusinessException;
+import org.waterwood.waterfunservicecore.infrastructure.persistence.user.UserRoleRepo;
+import org.waterwood.utils.CollectionUtil;
+import org.waterwood.waterfunservicecore.infrastructure.security.AuthContextHelper;
 import org.waterwood.waterfunservice.service.role.RoleServiceImpl;
 import org.waterwood.waterfunservice.service.user.UserService;
-import org.waterwood.waterfunservice.infrastructure.utils.security.PasswordUtil;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -42,17 +42,19 @@ public class UserServiceImpl implements UserService {
     private final UserPermRepo userPermRepo;
     private final RoleRepo roleRepo;
 
+    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+
     @Override
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username).orElseThrow(
-                ()-> new BusinessException(ResponseCode.USER_NOT_FOUND)
+                ()-> new BusinessException(BaseResponseCode.USER_NOT_FOUND)
         );
     }
 
     @Override
     public User getUserById(long id) {
         return  userRepository.findById(id).orElseThrow(
-                ()-> new BusinessException(ResponseCode.USER_NOT_FOUND)
+                ()-> new BusinessException(BaseResponseCode.USER_NOT_FOUND)
         );
     }
 
@@ -82,7 +84,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean checkPassword(String rawPassword, String hashedPassword) {
-        return PasswordUtil.matchPassword(rawPassword, hashedPassword);
+        return encoder.matches(rawPassword, hashedPassword);
     }
 
     @Override
@@ -101,20 +103,20 @@ public class UserServiceImpl implements UserService {
         String oldPwd = userPwdUpdateRequestBody.getOldPwd();
         String newPwd = userPwdUpdateRequestBody.getNewPwd();
         String confirmPwd = userPwdUpdateRequestBody.getConfirmPwd();
-        if(oldPwd.equals(newPwd)) throw new BusinessException(ResponseCode.PASSWORD_TWO_PASSWORD_MUST_DIFFERENT);
-        if(! newPwd.equals(confirmPwd)) throw new BusinessException(ResponseCode.PASSWORD_TWO_PASSWORD_NOT_EQUAL);
+        if(oldPwd.equals(newPwd)) throw new BusinessException(BaseResponseCode.PASSWORD_TWO_PASSWORD_MUST_DIFFERENT);
+        if(! newPwd.equals(confirmPwd)) throw new BusinessException(BaseResponseCode.PASSWORD_TWO_PASSWORD_NOT_EQUAL);
         User u = userRepository.findUserById(AuthContextHelper.getCurrentUserId()).orElseThrow(
-                ()-> new BusinessException(ResponseCode.USER_NOT_FOUND)
+                ()-> new BusinessException(BaseResponseCode.USER_NOT_FOUND)
         );
-        if(checkPassword(newPwd, u.getPasswordHash())) throw  new BusinessException(ResponseCode.PASSWORD_TWO_PASSWORD_MUST_DIFFERENT);
-        if(!checkPassword(oldPwd, u.getPasswordHash())) throw new BusinessException(ResponseCode.USERNAME_OR_PASSWORD_INCORRECT);
-        userRepository.updatePassword(u.getId(), PasswordUtil.encryptPassword(newPwd));
+        if(checkPassword(newPwd, u.getPasswordHash())) throw  new BusinessException(BaseResponseCode.PASSWORD_TWO_PASSWORD_MUST_DIFFERENT);
+        if(!checkPassword(oldPwd, u.getPasswordHash())) throw new BusinessException(BaseResponseCode.USERNAME_OR_PASSWORD_INCORRECT);
+        userRepository.updatePassword(u.getId(),  (newPwd));
     }
 
     @Override
     public Set<Permission> getUserPermissions(long userId) {
         if(userId != AuthContextHelper.getCurrentUserId()){
-           // TODO: check permission
+           throw  new BusinessException(BaseResponseCode.HTTP_UNAUTHORIZED);
         }
         List<Role> roles = userRoleRepo.findByUserId(userId).stream().map(UserRole::getRole).toList();
 
@@ -197,7 +199,7 @@ public class UserServiceImpl implements UserService {
             List<Integer> notFounds = roleIds.stream()
                     .filter(id -> !roleMap.containsKey(id))
                     .toList();
-            throw new BusinessException(ResponseCode.ROLE_NOT_FOUND_WITH_ARGS, notFounds);
+            throw new BusinessException(BaseResponseCode.ROLE_NOT_FOUND_WITH_ARGS, notFounds);
         }
 
         return items.stream()

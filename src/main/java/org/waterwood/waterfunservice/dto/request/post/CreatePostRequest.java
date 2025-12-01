@@ -6,8 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.URL;
-import org.waterwood.waterfunservice.entity.post.Post;
-import org.waterwood.waterfunservice.infrastructure.validation.PostState;
+import org.waterwood.waterfunservicecore.entity.post.Post;
+import org.waterwood.waterfunservicecore.infrastructure.validation.PostState;
 
 import java.io.Serializable;
 import java.util.Set;

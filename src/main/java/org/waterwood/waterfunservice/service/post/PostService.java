@@ -3,7 +3,7 @@ package org.waterwood.waterfunservice.service.post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.waterwood.waterfunservice.entity.post.Post;
+import org.waterwood.waterfunservicecore.entity.post.Post;
 
 import java.util.Set;
 

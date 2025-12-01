@@ -3,7 +3,7 @@ package org.waterwood.waterfunservice.service.perm;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.waterwood.waterfunservice.entity.Permission;
+import org.waterwood.waterfunservicecore.entity.Permission;
 
 public interface PermissionService {
     /**

@@ -2,7 +2,7 @@ package org.waterwood.waterfunservice.dto.request.user;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import org.waterwood.waterfunservice.infrastructure.validation.StrongPassword;
+import org.waterwood.common.validation.StrongPassword;
 
 @Data
 public class UserPwdUpdateRequestBody {

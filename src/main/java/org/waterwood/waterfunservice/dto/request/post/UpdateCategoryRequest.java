@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.waterwood.waterfunservice.entity.post.Category;
+import org.waterwood.waterfunservicecore.entity.post.Category;
 
 import java.io.Serializable;
 

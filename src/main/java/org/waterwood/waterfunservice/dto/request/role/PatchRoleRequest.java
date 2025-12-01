@@ -1,12 +1,12 @@
-package org.waterwood.waterfunservice.dto.response.role;
+package org.waterwood.waterfunservice.dto.request.role;
 
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.waterwood.waterfunservicecore.entity.Role;
 
 import java.io.Serializable;
-import java.time.Instant;
 
 /**
  * DTO for {@link Role}
@@ -14,10 +14,10 @@ import java.time.Instant;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RoleResp implements Serializable {
-    private Integer id;
+public class PatchRoleRequest implements Serializable {
+    @Size(max = 50)
     private String name;
+    @Size(max = 255)
     private String description;
     private Integer parentId;
-    private Instant createdAt;
 }

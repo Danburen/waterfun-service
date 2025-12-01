@@ -2,7 +2,7 @@ package org.waterwood.waterfunservice.infrastructure.mapper;
 
 import org.mapstruct.*;
 import org.waterwood.waterfunservice.dto.request.post.UpdateTagRequest;
-import org.waterwood.waterfunservice.entity.post.Tag;
+import org.waterwood.waterfunservicecore.entity.post.Tag;
 import org.waterwood.waterfunservice.dto.request.post.CreateTagRequest;
 import org.waterwood.waterfunservice.dto.response.post.TagResponse;
 

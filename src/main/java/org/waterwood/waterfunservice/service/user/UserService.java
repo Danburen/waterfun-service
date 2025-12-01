@@ -1,12 +1,12 @@
 package org.waterwood.waterfunservice.service.user;
 
 import org.waterwood.waterfunservice.dto.request.user.UserRoleItemDto;
-import org.waterwood.waterfunservice.entity.Permission;
-import org.waterwood.waterfunservice.entity.Role;
-import org.waterwood.waterfunservice.entity.user.User;
+import org.waterwood.waterfunservicecore.entity.Permission;
+import org.waterwood.waterfunservicecore.entity.Role;
+import org.waterwood.waterfunservicecore.entity.user.User;
 import org.waterwood.waterfunservice.dto.response.user.UserInfoResponse;
 import org.waterwood.waterfunservice.dto.request.user.UserPwdUpdateRequestBody;
-import org.waterwood.waterfunservice.infrastructure.exception.BusinessException;
+import org.waterwood.common.exceptions.BusinessException;
 
 import java.util.List;
 import java.util.Set;

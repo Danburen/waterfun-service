@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.waterwood.waterfunservice.dto.request.post.CreateCategoryRequest;
-import org.waterwood.waterfunservice.dto.response.comm.ApiResponse;
+import org.waterwood.api.ApiResponse;
 import org.waterwood.waterfunservice.dto.request.post.UpdateCategoryRequest;
 import org.waterwood.waterfunservice.dto.response.post.CategoryResponse;
 import org.waterwood.waterfunservice.infrastructure.mapper.CategoryMapper;

@@ -1,11 +1,10 @@
 package org.waterwood.waterfunservice.dto.request.perm;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.waterwood.waterfunservice.dto.common.enums.PermissionType;
-import org.waterwood.waterfunservice.entity.Permission;
+import org.waterwood.api.enums.PermissionType;
+import org.waterwood.waterfunservicecore.entity.Permission;
 
 import java.io.Serializable;
 

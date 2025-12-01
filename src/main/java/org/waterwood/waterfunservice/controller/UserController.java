@@ -2,21 +2,24 @@ package org.waterwood.waterfunservice.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.validator.constraints.URL;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.waterwood.waterfunservice.dto.request.user.UpdateUserProfileRequest;
 import org.waterwood.waterfunservice.dto.request.user.UserPwdUpdateRequestBody;
-import org.waterwood.waterfunservice.dto.response.comm.ApiResponse;
+import org.waterwood.api.ApiResponse;
 import org.waterwood.waterfunservice.dto.response.user.UserInfoResponse;
 import org.waterwood.waterfunservice.dto.response.user.UserProfileResponse;
-import org.waterwood.waterfunservice.entity.Permission;
+import org.waterwood.waterfunservicecore.api.PostPolicyDto;
+import org.waterwood.waterfunservicecore.api.resp.CloudResourceViewResp;
+import org.waterwood.waterfunservicecore.entity.Permission;
 import org.waterwood.waterfunservice.infrastructure.mapper.UserMapper;
 import org.waterwood.waterfunservice.infrastructure.mapper.UserProfileMapper;
-import org.waterwood.waterfunservice.infrastructure.utils.security.AuthContextHelper;
+import org.waterwood.waterfunservicecore.infrastructure.security.AuthContextHelper;
 import org.waterwood.waterfunservice.service.user.impl.UserProfileServiceImpl;
 import org.waterwood.waterfunservice.service.user.UserService;
+import org.waterwood.waterfunservicecore.services.storage.CloudFileService;
 
+import java.time.Duration;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,34 +33,46 @@ public class UserController {
     private final UserProfileServiceImpl userProfileService;
     private final UserMapper userMapper;
     private final UserProfileMapper userProfileMapper;
+    private final CloudFileService cloudFileService;
 
     @GetMapping("userInfo")
-    public ApiResponse<UserInfoResponse> getUserInfo(@RequestParam long userId){
+    public ApiResponse<UserInfoResponse> getUserInfo(){
         return ApiResponse.success(
                 userMapper.toUserInfoResponse(
-                        userService.getUserById(userId)
+                        userService.getUserById(AuthContextHelper.getCurrentUserId())
                 )
         );
     }
     @PutMapping("/updateProfile")
     public ApiResponse<Void> updateProfile(@RequestBody @Valid UpdateUserProfileRequest body){
-        userProfileService.updateProfile(userProfileMapper.toEntity(body));
+        userProfileService.updateProfileByDto(body);
         return ApiResponse.success();
     }
 
     @GetMapping("/profile")
-    public ApiResponse<UserProfileResponse> getProfile(@RequestParam long userId){
-        return ApiResponse.success(userProfileMapper.toResponse(
-                userProfileService.getUserProfile(userId)
-        ));
+    public ApiResponse<UserProfileResponse> getProfile(){
+        UserProfileResponse res = userProfileMapper.toResponse(
+                userProfileService.getUserProfile()
+        );
+        res.setAvatarUrl(
+                cloudFileService.getFileUrlFromCloud("uploads/avatar/" + res.getAvatarUrl(), Duration.ofHours(1))
+        );
+        return ApiResponse.success(res);
     }
 
-    @PatchMapping("/updateAvatar")
-    public ApiResponse<Void> updateAvatar(@RequestParam @URL String avatarUrl){
-        userProfileService.updateAvatar(avatarUrl);
-        return ApiResponse.success();
+    @GetMapping("/avatar/upload")
+    public ApiResponse<PostPolicyDto> updateAvatar(@RequestParam String suffix){
+        return ApiResponse.success(userProfileService.getUploadPolicyAndSave(suffix));
     }
 
+    @PostMapping("/avatar/uploaded")
+    public ApiResponse<CloudResourceViewResp> avatarUploaded(@RequestParam String path){
+        return ApiResponse.success(
+                new CloudResourceViewResp(
+                        cloudFileService.getFileUrlFromCloud(path, Duration.ofHours(1))
+                )
+        );
+    }
     @PatchMapping("/updatePwd")
     public ApiResponse<Void> updatePwd(@RequestBody @Valid UserPwdUpdateRequestBody userPwdUpdateRequestBody){
         userService.updatePwd(userPwdUpdateRequestBody);

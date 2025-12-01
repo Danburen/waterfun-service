@@ -1,29 +1,31 @@
 package org.waterwood.waterfunservice.service.user;
 
-import org.waterwood.waterfunservice.entity.user.UserProfile;
+import org.waterwood.waterfunservice.dto.request.user.UpdateUserProfileRequest;
+import org.waterwood.waterfunservicecore.api.PostPolicyDto;
+import org.waterwood.waterfunservicecore.entity.user.UserProfile;
 
 public interface UserProfileService {
     void addUserProfile(UserProfile up);
 
     /**
      * Update the User Profile
-     * @param profile the request body
+     * @param dto the DTO
      */
-    void updateProfile(UserProfile profile);
+    void updateProfileByDto(UpdateUserProfileRequest dto);
 
     /**
      * Get the target User Profile
      *
      * @param userId the id of the target User
-     * @return the entity of{@link UserProfile}
+     * @return the entity
      */
     UserProfile getUserProfile(Long userId);
 
     /**
      * Get current User Profile
-     * @return the entity of{@link UserProfile}
+     * @return the entity
      */
     UserProfile getUserProfile();
 
-    void updateAvatar(String avatarUrl);
+    PostPolicyDto getUploadPolicyAndSave(String avatarUrl);
 }

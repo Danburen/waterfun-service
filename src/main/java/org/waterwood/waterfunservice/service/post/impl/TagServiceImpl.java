@@ -2,15 +2,15 @@ package org.waterwood.waterfunservice.service.post.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.dto.response.ResponseCode;
-import org.waterwood.waterfunservice.entity.post.Tag;
-import org.waterwood.waterfunservice.entity.user.User;
-import org.waterwood.waterfunservice.infrastructure.exception.BusinessException;
-import org.waterwood.waterfunservice.infrastructure.persistence.TagRepository;
+import org.waterwood.api.BaseResponseCode;
+import org.waterwood.waterfunservicecore.entity.post.Tag;
+import org.waterwood.waterfunservicecore.entity.user.User;
+import org.waterwood.common.exceptions.BusinessException;
+import org.waterwood.waterfunservicecore.infrastructure.persistence.TagRepository;
 import org.waterwood.waterfunservice.service.post.TagService;
 import org.waterwood.waterfunservice.service.user.UserService;
-import org.waterwood.waterfunservice.infrastructure.utils.generator.SlugGenerator;
-import org.waterwood.waterfunservice.infrastructure.utils.security.AuthContextHelper;
+import org.waterwood.utils.generator.SlugGenerator;
+import org.waterwood.waterfunservicecore.infrastructure.security.AuthContextHelper;
 
 import java.util.HashSet;
 import java.util.List;
@@ -44,14 +44,14 @@ public class TagServiceImpl implements TagService {
     @Override
     public Tag getTag(Integer id) {
         return tagRepository.findById(id).orElseThrow(
-                () -> new BusinessException(ResponseCode.NOT_FOUND, "Tag ID: " + id)
+                () -> new BusinessException(BaseResponseCode.NOT_FOUND, "Tag ID: " + id)
         );
     }
 
     @Override
     public void updateTag(Tag tag) {
         Tag t = tagRepository.findById(tag.getId()).orElseThrow(
-                () -> new BusinessException(ResponseCode.NOT_FOUND, "Tag ID: " + tag.getId())
+                () -> new BusinessException(BaseResponseCode.NOT_FOUND, "Tag ID: " + tag.getId())
         );
         if(tag.getName() !=  null){
             t.setName(tag.getName());
@@ -64,11 +64,11 @@ public class TagServiceImpl implements TagService {
     @Override
     public void deleteTag(Integer id) {
         Tag t = tagRepository.findById(id).orElseThrow(
-                () -> new BusinessException(ResponseCode.HTTP_NOT_FOUND)
+                () -> new BusinessException(BaseResponseCode.HTTP_NOT_FOUND)
         );
 
         if(! t.getCreator().getId().equals(AuthContextHelper.getCurrentUserId())){
-            throw new BusinessException(ResponseCode.FORBIDDEN);
+            throw new BusinessException(BaseResponseCode.FORBIDDEN);
         }
 
         tagRepository.delete(t);

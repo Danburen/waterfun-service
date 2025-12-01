@@ -5,21 +5,21 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.waterwood.waterfunservice.dto.response.ResponseCode;
-import org.waterwood.waterfunservice.entity.post.Category;
-import org.waterwood.waterfunservice.entity.post.Tag;
-import org.waterwood.waterfunservice.infrastructure.exception.BusinessException;
-import org.waterwood.waterfunservice.infrastructure.persistence.PostRepository;
-import org.waterwood.waterfunservice.entity.post.Post;
-import org.waterwood.waterfunservice.entity.user.User;
-import org.waterwood.waterfunservice.infrastructure.persistence.TagRepository;
-import org.waterwood.waterfunservice.infrastructure.persistence.user.UserRepository;
-import org.waterwood.waterfunservice.infrastructure.utils.security.AuthContextHelper;
+import org.waterwood.api.BaseResponseCode;
+import org.waterwood.waterfunservicecore.entity.post.Category;
+import org.waterwood.waterfunservicecore.entity.post.Tag;
+import org.waterwood.common.exceptions.BusinessException;
+import org.waterwood.waterfunservicecore.infrastructure.persistence.PostRepository;
+import org.waterwood.waterfunservicecore.entity.post.Post;
+import org.waterwood.waterfunservicecore.entity.user.User;
+import org.waterwood.waterfunservicecore.infrastructure.persistence.TagRepository;
+import org.waterwood.waterfunservicecore.infrastructure.persistence.user.UserRepository;
+import org.waterwood.waterfunservicecore.infrastructure.security.AuthContextHelper;
 import org.waterwood.waterfunservice.service.post.CategoryService;
 import org.waterwood.waterfunservice.service.post.PostService;
 import org.waterwood.waterfunservice.service.post.TagService;
 import org.waterwood.waterfunservice.service.user.UserService;
-import org.waterwood.waterfunservice.infrastructure.utils.generator.SlugGenerator;
+import org.waterwood.utils.generator.SlugGenerator;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -65,14 +65,14 @@ public class PostServiceImpl implements PostService {
         if(p.getAuthor() == userService.getUserById(AuthContextHelper.getCurrentUserId())){
             postRepository.deleteById(id);
         }else{
-            throw new BusinessException(ResponseCode.FORBIDDEN);
+            throw new BusinessException(BaseResponseCode.FORBIDDEN);
         }
     }
 
     @Override
     public Post getPostById(Long id) {
         return postRepository.findById(id)
-                .orElseThrow(()-> new BusinessException(ResponseCode.NOT_FOUND));
+                .orElseThrow(()-> new BusinessException(BaseResponseCode.NOT_FOUND));
     }
 
     @Override

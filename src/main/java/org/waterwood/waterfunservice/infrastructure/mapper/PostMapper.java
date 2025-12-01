@@ -1,14 +1,11 @@
 package org.waterwood.waterfunservice.infrastructure.mapper;
 
-import org.jetbrains.annotations.NotNull;
 import org.mapstruct.*;
 import org.waterwood.waterfunservice.dto.request.post.PatchUserPostReq;
-import org.waterwood.waterfunservice.entity.post.Category;
-import org.waterwood.waterfunservice.entity.post.Post;
+import org.waterwood.waterfunservicecore.entity.post.Post;
 import org.waterwood.waterfunservice.dto.response.post.PostResponse;
 import org.waterwood.waterfunservice.dto.request.post.CreatePostRequest;
-import org.waterwood.waterfunservice.entity.post.Tag;
-import org.waterwood.waterfunservice.infrastructure.persistence.CategoryRepository;
+import org.waterwood.waterfunservicecore.entity.post.Tag;
 
 import java.util.Collection;
 import java.util.Set;

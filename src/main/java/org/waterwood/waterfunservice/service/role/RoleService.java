@@ -5,8 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.waterfunservice.dto.request.role.RolePermItemDTO;
-import org.waterwood.waterfunservice.entity.Permission;
-import org.waterwood.waterfunservice.entity.Role;
+import org.waterwood.waterfunservicecore.entity.Permission;
+import org.waterwood.waterfunservicecore.entity.Role;
 
 import java.util.List;
 

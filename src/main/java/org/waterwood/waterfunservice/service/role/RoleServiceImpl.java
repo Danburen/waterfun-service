@@ -7,16 +7,15 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.waterfunservice.dto.request.role.RolePermItemDTO;
-import org.waterwood.waterfunservice.dto.response.ResponseCode;
-import org.waterwood.waterfunservice.entity.Permission;
-import org.waterwood.waterfunservice.entity.Role;
-import org.waterwood.waterfunservice.entity.RolePermission;
-import org.waterwood.waterfunservice.infrastructure.exception.BusinessException;
-import org.waterwood.waterfunservice.infrastructure.persistence.PermissionRepo;
-import org.waterwood.waterfunservice.infrastructure.persistence.RolePermRepo;
-import org.waterwood.waterfunservice.infrastructure.persistence.RoleRepo;
-import org.waterwood.waterfunservice.infrastructure.utils.CollectionUtil;
-import org.waterwood.waterfunservice.service.perm.PermissionService;
+import org.waterwood.api.BaseResponseCode;
+import org.waterwood.waterfunservicecore.entity.Permission;
+import org.waterwood.waterfunservicecore.entity.Role;
+import org.waterwood.waterfunservicecore.entity.RolePermission;
+import org.waterwood.common.exceptions.BusinessException;
+import org.waterwood.waterfunservicecore.infrastructure.persistence.PermissionRepo;
+import org.waterwood.waterfunservicecore.infrastructure.persistence.RolePermRepo;
+import org.waterwood.waterfunservicecore.infrastructure.persistence.RoleRepo;
+import org.waterwood.utils.CollectionUtil;
 
 import java.time.Instant;
 import java.util.List;
@@ -29,7 +28,6 @@ import java.util.stream.Collectors;
 public class RoleServiceImpl implements RoleService {
     private final RoleRepo roleRepo;
     private final RolePermRepo rolePermRepo;
-    private final PermissionService permissionService;
     private final PermissionRepo permissionRepo;
 
 
@@ -53,14 +51,14 @@ public class RoleServiceImpl implements RoleService {
     public Role getRole(int id) {
         // TODO: check permission
         return roleRepo.findById(id)
-                .orElseThrow(()-> new BusinessException(ResponseCode.ROLE_NOT_FOUND));
+                .orElseThrow(()-> new BusinessException(BaseResponseCode.ROLE_NOT_FOUND));
     }
 
     @Override
     public Role addRole(Role role) {
         // TODO: check permission
         if(roleRepo.existsById(role.getId())){
-            throw new BusinessException(ResponseCode.ROLE_ALREADY_EXISTS);
+            throw new BusinessException(BaseResponseCode.ROLE_ALREADY_EXISTS);
         }
         return roleRepo.save(role);
     }
@@ -125,7 +123,7 @@ public class RoleServiceImpl implements RoleService {
                 .collect(Collectors.toMap(Permission::getId, p -> p));
         if(strict && permIds.size() != permEntities.size()){
             List<Integer> notFounds = permIds.stream().filter(pId -> !permMap.containsKey(pId)).toList();
-            throw new BusinessException(ResponseCode.PERMISSION_NOT_FOUND, notFounds);
+            throw new BusinessException(BaseResponseCode.PERMISSION_NOT_FOUND, notFounds);
         }
         return items.stream()
                 .filter(dto -> permMap.containsKey(dto.getPermissionId()))

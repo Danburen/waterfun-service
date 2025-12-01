@@ -10,24 +10,20 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.waterwood.waterfunservice.dto.common.TokenPair;
-import org.waterwood.waterfunservice.dto.common.TokenResult;
-import org.waterwood.waterfunservice.dto.request.auth.*;
-import org.waterwood.waterfunservice.dto.response.comm.ApiResponse;
-import org.waterwood.waterfunservice.service.auth.impl.AuthServiceImpl;
-import org.waterwood.waterfunservice.service.dto.LineCaptchaResult;
-import org.waterwood.waterfunservice.service.auth.impl.CaptchaServiceImpl;
-import org.waterwood.waterfunservice.service.auth.impl.LoginServiceImpl;
-import org.waterwood.waterfunservice.dto.common.enums.EmailTemplateType;
-import org.waterwood.waterfunservice.service.auth.impl.EmailCodeService;
-import org.waterwood.waterfunservice.service.auth.impl.SmsCodeService;
-import org.waterwood.waterfunservice.dto.response.auth.LoginClientData;
-import org.waterwood.waterfunservice.entity.user.User;
-import org.waterwood.waterfunservice.service.auth.impl.RegisterServiceImpl;
-import org.waterwood.waterfunservice.dto.response.auth.EmailCodeResult;
-import org.waterwood.waterfunservice.dto.response.auth.SmsCodeResult;
-import org.waterwood.waterfunservice.infrastructure.utils.CookieUtil;
-import org.waterwood.waterfunservice.infrastructure.utils.ResponseUtil;
+import org.waterwood.api.BaseResponseCode;
+import org.waterwood.api.TokenPair;
+import org.waterwood.common.TokenResult;
+import org.waterwood.api.ApiResponse;
+import org.waterwood.waterfunservicecore.services.auth.*;
+import org.waterwood.api.enums.EmailTemplateType;
+import org.waterwood.waterfunservicecore.api.req.auth.*;
+import org.waterwood.waterfunservicecore.api.resp.auth.LoginClientData;
+import org.waterwood.waterfunservicecore.entity.user.User;
+import org.waterwood.waterfunservicecore.services.email.EmailCodeResult;
+import org.waterwood.waterfunservicecore.api.resp.auth.SmsCodeResult;
+import org.waterwood.waterfunservicecore.infrastructure.utils.CookieUtil;
+import org.waterwood.waterfunservicecore.infrastructure.utils.ResponseUtil;
+import org.waterwood.waterfunservicecore.services.email.EmailCodeService;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -82,6 +78,9 @@ public class AuthController {
     @GetMapping("/csrf-token")
     public ApiResponse<Void> getCsrfToken(HttpServletRequest request,HttpServletResponse response) {
         CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+        if(token == null){
+            return ApiResponse.success();
+        }
         ResponseCookie cookie = ResponseCookie.from("XSRF-TOKEN", token.getToken())
                 .httpOnly(false)
                 .secure(true)

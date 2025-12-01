@@ -5,8 +5,8 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.waterwood.waterfunservice.entity.user.Gender;
-import org.waterwood.waterfunservice.entity.user.UserProfile;
+import org.waterwood.waterfunservicecore.entity.user.Gender;
+import org.waterwood.waterfunservicecore.entity.user.UserProfile;
 
 import java.io.Serializable;
 
@@ -17,9 +17,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserProfileResponse implements Serializable {
-    @NotNull
-    private Long id;
-    @Size(max = 12)
     private String nickname;
     private String avatarUrl;
     private String bio;

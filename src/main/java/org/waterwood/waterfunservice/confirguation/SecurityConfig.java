@@ -9,8 +9,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.waterwood.waterfunservice.infrastructure.security.WaterJwtDecoder;
-import org.waterwood.waterfunservice.infrastructure.security.UserJwtAuthConverter;
+import org.waterwood.waterfunservicecore.infrastructure.security.WaterJwtDecoder;
+import org.waterwood.waterfunservicecore.infrastructure.security.UserJwtAuthConverter;
 
 import java.util.List;
 
