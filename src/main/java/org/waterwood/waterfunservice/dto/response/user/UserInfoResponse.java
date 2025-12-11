@@ -20,4 +20,5 @@ public class UserInfoResponse implements Serializable {
     private String username;
     private AccountStatus accountStatus;
     private Instant createdAt;
+    private Boolean passwordHash;
 }

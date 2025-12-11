@@ -3,7 +3,7 @@ package org.waterwood.waterfunservice.dto.request.user;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.waterwood.common.validation.StrongPassword;
-
+@Deprecated
 @Data
 public class UserPwdUpdateRequestBody {
     @NotBlank
@@ -13,4 +13,5 @@ public class UserPwdUpdateRequestBody {
     private String newPwd;
     @NotBlank
     private String confirmPwd;
+
 }

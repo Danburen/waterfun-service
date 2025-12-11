@@ -5,21 +5,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.waterwood.waterfunservice.dto.request.user.UpdateUserProfileRequest;
-import org.waterwood.waterfunservice.dto.request.user.UserPwdUpdateRequestBody;
 import org.waterwood.api.ApiResponse;
 import org.waterwood.waterfunservice.dto.response.user.UserInfoResponse;
 import org.waterwood.waterfunservice.dto.response.user.UserProfileResponse;
 import org.waterwood.waterfunservicecore.api.PostPolicyDto;
-import org.waterwood.waterfunservicecore.api.resp.CloudResourceViewResp;
+import org.waterwood.waterfunservicecore.api.resp.CloudResourcePresignedUrlResp;
 import org.waterwood.waterfunservicecore.entity.Permission;
 import org.waterwood.waterfunservice.infrastructure.mapper.UserMapper;
 import org.waterwood.waterfunservice.infrastructure.mapper.UserProfileMapper;
+import org.waterwood.waterfunservicecore.entity.user.User;
+import org.waterwood.waterfunservicecore.entity.user.UserProfile;
 import org.waterwood.waterfunservicecore.infrastructure.security.AuthContextHelper;
 import org.waterwood.waterfunservice.service.user.impl.UserProfileServiceImpl;
 import org.waterwood.waterfunservice.service.user.UserService;
 import org.waterwood.waterfunservicecore.services.storage.CloudFileService;
 
-import java.time.Duration;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,11 +37,10 @@ public class UserController {
 
     @GetMapping("userInfo")
     public ApiResponse<UserInfoResponse> getUserInfo(){
-        return ApiResponse.success(
-                userMapper.toUserInfoResponse(
-                        userService.getUserById(AuthContextHelper.getCurrentUserId())
-                )
-        );
+        User user = userService.getUserById(AuthContextHelper.getCurrentUserId());
+        UserInfoResponse res = userMapper.toUserInfoResponse(user);
+        res.setPasswordHash(user.getPasswordHash() != null);
+        return ApiResponse.success(res);
     }
     @PutMapping("/updateProfile")
     public ApiResponse<Void> updateProfile(@RequestBody @Valid UpdateUserProfileRequest body){
@@ -51,33 +50,27 @@ public class UserController {
 
     @GetMapping("/profile")
     public ApiResponse<UserProfileResponse> getProfile(){
-        UserProfileResponse res = userProfileMapper.toResponse(
-                userProfileService.getUserProfile()
-        );
-        res.setAvatarUrl(
-                cloudFileService.getFileUrlFromCloud("uploads/avatar/" + res.getAvatarUrl(), Duration.ofHours(1))
+        UserProfile up = userProfileService.getUserProfile();
+        UserProfileResponse res = userProfileMapper.toResponse(up);
+        res.setAvatar(
+                userProfileService.getUserAvatar()
         );
         return ApiResponse.success(res);
     }
 
+
     @GetMapping("/avatar/upload")
     public ApiResponse<PostPolicyDto> updateAvatar(@RequestParam String suffix){
-        return ApiResponse.success(userProfileService.getUploadPolicyAndSave(suffix));
+        return ApiResponse.success(userProfileService.getUploadPolicyAndSaveAvatar(suffix));
     }
 
-    @PostMapping("/avatar/uploaded")
-    public ApiResponse<CloudResourceViewResp> avatarUploaded(@RequestParam String path){
+    @GetMapping("/avatar")
+    public ApiResponse<CloudResourcePresignedUrlResp> getAvatar(){
         return ApiResponse.success(
-                new CloudResourceViewResp(
-                        cloudFileService.getFileUrlFromCloud(path, Duration.ofHours(1))
-                )
+                userProfileService.getUserAvatar()
         );
     }
-    @PatchMapping("/updatePwd")
-    public ApiResponse<Void> updatePwd(@RequestBody @Valid UserPwdUpdateRequestBody userPwdUpdateRequestBody){
-        userService.updatePwd(userPwdUpdateRequestBody);
-        return ApiResponse.success();
-    }
+
 
     @GetMapping("/permissions")
     public ApiResponse<Set<String>> getPermissions(){

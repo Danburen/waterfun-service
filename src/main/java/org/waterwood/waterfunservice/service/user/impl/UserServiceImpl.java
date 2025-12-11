@@ -7,7 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.waterfunservice.dto.request.user.UserRoleItemDto;
 import org.waterwood.api.BaseResponseCode;
-import org.waterwood.waterfunservice.dto.request.user.UserPwdUpdateRequestBody;
+import org.waterwood.waterfunservicecore.api.VerifyScene;
+import org.waterwood.waterfunservicecore.api.req.ResetPasswordDto;
 import org.waterwood.waterfunservicecore.entity.Permission;
 import org.waterwood.waterfunservicecore.entity.Role;
 import org.waterwood.waterfunservicecore.entity.user.AccountStatus;
@@ -99,10 +100,13 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public void updatePwd(UserPwdUpdateRequestBody userPwdUpdateRequestBody) {
-        String oldPwd = userPwdUpdateRequestBody.getOldPwd();
-        String newPwd = userPwdUpdateRequestBody.getNewPwd();
-        String confirmPwd = userPwdUpdateRequestBody.getConfirmPwd();
+    public void updatePwd(ResetPasswordDto dto) {
+        if(dto.getVerify().getScene() != VerifyScene.RESET_PASSWORD){
+            throw new BusinessException(BaseResponseCode.INVALID_VERIFY_SCENE);
+        }
+        String oldPwd = dto.getOldPwd();
+        String newPwd = dto.getNewPwd();
+        String confirmPwd = dto.getConfirmPwd();
         if(oldPwd.equals(newPwd)) throw new BusinessException(BaseResponseCode.PASSWORD_TWO_PASSWORD_MUST_DIFFERENT);
         if(! newPwd.equals(confirmPwd)) throw new BusinessException(BaseResponseCode.PASSWORD_TWO_PASSWORD_NOT_EQUAL);
         User u = userRepository.findUserById(AuthContextHelper.getCurrentUserId()).orElseThrow(

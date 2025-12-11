@@ -68,7 +68,7 @@ public class GlobalExceptionHandler {
         }
         ErrorResponse response = new ErrorResponse(
                 BaseResponseCode.VALIDATION_ERROR.getCode(),
-                msgSrc.getMessage(BaseResponseCode.VALIDATION_ERROR.getMsgKey(),
+                msgSrc.getMessage(BaseResponseCode.VALIDATION_ERROR.getCode(),
                         null,
                         "Validation Error",
                         LOCALE),
@@ -84,7 +84,7 @@ public class GlobalExceptionHandler {
      * @return the {@link ResponseEntity} of {@link ErrorResponse} body with {@link HttpStatus} 400.
      */
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<?> handleConstraintViolation(ConstraintViolationException ex){
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex){
         List<String> errors = new ArrayList<>();
         for(ConstraintViolation<?> violation : ex.getConstraintViolations()){
             String msg = msgSrc.getMessage(
@@ -98,13 +98,14 @@ public class GlobalExceptionHandler {
 
         ErrorResponse response = new ErrorResponse(
                 BaseResponseCode.VALIDATION_ERROR.getCode(),
-                msgSrc.getMessage(BaseResponseCode.VALIDATION_ERROR.getMsgKey(),
+                msgSrc.getMessage(BaseResponseCode.VALIDATION_ERROR.getCode(),
                         null,
                         "Parameter constraint violation",
                         LOCALE),
                 errors,
                 new Date()
         );
+        log.info(String.valueOf(errors));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -144,7 +145,7 @@ public class GlobalExceptionHandler {
      * @return the {@link ResponseEntity} of {@link ErrorResponse} body with {@link}
      */
     @ExceptionHandler(AuthException.class)
-    public ResponseEntity<?> handleAuthException(AuthException ex){
+    public ResponseEntity<ErrorResponse> handleAuthException(AuthException ex){
         ErrorResponse response = new ErrorResponse(
                 ex.getErrorCode(),
                 msgSrc.getMessage(ex.getMessage(),
@@ -163,7 +164,7 @@ public class GlobalExceptionHandler {
      * @return the {@link ResponseEntity} of {@link ErrorResponse} body with {@link}
      */
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<?> handleBusinessException(BusinessException ex){
+    public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex){
         ErrorResponse response = new ErrorResponse(
                 ex.getErrorCode(),
                 msgSrc.getMessage(ex.getMessage(),

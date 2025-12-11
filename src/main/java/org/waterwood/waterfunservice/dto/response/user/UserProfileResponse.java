@@ -5,10 +5,12 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.waterwood.waterfunservicecore.api.resp.CloudResourcePresignedUrlResp;
 import org.waterwood.waterfunservicecore.entity.user.Gender;
 import org.waterwood.waterfunservicecore.entity.user.UserProfile;
 
 import java.io.Serializable;
+import java.time.Instant;
 
 /**
  * DTO for {@link UserProfile}
@@ -18,7 +20,9 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class UserProfileResponse implements Serializable {
     private String nickname;
-    private String avatarUrl;
+    private CloudResourcePresignedUrlResp avatar;
     private String bio;
     private Gender gender;
+    private String birthday;
+    private String residence;
 }

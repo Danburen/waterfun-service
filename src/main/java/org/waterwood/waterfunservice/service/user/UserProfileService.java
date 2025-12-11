@@ -2,6 +2,7 @@ package org.waterwood.waterfunservice.service.user;
 
 import org.waterwood.waterfunservice.dto.request.user.UpdateUserProfileRequest;
 import org.waterwood.waterfunservicecore.api.PostPolicyDto;
+import org.waterwood.waterfunservicecore.api.resp.CloudResourcePresignedUrlResp;
 import org.waterwood.waterfunservicecore.entity.user.UserProfile;
 
 public interface UserProfileService {
@@ -27,5 +28,11 @@ public interface UserProfileService {
      */
     UserProfile getUserProfile();
 
-    PostPolicyDto getUploadPolicyAndSave(String avatarUrl);
+    PostPolicyDto getUploadPolicyAndSaveAvatar(String avatarUrl);
+
+    /**
+     * Get the User Avatar
+     * @return the presigned url
+     */
+    CloudResourcePresignedUrlResp getUserAvatar();
 }

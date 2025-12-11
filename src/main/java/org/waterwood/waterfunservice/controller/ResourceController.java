@@ -5,19 +5,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.waterwood.api.ApiResponse;
 import org.waterwood.api.BaseResponseCode;
 import org.waterwood.waterfunservice.dto.response.MiniFileResData;
 import org.waterwood.waterfunservice.service.resource.ResourceService;
 import org.waterwood.waterfunservice.service.resource.LegalResourceConstants;
+import org.waterwood.waterfunservicecore.api.PostPolicyDto;
+import org.waterwood.waterfunservicecore.services.storage.CloudFileService;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/resource/")
@@ -27,6 +29,8 @@ public class ResourceController {
     private ResourceService resourceService;
     @Autowired
     private ResourceLoader resourceLoader;
+    @Autowired
+    private CloudFileService cloudFileService;
 
     @GetMapping("legal/{type}/{lang}/{fileName}")
     public ResponseEntity<?> getLegalResource(
@@ -51,6 +55,16 @@ public class ResourceController {
         } catch (IOException e) {
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @PostMapping("/upload")
+    public ApiResponse<String> upload(MultipartFile file) throws IOException {
+        String originalName = file.getOriginalFilename();
+        String ext = originalName.substring(originalName.lastIndexOf('.'));
+        String key = "imgs/" + UUID.randomUUID().toString() + ext;
+        log.info("upload file: {}", key);
+        cloudFileService.uploadFile(key, file.getInputStream(), file.getSize(), file.getContentType());
+        return ApiResponse.success();
     }
 
     private boolean isSafePathSegment(String segment) {

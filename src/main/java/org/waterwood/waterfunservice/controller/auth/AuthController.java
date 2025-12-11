@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.controller;
+package org.waterwood.waterfunservice.controller.auth;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,20 +10,18 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.waterwood.api.BaseResponseCode;
 import org.waterwood.api.TokenPair;
 import org.waterwood.common.TokenResult;
 import org.waterwood.api.ApiResponse;
+import org.waterwood.waterfunservicecore.api.VerifyChannel;
+import org.waterwood.waterfunservicecore.api.resp.auth.CodeResult;
 import org.waterwood.waterfunservicecore.services.auth.*;
-import org.waterwood.api.enums.EmailTemplateType;
 import org.waterwood.waterfunservicecore.api.req.auth.*;
 import org.waterwood.waterfunservicecore.api.resp.auth.LoginClientData;
 import org.waterwood.waterfunservicecore.entity.user.User;
-import org.waterwood.waterfunservicecore.services.email.EmailCodeResult;
-import org.waterwood.waterfunservicecore.api.resp.auth.SmsCodeResult;
 import org.waterwood.waterfunservicecore.infrastructure.utils.CookieUtil;
 import org.waterwood.waterfunservicecore.infrastructure.utils.ResponseUtil;
-import org.waterwood.waterfunservicecore.services.email.EmailCodeService;
+import org.waterwood.waterfunservicecore.services.auth.code.VerificationService;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -34,19 +32,17 @@ import java.time.Duration;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final CaptchaServiceImpl captchaService;
-    private final EmailCodeService emailCodeService;
-    private final SmsCodeService smsCodeService;
     private final LoginServiceImpl loginService;
     private final RegisterServiceImpl registerService;
     private final AuthServiceImpl authService;
+    private final VerificationService verificationService;
 
-    public AuthController(CaptchaServiceImpl cs, EmailCodeService emcs, SmsCodeService smcs, LoginServiceImpl ls, RegisterServiceImpl rs, AuthServiceImpl as) {
+    public AuthController(CaptchaServiceImpl cs, LoginServiceImpl ls, RegisterServiceImpl rs, AuthServiceImpl as, VerificationService verificationService) {
         this.captchaService = cs;
-        this.emailCodeService = emcs;
-        this.smsCodeService = smcs;
         this.loginService = ls;
         this.registerService = rs;
         this.authService = as;
+        this.verificationService = verificationService;
     }
 
     @PostMapping("/refresh-access-token")
@@ -92,51 +88,42 @@ public class AuthController {
         return ApiResponse.success();
     }
 
-    @PostMapping("/send-sms-code")
-    public ApiResponse<Void> sendSmsCode(@Valid @RequestBody SendSmsCodeRequest requestBody, HttpServletResponse response) {
-        SmsCodeResult result = smsCodeService.sendSmsCode(requestBody.getPhoneNumber());
-        ResponseUtil.setCookieAndNoCache(response, "SMS_CODE_KEY", result.getKey(), 120);
+    /***
+     * Send sms/email code api for scene only allow login or register
+     * @param dto send code request
+     * @param response http response
+     * @return send code result
+     */
+    @PostMapping("/send-code")
+    public ApiResponse<Void> sendCode(@Valid @RequestBody SendCodeDto dto, HttpServletResponse response) {
+        CodeResult result = verificationService.sendCode(dto);
+        String cookieKey = dto.getChannel().name() + "_CODE_KEY";
+        ResponseUtil.setCookieAndNoCache(response,cookieKey, result.getKey(), 120);
         return ApiResponse.success();
     }
 
-    @PostMapping("/send-email-code")
-    public ApiResponse<Void> sendEmailCode(@Valid @RequestBody SendEmailCodeRequest requestBody, HttpServletResponse response) {
-        EmailCodeResult result = emailCodeService.sendEmailCode(requestBody.getEmail(), EmailTemplateType.VERIFY_CODE);
-        ResponseUtil.setCookieAndNoCache(response, "EMAIL_CODE_KEY", result.getKey(), 120);
-        return ApiResponse.success();
-    }
-
-    @PostMapping("/login/password")
-    public ApiResponse<LoginClientData> loginByPassword(@Valid @RequestBody PwdLoginRequestBody body, HttpServletRequest request, HttpServletResponse response) {
+    @PostMapping("/login-by-password")
+    public ApiResponse<LoginClientData> loginByPassword(@Valid @RequestBody PwdLoginReq body, HttpServletRequest request, HttpServletResponse response) {
         Cookie[] cookies = request.getCookies();
         User user = loginService.login(body, CookieUtil.getCookieValue(cookies, "CAPTCHA_KEY"));
         return BuildLoginResponse(response, user,body.getDeviceFp());
     }
 
-    @PostMapping("/admin/login/password")
-    public ApiResponse<LoginClientData> adminLoginByPassword(@Valid @RequestBody PwdLoginRequestBody body, HttpServletRequest request, HttpServletResponse response) {
-        User user =  loginService.login(body, CookieUtil.getCookieValue(request, "CAPTCHA_KEY"));
-        return BuildLoginResponse(response, user,body.getDeviceFp());
-    }
-
-    @PostMapping("/login/sms")
-    public ApiResponse<LoginClientData> loginBySms(@Valid @RequestBody SmsLoginRequestBody body, HttpServletRequest request, HttpServletResponse response) {
-        User user = loginService.login(body, CookieUtil.getCookieValue(request, "SMS_CODE_KEY"));
-        return BuildLoginResponse(response, user,body.getDeviceFp());
-    }
-
-    @PostMapping("/login/email")
-    public ApiResponse<LoginClientData> loginByEmail(@Valid @RequestBody EmailLoginRequestBody body, HttpServletRequest request, HttpServletResponse response) {
-        User user = loginService.login(body, CookieUtil.getCookieValue(request, "EMAIL_CODE_KEY"));
-        return BuildLoginResponse(response, user,body.getDeviceFp());
+    @PostMapping("/login-by-code")
+    public ApiResponse<LoginClientData> loginByCode(@Valid @RequestBody VerifyCodeDto dto, HttpServletRequest request, HttpServletResponse response) {
+        String codeKey = dto.getChannel() == VerifyChannel.SMS ? "SMS_CODE_KEY" : "EMAIL_CODE_KEY";
+        User user = loginService.login(dto, CookieUtil.getCookieValue(request, codeKey));
+        return BuildLoginResponse(response, user,dto.getDeviceFp());
     }
 
     @PostMapping("/register")
-    public ApiResponse<LoginClientData> register(@Valid @RequestBody RegisterRequest body, HttpServletRequest request, HttpServletResponse response) {
-        User user = registerService.register(body,
+    public ApiResponse<LoginClientData> register(@Valid @RequestBody RegisterRequest dto, HttpServletRequest request, HttpServletResponse response) {
+        User user = registerService.register(dto,
                 CookieUtil.getCookieValue(request.getCookies(), "SMS_CODE_KEY"));
-        return BuildLoginResponse(response, user,body.getDeviceFp());
+
+        return BuildLoginResponse(response, user,dto.getVerify().getDeviceFp());
     }
+
 
     @PostMapping("/logout")
     public ApiResponse<Void> logout(@RequestBody String deviceFp,HttpServletRequest request,HttpServletResponse response) {

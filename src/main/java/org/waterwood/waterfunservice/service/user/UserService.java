@@ -1,11 +1,11 @@
 package org.waterwood.waterfunservice.service.user;
 
 import org.waterwood.waterfunservice.dto.request.user.UserRoleItemDto;
+import org.waterwood.waterfunservicecore.api.req.ResetPasswordDto;
 import org.waterwood.waterfunservicecore.entity.Permission;
 import org.waterwood.waterfunservicecore.entity.Role;
 import org.waterwood.waterfunservicecore.entity.user.User;
 import org.waterwood.waterfunservice.dto.response.user.UserInfoResponse;
-import org.waterwood.waterfunservice.dto.request.user.UserPwdUpdateRequestBody;
 import org.waterwood.common.exceptions.BusinessException;
 
 import java.util.List;
@@ -36,7 +36,7 @@ public interface UserService {
 
     User update(User user);
 
-    void updatePwd(UserPwdUpdateRequestBody userPwdUpdateRequestBody);
+    void updatePwd(ResetPasswordDto dto);
 
     /**
      * Get user permissions
