@@ -10,7 +10,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.waterwood.api.enums.PostStatus;
 import org.waterwood.api.enums.PostVisibility;
-import org.waterwood.waterfunservice.dto.request.post.PatchUserPostReq;
+import org.waterwood.waterfunservice.dto.request.PatchUserPostReq;
 import org.waterwood.api.BaseResponseCode;
 import org.waterwood.api.ApiResponse;
 import org.waterwood.waterfunservicecore.entity.post.Post;
@@ -19,7 +19,7 @@ import org.waterwood.waterfunservice.dto.response.post.PostResponse;
 import org.waterwood.waterfunservicecore.infrastructure.persistence.utils.PostSpec;
 import org.waterwood.waterfunservicecore.infrastructure.security.AuthContextHelper;
 import org.waterwood.waterfunservice.service.post.PostService;
-import org.waterwood.waterfunservice.dto.request.post.CreatePostRequest;
+import org.waterwood.waterfunservice.dto.request.CreatePostRequest;
 
 import java.util.List;
 
@@ -86,7 +86,7 @@ public class PostController {
     @PatchMapping("/{id}")
     public ApiResponse<Void> updatePost(@PathVariable Long id, @Valid @RequestBody PatchUserPostReq body){
         Post post = postService.getPostById(id);
-        if(! AuthContextHelper.getCurrentUserId().equals(post.getAuthor().getId())){
+        if(! AuthContextHelper.getCurrentUserUid().equals(post.getAuthor().getUid())){
             return ApiResponse.response(BaseResponseCode.FORBIDDEN);
         }
         Post p = postMapper.partialUpdate(body, post);;

@@ -1,80 +1,43 @@
 package org.waterwood.waterfunservice.service.user;
 
-import org.waterwood.waterfunservice.dto.request.user.UserRoleItemDto;
-import org.waterwood.waterfunservicecore.api.req.ResetPasswordDto;
-import org.waterwood.waterfunservicecore.entity.Permission;
-import org.waterwood.waterfunservicecore.entity.Role;
-import org.waterwood.waterfunservicecore.entity.user.User;
-import org.waterwood.waterfunservice.dto.response.user.UserInfoResponse;
-import org.waterwood.common.exceptions.BusinessException;
-
-import java.util.List;
-import java.util.Set;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.waterwood.waterfunservice.dto.response.UserPublicCardResp;
+import org.waterwood.waterfunservice.dto.response.UserPublicInfoResp;
+import org.waterwood.waterfunservice.dto.response.UserPublicProfileResp;
 
 public interface UserService {
-    User getUserByUsername(String username);
+    /**
+     * Get a user's public info.
+     * @param userUid target uid
+     * @return public info dto
+     */
+    UserPublicInfoResp getPublicUserInfo(long userUid);
 
     /**
-     * Get user by id
-     * @param id user id
-     * @throws BusinessException if user not found
-     * @return userinfo response dto of {@link UserInfoResponse}
+     * Get a user's public profile.
+     * @param userUid target uid
+     * @return public profile dto
      */
-    User getUserById(long id);
-
-    boolean activateUser(long id);
-
-    boolean deactivateUser(long id);
-
-    boolean suspendUser(long id);
-
-    boolean deleteUser(long id);
-
-    boolean isUserExist(long userId);
-
-    User addUser(User user);
-
-    User update(User user);
-
-    void updatePwd(ResetPasswordDto dto);
+    UserPublicProfileResp getPublicUserProfile(long userUid);
 
     /**
-     * Get user permissions
-     * @param userId user id
-     * @return Set of permissions.
+     * Get a user's public card.
+     * @param userUid target uid
+     * @return public card dto
      */
-    Set<Permission> getUserPermissions(long userId);
+    UserPublicCardResp getPublicUserCard(long userUid);
 
     /**
-     * Get user all roles
-     * @param userId user id
-     * @return Set of role
+     * Get a user's following list.
+     * @param spec  specification of user's following
+     * @return public card dto list
      */
-    Set<Role> getRoles(long userId);
-
+    Page<UserPublicCardResp> listUserFollowers(long spec, Pageable pageable);
     /**
-     * Assign role to user
-     * input params must not be null
-     * will check the old user role record whether in the database
-     * <p>If already exists</p> throw exception
-     * <p>If not exists</p> will create new record
-     * @param id user id
-     * @param userRoleItemDtos list of role item
+     * Get a user's following list.
+     * @param userUid  specification of user's following
+     * @return public card dto list
      */
-    void assignRoles(long id, List<UserRoleItemDto> userRoleItemDtos);
-
-    /**
-     * Replace all roles to user
-     * @param id user id
-     * @param userRoleItemDtos list of user role item dto.
-     */
-    void replace(long id, List<UserRoleItemDto> userRoleItemDtos);
-
-    /**
-     * Patch user roles
-     * @param id user id
-     * @param adds list of user role item to add or update
-     * @param deletePermIds list of permission id to delete
-     */
-    void change(long id, List<UserRoleItemDto> adds, List<Integer> deletePermIds);
+    Page<UserPublicCardResp> listUserFollowing(long userUid, Pageable pageable);
 }

@@ -8,7 +8,7 @@ import org.waterwood.waterfunservicecore.entity.user.User;
 import org.waterwood.common.exceptions.BusinessException;
 import org.waterwood.waterfunservicecore.infrastructure.persistence.TagRepository;
 import org.waterwood.waterfunservice.service.post.TagService;
-import org.waterwood.waterfunservice.service.user.UserService;
+import org.waterwood.waterfunservicecore.services.user.UserCoreService;
 import org.waterwood.utils.generator.SlugGenerator;
 import org.waterwood.waterfunservicecore.infrastructure.security.AuthContextHelper;
 
@@ -22,14 +22,14 @@ public class TagServiceImpl implements TagService {
 
     private final TagRepository tagRepository;
     private final SlugGenerator slugGenerator;
-    private final UserService userService;
+    private final UserCoreService userCoreService;
 
     @Override
     public void createTag(Tag tag) {
         // Generate slug && check
         String slug = slugGenerator.generateSlug(tag.getName(), tagRepository);
         tag.setSlug(slug);
-        User u = userService.getUserById(AuthContextHelper.getCurrentUserId());
+        User u = userCoreService.getUserByUid(AuthContextHelper.getCurrentUserUid());
         tag.setCreator(u);
 
         if(tag.getUsageCount() == null) tag.setUsageCount(0L);
@@ -38,7 +38,7 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public List<Tag> getTags() {
-        return tagRepository.findAllByCreatorId(AuthContextHelper.getCurrentUserId());
+        return tagRepository.findAllByCreatorId(AuthContextHelper.getCurrentUserUid());
     }
 
     @Override
@@ -67,7 +67,7 @@ public class TagServiceImpl implements TagService {
                 () -> new BusinessException(BaseResponseCode.HTTP_NOT_FOUND)
         );
 
-        if(! t.getCreator().getId().equals(AuthContextHelper.getCurrentUserId())){
+        if(! t.getCreator().getUid().equals(AuthContextHelper.getCurrentUserUid())){
             throw new BusinessException(BaseResponseCode.FORBIDDEN);
         }
 

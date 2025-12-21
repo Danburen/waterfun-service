@@ -12,8 +12,7 @@ import org.waterwood.api.BaseResponseCode;
 import org.waterwood.waterfunservice.dto.response.MiniFileResData;
 import org.waterwood.waterfunservice.service.resource.ResourceService;
 import org.waterwood.waterfunservice.service.resource.LegalResourceConstants;
-import org.waterwood.waterfunservicecore.api.PostPolicyDto;
-import org.waterwood.waterfunservicecore.services.storage.CloudFileService;
+import org.waterwood.waterfunservicecore.services.sys.storage.CloudFileService;
 
 import java.io.IOException;
 import java.nio.file.Files;

@@ -1,11 +1,13 @@
-package org.waterwood.waterfunservice.dto.request.user;
+package org.waterwood.waterfunservice.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.waterwood.common.validation.StrongPassword;
-@Deprecated
+import org.waterwood.waterfunservicecore.api.req.auth.SecurityVerifyCodeDto;
+
 @Data
-public class UserPwdUpdateRequestBody {
+public class ResetPasswordDto {
     @NotBlank
     private String oldPwd;
     @NotBlank
@@ -13,5 +15,6 @@ public class UserPwdUpdateRequestBody {
     private String newPwd;
     @NotBlank
     private String confirmPwd;
-
+    @NotNull
+    private SecurityVerifyCodeDto verify;
 }

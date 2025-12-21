@@ -69,7 +69,7 @@
     <div class="header">
         <img src="https://www.waterfun.top/logo.png" alt="WaterFun Logo">
     </div>
-    <div class="content" th:replace="${fragment} :: content">
+    <div class="content" th:replace="~{${fragment} :: content}">
         xxx
         <div class="note">
             <p>如果您不希望再收到此类邮件，请<a th:href="${unsubscribeLink}">点击退订</a></p>

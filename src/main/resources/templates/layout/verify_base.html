@@ -64,6 +64,61 @@
             border-top: 1px solid #eee;
             padding-top: 15px;
         }
+
+
+        .link-primary {
+            color: #1e88e5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .link-primary:hover {
+            text-decoration: underline;
+        }
+        .link-secondary {
+            color: #666;
+            text-decoration: none;
+        }
+        .link-secondary:hover {
+            text-decoration: underline;
+        }
+        /* link*/
+        .verification-link {
+            padding: 12px 24px;
+            background-color: #1e88e5;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            width: 100%;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .verification-link:hover {
+            text-decoration: none;
+            background-color: #1976d2;
+        }
+
+        .verification-link-outline {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            background-color: transparent;
+            color: #1e88e5;
+            text-decoration: none;
+            border: 2px solid #1e88e5;
+            border-radius: 10px;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            box-shadow: #7096c3 2px 2px 2px;
+        }
+        .verification-link-outline:hover {
+            text-decoration: none;
+            background-color: #1e88e5;
+            color: white;
+        }
+
     </style>
 </head>
 <body>
@@ -73,14 +128,17 @@
     </div>
     <div class="content">
         <div th:replace="~{${fragment} :: content}"> <!-- will be replaced -->
-            <h2>尊敬的<span th:test="${target}">用户</span> ，您好！</h2>
-            <p>您正在进行 <b th:text="${action}">账户验证操作</b> 操作，您的验证码是：</p>
+            <h2>尊敬的<span th:text="${target}">用户</span>，您好！</h2>
+            <p>您正在进行 <b th:text="${action}">账户验证操作</b> 操作，请点击下方按钮完成验证：</p>
 
-            <div class="code" th:text="${verificationCode}">123456</div>
+            <a th:href="${verificationLink}" class="verification-link-outline">点击验证邮箱</a>
 
-            <p>请在<span th:text="${expireTime} + '分钟'">30</span>分钟内完成验证，不要泄露给其他人。</p>
+            <p>如果链接无法点击，请复制以下链接到浏览器地址栏：</p>
+            <p style="word-break: break-all; font-size: 14px; color: #666;" th:text="${verificationLink}">https://www.waterfun.top/verify?token=xxx</p>
 
-            <p>如非本人操作，请忽略此邮件或<a href="mailto:${supportMail}">联系客服</a>。</p>
+            <p>此链接将在<span th:text="${expireTime}">30</span>分钟内有效，请勿泄露给其他人。</p>
+
+            <p>如非本人操作，请忽略此邮件或<a href="mailto:${supportMail}" class="link-primary">联系客服</a>。</p>
         </div>
     </div>
     <div class="footer">

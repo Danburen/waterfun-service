@@ -1,9 +1,9 @@
 package org.waterwood.waterfunservice.infrastructure.mapper;
 
 import org.mapstruct.*;
-import org.waterwood.waterfunservice.dto.request.post.UpdateTagRequest;
+import org.waterwood.waterfunservice.dto.request.UpdateTagRequest;
 import org.waterwood.waterfunservicecore.entity.post.Tag;
-import org.waterwood.waterfunservice.dto.request.post.CreateTagRequest;
+import org.waterwood.waterfunservice.dto.request.CreateTagRequest;
 import org.waterwood.waterfunservice.dto.response.post.TagResponse;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = MappingConstants.ComponentModel.SPRING)

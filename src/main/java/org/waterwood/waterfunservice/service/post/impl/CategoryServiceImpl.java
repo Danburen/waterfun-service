@@ -30,7 +30,7 @@ public class CategoryServiceImpl implements CategoryService {
         categoryRepository.findByName(category.getName()).ifPresent(_->{
             throw new BusinessException(BaseResponseCode.POST_CATEGORY_EXISTS);
         });
-        User u = userRepository.findUserById(AuthContextHelper.getCurrentUserId()).orElseThrow(
+        User u = userRepository.findUserById(AuthContextHelper.getCurrentUserUid()).orElseThrow(
                 ()-> new BusinessException(BaseResponseCode.USER_NOT_FOUND)
         );
         category.setCreator(u);
@@ -44,8 +44,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<Category> getCategories() {
-        Long userId = AuthContextHelper.getCurrentUserId();
-        return categoryRepository.findAllByCreatorId(userId);
+        Long userUid = AuthContextHelper.getCurrentUserUid();
+        return categoryRepository.findAllByCreatorId(userUid);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class CategoryServiceImpl implements CategoryService {
                 () -> new BusinessException(BaseResponseCode.NOT_FOUND)
         );
 
-        if(! c.getCreator().getId().equals(AuthContextHelper.getCurrentUserId())) {
+        if(! c.getCreator().getUid().equals(AuthContextHelper.getCurrentUserUid())) {
             throw new BusinessException(BaseResponseCode.FORBIDDEN);
         }
 

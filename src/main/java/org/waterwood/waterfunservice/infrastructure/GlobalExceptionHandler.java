@@ -129,14 +129,7 @@ public class GlobalExceptionHandler {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
             }
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                new ErrorResponse(
-                        BaseResponseCode.VALIDATION_ERROR.getCode(),
-                        ex.getMessage(),
-                        null,
-                        new Date()
-                )
-        );
+        throw ex;
     }
 
     /**

@@ -18,7 +18,7 @@ import org.waterwood.waterfunservicecore.infrastructure.security.AuthContextHelp
 import org.waterwood.waterfunservice.service.post.CategoryService;
 import org.waterwood.waterfunservice.service.post.PostService;
 import org.waterwood.waterfunservice.service.post.TagService;
-import org.waterwood.waterfunservice.service.user.UserService;
+import org.waterwood.waterfunservicecore.services.user.UserCoreService;
 import org.waterwood.utils.generator.SlugGenerator;
 
 import java.util.HashSet;
@@ -29,15 +29,15 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final SlugGenerator slugGenerator;
-    private final UserService userService;
+    private final UserCoreService userCoreService;
     private final TagRepository tagRepository;
     private final TagService tagService;
     private final CategoryService categoryService;
 
-    public PostServiceImpl(PostRepository postRepository, SlugGenerator slugGenerator, UserRepository userRepository, UserService userService, TagRepository tagRepository, TagService tagService, CategoryService categoryService) {
+    public PostServiceImpl(PostRepository postRepository, SlugGenerator slugGenerator, UserRepository userRepository, UserCoreService userCoreService, TagRepository tagRepository, TagService tagService, CategoryService categoryService) {
         this.postRepository = postRepository;
         this.slugGenerator = slugGenerator;
-        this.userService = userService;
+        this.userCoreService = userCoreService;
         this.tagRepository = tagRepository;
         this.tagService = tagService;
         this.categoryService = categoryService;
@@ -46,7 +46,7 @@ public class PostServiceImpl implements PostService {
     @Override
     public void add(Post post, Set<Integer> tagIds) {
         Set<Tag> tags = new HashSet<>(tagRepository.findAllById(tagIds));
-        User u = userService.getUserById(AuthContextHelper.getCurrentUserId());
+        User u = userCoreService.getUserByUid(AuthContextHelper.getCurrentUserUid());
         post.setAuthor(u);
         post.setSlug(slugGenerator.generateSlug(post.getTitle(), postRepository));
         post.setTags(tags);
@@ -62,7 +62,7 @@ public class PostServiceImpl implements PostService {
     @Transactional
     public void deletePost(Long id) {
         Post p = postRepository.getReferenceById(id);
-        if(p.getAuthor() == userService.getUserById(AuthContextHelper.getCurrentUserId())){
+        if(p.getAuthor() == userCoreService.getUserByUid(AuthContextHelper.getCurrentUserUid())){
             postRepository.deleteById(id);
         }else{
             throw new BusinessException(BaseResponseCode.FORBIDDEN);
@@ -79,7 +79,7 @@ public class PostServiceImpl implements PostService {
     public void updatePost(Post post, Set<Integer> tagIds, Integer categoryId) {
         Set<Tag> tags = new HashSet<>(tagRepository.findAllById(tagIds));
         Category category = categoryService.getCategory(categoryId);
-        User u = userService.getUserById(AuthContextHelper.getCurrentUserId());
+        User u = userCoreService.getUserByUid(AuthContextHelper.getCurrentUserUid());
         post.setCategory(category);
         post.setAuthor(u);
         post.setSlug(slugGenerator.generateSlug(post.getTitle(), postRepository));

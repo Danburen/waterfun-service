@@ -1,35 +1,37 @@
-package org.waterwood.waterfunservice.dto.request.post;
+package org.waterwood.waterfunservice.dto.request;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.waterwood.api.enums.PostVisibility;
+import org.hibernate.validator.constraints.URL;
 import org.waterwood.waterfunservicecore.entity.post.Post;
+import org.waterwood.waterfunservicecore.infrastructure.validation.PostState;
 
 import java.io.Serializable;
 import java.util.Set;
 
 /**
- * DTO for {@link Post}
+ * Create Post Request DTO for {@link Post}
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PatchUserPostReq implements Serializable {
-    @NotNull
+public class CreatePostRequest implements Serializable {
     @Size(max = 32)
+    @NotBlank
     private String title;
     @Size(max = 64)
     private String subtitle;
-    @NotNull
+    @NotBlank
     private String content;
     @Size(max = 500)
     private String summary;
     @Size(max = 255)
+    @URL
     private String coverImg;
-    private PostVisibility visibility;
-    private Integer categoryId;
+    @PostState
+    private String status;
     private Set<Integer> tagIds;
 }

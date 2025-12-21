@@ -1,5 +1,6 @@
 package org.waterwood.waterfunservice.controller.auth;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -45,6 +46,7 @@ public class AuthController {
         this.verificationService = verificationService;
     }
 
+    @Operation(summary = "刷新access token")
     @PostMapping("/refresh-access-token")
     public ApiResponse<LoginClientData> refreshAccessToken(@Valid @NotBlank(message = "{auth.device_fingerprint.required}") String dfp, HttpServletRequest request, HttpServletResponse response) {
         TokenResult res = authService.refreshAccessToken(
@@ -54,6 +56,7 @@ public class AuthController {
         return ApiResponse.success(data);
     }
 
+    @Operation(summary = "获取图形验证码")
     @GetMapping("/captcha")
     public void getCaptcha(HttpServletResponse response) throws IOException{
         LineCaptchaResult result = captchaService.generateCaptcha();
@@ -94,6 +97,7 @@ public class AuthController {
      * @param response http response
      * @return send code result
      */
+    @Operation(summary = "发送无验证验证码")
     @PostMapping("/send-code")
     public ApiResponse<Void> sendCode(@Valid @RequestBody SendCodeDto dto, HttpServletResponse response) {
         CodeResult result = verificationService.sendCode(dto);
@@ -102,6 +106,7 @@ public class AuthController {
         return ApiResponse.success();
     }
 
+    @Operation(summary = "密码登陆")
     @PostMapping("/login-by-password")
     public ApiResponse<LoginClientData> loginByPassword(@Valid @RequestBody PwdLoginReq body, HttpServletRequest request, HttpServletResponse response) {
         Cookie[] cookies = request.getCookies();
@@ -109,6 +114,8 @@ public class AuthController {
         return BuildLoginResponse(response, user,body.getDeviceFp());
     }
 
+
+    @Operation(summary = "手机登陆")
     @PostMapping("/login-by-code")
     public ApiResponse<LoginClientData> loginByCode(@Valid @RequestBody VerifyCodeDto dto, HttpServletRequest request, HttpServletResponse response) {
         String codeKey = dto.getChannel() == VerifyChannel.SMS ? "SMS_CODE_KEY" : "EMAIL_CODE_KEY";
@@ -116,6 +123,7 @@ public class AuthController {
         return BuildLoginResponse(response, user,dto.getDeviceFp());
     }
 
+    @Operation(summary = "注册")
     @PostMapping("/register")
     public ApiResponse<LoginClientData> register(@Valid @RequestBody RegisterRequest dto, HttpServletRequest request, HttpServletResponse response) {
         User user = registerService.register(dto,
@@ -124,18 +132,8 @@ public class AuthController {
         return BuildLoginResponse(response, user,dto.getVerify().getDeviceFp());
     }
 
-
-    @PostMapping("/logout")
-    public ApiResponse<Void> logout(@RequestBody String deviceFp,HttpServletRequest request,HttpServletResponse response) {
-        String refreshToken = CookieUtil.getCookieValue(request.getCookies(),"REFRESH_TOKEN");
-        boolean  result = loginService.logout(refreshToken, deviceFp);
-        if(result) CookieUtil.cleanTokenCookie(response);
-        return ApiResponse.success();
-    }
-
-
     private ApiResponse<LoginClientData> BuildLoginResponse(HttpServletResponse response, User user,String dfp) {
-        TokenPair tokenPair = authService.createNewTokens(user.getId(), dfp);
+        TokenPair tokenPair = authService.createNewTokens(user.getUid(), dfp);
         CookieUtil.setTokenCookie(response,tokenPair);
         response.setContentType("application/json");
         response.setHeader("Pragma", "No-cache");

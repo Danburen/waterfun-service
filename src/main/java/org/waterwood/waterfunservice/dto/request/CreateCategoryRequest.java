@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.dto.request.post;
+package org.waterwood.waterfunservice.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
