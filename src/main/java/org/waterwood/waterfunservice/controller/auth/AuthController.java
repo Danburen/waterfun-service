@@ -5,14 +5,12 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.waterwood.api.TokenPair;
-import org.waterwood.common.TokenResult;
 import org.waterwood.api.ApiResponse;
 import org.waterwood.waterfunservicecore.api.VerifyChannel;
 import org.waterwood.waterfunservicecore.api.resp.auth.CodeResult;
@@ -23,6 +21,10 @@ import org.waterwood.waterfunservicecore.entity.user.User;
 import org.waterwood.waterfunservicecore.infrastructure.utils.CookieUtil;
 import org.waterwood.waterfunservicecore.infrastructure.utils.ResponseUtil;
 import org.waterwood.waterfunservicecore.services.auth.code.VerificationService;
+import org.waterwood.waterfunservicecore.services.auth.impl.AuthServiceImpl;
+import org.waterwood.waterfunservicecore.services.auth.impl.CaptchaServiceImpl;
+import org.waterwood.waterfunservicecore.services.auth.impl.LoginServiceImpl;
+import org.waterwood.waterfunservicecore.services.auth.impl.RegisterServiceImpl;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -44,16 +46,6 @@ public class AuthController {
         this.registerService = rs;
         this.authService = as;
         this.verificationService = verificationService;
-    }
-
-    @Operation(summary = "刷新access token")
-    @PostMapping("/refresh-access-token")
-    public ApiResponse<LoginClientData> refreshAccessToken(@Valid @NotBlank(message = "{auth.device_fingerprint.required}") String dfp, HttpServletRequest request, HttpServletResponse response) {
-        TokenResult res = authService.refreshAccessToken(
-                CookieUtil.getCookieValue(request.getCookies(),"REFRESH_TOKEN"),
-                dfp);
-        LoginClientData data = new LoginClientData(res.tokenValue(),res.expire());
-        return ApiResponse.success(data);
     }
 
     @Operation(summary = "获取图形验证码")
@@ -111,7 +103,7 @@ public class AuthController {
     public ApiResponse<LoginClientData> loginByPassword(@Valid @RequestBody PwdLoginReq body, HttpServletRequest request, HttpServletResponse response) {
         Cookie[] cookies = request.getCookies();
         User user = loginService.login(body, CookieUtil.getCookieValue(cookies, "CAPTCHA_KEY"));
-        return BuildLoginResponse(response, user,body.getDeviceFp());
+        return authService.BuildLoginResponse(response, user, body.getDeviceFp());
     }
 
 
@@ -120,7 +112,7 @@ public class AuthController {
     public ApiResponse<LoginClientData> loginByCode(@Valid @RequestBody VerifyCodeDto dto, HttpServletRequest request, HttpServletResponse response) {
         String codeKey = dto.getChannel() == VerifyChannel.SMS ? "SMS_CODE_KEY" : "EMAIL_CODE_KEY";
         User user = loginService.login(dto, CookieUtil.getCookieValue(request, codeKey));
-        return BuildLoginResponse(response, user,dto.getDeviceFp());
+        return authService.BuildLoginResponse(response, user, dto.getDeviceFp());
     }
 
     @Operation(summary = "注册")
@@ -129,17 +121,11 @@ public class AuthController {
         User user = registerService.register(dto,
                 CookieUtil.getCookieValue(request.getCookies(), "SMS_CODE_KEY"));
 
-        return BuildLoginResponse(response, user,dto.getVerify().getDeviceFp());
+        return getLoginClientDataApiResponse(dto, response, user);
     }
 
-    private ApiResponse<LoginClientData> BuildLoginResponse(HttpServletResponse response, User user,String dfp) {
-        TokenPair tokenPair = authService.createNewTokens(user.getUid(), dfp);
-        CookieUtil.setTokenCookie(response,tokenPair);
-        response.setContentType("application/json");
-        response.setHeader("Pragma", "No-cache");
-        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-        response.setHeader("X-Content-Type-Options", "nosniff");
-        response.setHeader("X-Frame-Options", "DENY");
-        return  ApiResponse.success(new LoginClientData(tokenPair.accessToken(),tokenPair.accessExp()));
+    private @NotNull ApiResponse<LoginClientData> getLoginClientDataApiResponse(RegisterRequest dto, HttpServletResponse response, User user) {
+        return authService.BuildLoginResponse(response, user, dto.getVerify().getDeviceFp());
     }
+
 }

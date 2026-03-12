@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.api.BaseResponseCode;
 import org.waterwood.waterfunservicecore.entity.user.User;
 import org.waterwood.waterfunservicecore.entity.post.Category;
-import org.waterwood.common.exceptions.BusinessException;
+import org.waterwood.common.exceptions.BizException;
 import org.waterwood.utils.generator.SlugGenerator;
 import org.waterwood.waterfunservicecore.infrastructure.persistence.user.UserRepository;
 import org.waterwood.waterfunservice.infrastructure.mapper.CategoryMapper;
@@ -28,10 +28,10 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void createCategory(Category category) {
         categoryRepository.findByName(category.getName()).ifPresent(_->{
-            throw new BusinessException(BaseResponseCode.POST_CATEGORY_EXISTS);
+            throw new BizException(BaseResponseCode.POST_CATEGORY_EXISTS);
         });
-        User u = userRepository.findUserById(AuthContextHelper.getCurrentUserUid()).orElseThrow(
-                ()-> new BusinessException(BaseResponseCode.USER_NOT_FOUND)
+        User u = userRepository.findUserByUid(AuthContextHelper.getCurrentUserUid()).orElseThrow(
+                ()-> new BizException(BaseResponseCode.USER_NOT_FOUND)
         );
         category.setCreator(u);
         category.setSortOrder(category.getSortOrder());
@@ -45,27 +45,27 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public List<Category> getCategories() {
         Long userUid = AuthContextHelper.getCurrentUserUid();
-        return categoryRepository.findAllByCreatorId(userUid);
+        return categoryRepository.findAllByCreatorUid(userUid);
     }
 
     @Override
     public Category getCategory(Integer id) {
         return categoryRepository.findById(id).orElseThrow(
-                () -> new BusinessException(BaseResponseCode.NOT_FOUND, "Category ID: " + id)
+                () -> new BizException(BaseResponseCode.NOT_FOUND, "Category ID: " + id)
         );
     }
 
     @Override
     public void updateCategory(Category category) {
         Category c = categoryRepository.findById(category.getId()).orElseThrow(
-                () -> new BusinessException(BaseResponseCode.NOT_FOUND)
+                () -> new BizException(BaseResponseCode.NOT_FOUND)
         );
         if (category.getName() != null) c.setName(category.getName());
         if (category.getSlug() != null) c.setSlug(category.getSlug());
         if (category.getDescription() != null) c.setDescription(category.getDescription());
         if (category.getParentId() != null) {
             Category parent = categoryRepository.findById(category.getParentId()).orElseThrow(
-                    () -> new BusinessException(BaseResponseCode.PARENT_NOT_FOUND, "ID: " + category.getParentId())
+                    () -> new BizException(BaseResponseCode.PARENT_NOT_FOUND, "ID: " + category.getParentId())
             );
             c.setParentId(parent.getParentId());
         }
@@ -78,11 +78,11 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public void deleteCategory(Integer id) {
         Category c = categoryRepository.findById(id).orElseThrow(
-                () -> new BusinessException(BaseResponseCode.NOT_FOUND)
+                () -> new BizException(BaseResponseCode.NOT_FOUND)
         );
 
         if(! c.getCreator().getUid().equals(AuthContextHelper.getCurrentUserUid())) {
-            throw new BusinessException(BaseResponseCode.FORBIDDEN);
+            throw new BizException(BaseResponseCode.FORBIDDEN);
         }
 
         categoryRepository.removeCategoryById(id);

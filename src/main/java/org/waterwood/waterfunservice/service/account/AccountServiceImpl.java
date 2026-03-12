@@ -10,12 +10,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.api.BaseResponseCode;
-import org.waterwood.common.exceptions.BusinessException;
-import org.waterwood.utils.MaskUtil;
-import org.waterwood.waterfunservice.dto.request.*;
+import org.waterwood.common.exceptions.BizException;
+import org.waterwood.waterfunservice.api.request.*;
 import org.waterwood.waterfunservicecore.api.VerifyChannel;
 import org.waterwood.waterfunservicecore.api.VerifyScene;
-import org.waterwood.waterfunservicecore.api.resp.AccountDto;
 import org.waterwood.waterfunservicecore.api.resp.auth.CodeResult;
 import org.waterwood.waterfunservicecore.entity.user.User;
 import org.waterwood.waterfunservicecore.entity.user.UserDatum;
@@ -62,17 +60,12 @@ public class AccountServiceImpl implements AccountService {
         );
         User user = userCoreService.getUser(userUid);
         if(! dto.getConfirmPwd().equals(dto.getNewPwd())){
-            throw new BusinessException(BaseResponseCode.PASSWORD_TWO_PASSWORD_NOT_EQUAL);
+            throw new BizException(BaseResponseCode.PASSWORD_TWO_PASSWORD_NOT_EQUAL);
         }
-
-        if(encoder.matches(dto.getNewPwd(), user.getPasswordHash())){
-            throw new BusinessException(BaseResponseCode.PASSWORD_TWO_PASSWORD_MUST_DIFFERENT);
-        }
-
         if(! encoder.matches(dto.getOldPwd(), user.getPasswordHash())){
-            throw new BusinessException(BaseResponseCode.OLD_PASSWORD_INCORRECT);
+            throw new BizException(BaseResponseCode.OLD_PASSWORD_INCORRECT);
         }
-        userCoreService.changePwd(userUid, encoder.encode(dto.getNewPwd()));
+        userCoreService.changePwd(userUid, dto.getNewPwd());
     }
 
     @Override
@@ -82,12 +75,12 @@ public class AccountServiceImpl implements AccountService {
                 dto.getVerify(), getTargetOfChannel(userUid, dto.getVerify().getChannel()),
                 VerifyScene.SET_PASSWORD
         );
-        User user = userRepository.findById(userUid).orElseThrow(() -> new BusinessException(BaseResponseCode.USER_NOT_FOUND));
+        User user = userRepository.findById(userUid).orElseThrow(() -> new BizException(BaseResponseCode.USER_NOT_FOUND));
         if(! dto.getConfirmPwd().equals(dto.getNewPwd())){
-            throw new BusinessException(BaseResponseCode.PASSWORD_TWO_PASSWORD_NOT_EQUAL);
+            throw new BizException(BaseResponseCode.PASSWORD_TWO_PASSWORD_NOT_EQUAL);
         }
         if(user.getPasswordHash() != null) {
-            throw new BusinessException(BaseResponseCode.PASSWORD_ALREADY_SET);
+            throw new BizException(BaseResponseCode.PASSWORD_ALREADY_SET);
         }
         user.setPasswordHash(encoder.encode(dto.getNewPwd()));
         userRepository.save(user);
@@ -103,7 +96,7 @@ public class AccountServiceImpl implements AccountService {
                 VerifyScene.ACTIVATE,
                 VerifyChannel.EMAIL
         );
-        UserDatum ud = userDatumCoreService.saveNewEmailVerified(userUid, dto.getEmail());
+        UserDatum ud = userDatumCoreService.saveNewEmail(userUid, dto.getEmail(), true);
         userDatumRepo.save(ud);
     }
 
@@ -121,22 +114,6 @@ public class AccountServiceImpl implements AccountService {
         // TODO: ADD MOVE VERIFICATION FOR EMAIL CHANGE AND AUDIT LOG
         return verificationService.sendAuthenticationCode(
                 dto.getEmail() , VerifyChannel.EMAIL, VerifyScene.ACTIVATE);
-    }
-
-    @Override
-    @Transactional
-    public AccountDto getAccountInfo(long userUid) {
-        UserDatum ud = userDatumRepo.findUserDatumByUserUid(userUid)
-                .orElseThrow(() -> new BusinessException(BaseResponseCode.USER_NOT_FOUND));
-        EncryptionDataKey aesKey = encryptedKeyService.pickEncryptionKey(0);
-        String realEmail = EncryptionHelper.decryptField(ud.getEmailEncrypted(), aesKey);
-        String realPhone = EncryptionHelper.decryptField(ud.getPhoneEncrypted(), aesKey);
-        return new AccountDto(
-                MaskUtil.maskPhone(realPhone),
-                MaskUtil.maskEmail(realEmail),
-                ud.getPhoneVerified(),
-                ud.getEmailVerified()
-        );
     }
 
     @Override
@@ -196,7 +173,7 @@ public class AccountServiceImpl implements AccountService {
                 VerifyChannel.SMS
         );
         //TODO: ADD MOVE VERIFICATION FOR PHONE CHANGE AND AUDIT LOG
-        userDatumCoreService.saveNewPhoneVerified(userUid, dto.getPhone());
+        userDatumCoreService.saveNewPhone(userUid, dto.getPhone(), true);
     }
 
     @Override
@@ -210,11 +187,11 @@ public class AccountServiceImpl implements AccountService {
         );
         String emailRaw = userDatumCoreService.getRawEmail(userUid);
         if(emailRaw == null){
-            throw new BusinessException(BaseResponseCode.EMAIL_NOT_FOUND);
+            throw new BizException(BaseResponseCode.EMAIL_NOT_FOUND);
         }
 
         if (!emailRaw.equals(dto.getEmail())){
-            throw new BusinessException(BaseResponseCode.EMAIL_INVALID);
+            throw new BizException(BaseResponseCode.EMAIL_INVALID);
         }
 
         // TODO ADD AUDIO LOG AND FALLBACK
@@ -228,7 +205,7 @@ public class AccountServiceImpl implements AccountService {
     private @NotNull String getTargetOfChannel(long userUid, VerifyChannel channel) {
         EncryptionDataKey aesKey = encryptedKeyService.getAesKey();
         UserDatum ud = userDatumRepo.findUserDatumByUserUid(userUid)
-                .orElseThrow(() -> new BusinessException(BaseResponseCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new BizException(BaseResponseCode.USER_NOT_FOUND));
         String target;
         if(channel == VerifyChannel.EMAIL){
             target = EncryptionHelper.decryptField(ud.getEmailEncrypted(), aesKey);

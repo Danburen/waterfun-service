@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.dto.request;
+package org.waterwood.waterfunservice.api.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,9 +7,7 @@ import org.waterwood.common.validation.StrongPassword;
 import org.waterwood.waterfunservicecore.api.req.auth.SecurityVerifyCodeDto;
 
 @Data
-public class ResetPasswordDto {
-    @NotBlank
-    private String oldPwd;
+public class SetPasswordDto {
     @NotBlank
     @StrongPassword
     private String newPwd;

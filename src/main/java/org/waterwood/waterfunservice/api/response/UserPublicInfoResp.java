@@ -1,10 +1,9 @@
-package org.waterwood.waterfunservice.dto.response;
+package org.waterwood.waterfunservice.api.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.waterwood.waterfunservicecore.api.resp.CloudResourcePresignedUrlResp;
-import org.waterwood.waterfunservicecore.entity.user.Gender;
+import org.waterwood.waterfunservicecore.api.resp.CloudResPresignedUrlResp;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -15,7 +14,7 @@ import java.time.Instant;
 public class UserPublicInfoResp implements Serializable {
     private Long userUid;
     private String username;
-    private CloudResourcePresignedUrlResp avatar;
+    private CloudResPresignedUrlResp avatar;
     private Instant createdAt;
     private Instant lastActiveAt;
 }

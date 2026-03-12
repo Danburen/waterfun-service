@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.waterwood.api.ApiResponse;
 import org.waterwood.api.BaseResponseCode;
-import org.waterwood.waterfunservice.dto.response.MiniFileResData;
+import org.waterwood.waterfunservice.api.response.MiniFileResData;
 import org.waterwood.waterfunservice.service.resource.ResourceService;
 import org.waterwood.waterfunservice.service.resource.LegalResourceConstants;
 import org.waterwood.waterfunservicecore.services.sys.storage.CloudFileService;

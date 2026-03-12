@@ -1,18 +1,14 @@
-package org.waterwood.waterfunservice.dto.request;
+package org.waterwood.waterfunservice.api.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import org.waterwood.common.validation.StrongPassword;
 import org.waterwood.waterfunservicecore.api.req.auth.SecurityVerifyCodeDto;
 
 @Data
-public class SetPasswordDto {
+public class PhoneChangeActivateDto {
     @NotBlank
-    @StrongPassword
-    private String newPwd;
-    @NotBlank
-    private String confirmPwd;
+    private String phone;
     @NotNull
     private SecurityVerifyCodeDto verify;
 }

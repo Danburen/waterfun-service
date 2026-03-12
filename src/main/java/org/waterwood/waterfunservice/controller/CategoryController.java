@@ -3,10 +3,10 @@ package org.waterwood.waterfunservice.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import org.waterwood.waterfunservice.dto.request.CreateCategoryRequest;
+import org.waterwood.waterfunservice.api.request.CreateCategoryRequest;
 import org.waterwood.api.ApiResponse;
-import org.waterwood.waterfunservice.dto.request.UpdateCategoryRequest;
-import org.waterwood.waterfunservice.dto.response.post.CategoryResponse;
+import org.waterwood.waterfunservice.api.request.UpdateCategoryRequest;
+import org.waterwood.waterfunservice.api.response.post.CategoryResponse;
 import org.waterwood.waterfunservice.infrastructure.mapper.CategoryMapper;
 import org.waterwood.waterfunservice.service.post.CategoryService;
 

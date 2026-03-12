@@ -1,6 +1,5 @@
-package org.waterwood.waterfunservice.dto.response.post;
+package org.waterwood.waterfunservice.api.request;
 
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -9,29 +8,22 @@ import lombok.NoArgsConstructor;
 import org.waterwood.waterfunservicecore.entity.post.Category;
 
 import java.io.Serializable;
-import java.time.Instant;
 
 /**
- * Response DTO for {@link Category}
+ * Update Category Request DTO for {@link Category}
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CategoryResponse implements Serializable {
+public class UpdateCategoryRequest implements Serializable {
     @NotNull
     Long id;
     @Size(max = 50)
-    @NotEmpty
     String name;
     @Size(max = 50)
-    @NotEmpty
     String slug;
     String description;
     Long parentId;
     Integer sortOrder;
     Boolean isActive;
-    @NotNull
-    Instant updateAt;
-    @NotNull
-    Instant createdAt;
 }

@@ -1,10 +1,10 @@
 package org.waterwood.waterfunservice.infrastructure.mapper;
 
 import org.mapstruct.*;
-import org.waterwood.waterfunservice.dto.request.UpdateTagRequest;
+import org.waterwood.waterfunservice.api.request.UpdateTagRequest;
 import org.waterwood.waterfunservicecore.entity.post.Tag;
-import org.waterwood.waterfunservice.dto.request.CreateTagRequest;
-import org.waterwood.waterfunservice.dto.response.post.TagResponse;
+import org.waterwood.waterfunservice.api.request.CreateTagRequest;
+import org.waterwood.waterfunservice.api.response.post.TagResponse;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface TagMapper {

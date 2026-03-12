@@ -10,18 +10,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.waterwood.api.ApiResponse;
-import org.waterwood.waterfunservice.dto.request.PhoneChangeActivateDto;
+import org.waterwood.waterfunservice.api.request.PhoneChangeActivateDto;
 import org.waterwood.waterfunservicecore.api.VerifyChannel;
-import org.waterwood.waterfunservicecore.api.resp.AccountDto;
-import org.waterwood.waterfunservice.dto.request.EmailChangeDto;
-import org.waterwood.waterfunservice.dto.request.ResetPasswordDto;
-import org.waterwood.waterfunservice.dto.request.SetPasswordDto;
-import org.waterwood.waterfunservice.dto.request.EmailBindActivateDto;
+import org.waterwood.waterfunservicecore.api.resp.AccountResp;
+import org.waterwood.waterfunservice.api.request.EmailChangeDto;
+import org.waterwood.waterfunservice.api.request.ResetPasswordDto;
+import org.waterwood.waterfunservice.api.request.SetPasswordDto;
+import org.waterwood.waterfunservice.api.request.EmailBindActivateDto;
 import org.waterwood.waterfunservicecore.api.resp.auth.CodeResult;
 import org.waterwood.waterfunservicecore.infrastructure.utils.ResponseUtil;
 import org.waterwood.waterfunservicecore.infrastructure.utils.context.UserContext;
 import org.waterwood.waterfunservice.service.account.AccountService;
 import org.waterwood.waterfunservicecore.services.auth.code.VerificationService;
+import org.waterwood.waterfunservicecore.services.user.UserDatumCoreService;
 import org.waterwood.waterfunservicecore.utils.CookieKeyGetter;
 
 @Slf4j
@@ -31,11 +32,12 @@ import org.waterwood.waterfunservicecore.utils.CookieKeyGetter;
 public class AuthAccountController {
     private final AccountService accountService;
     private final VerificationService verificationService;
+    private final UserDatumCoreService userDatumCoreService;
 
     @GetMapping
-    public ApiResponse<AccountDto> get(@Parameter(hidden = true) @AuthenticationPrincipal UserContext user){
+    public ApiResponse<AccountResp> get(@Parameter(hidden = true) @AuthenticationPrincipal UserContext user){
         return ApiResponse.success(
-            accountService.getAccountInfo(user.getUserUid())
+            userDatumCoreService.getAccountInfo(user.getUserUid())
         );
     }
 

@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.waterwood.api.BaseResponseCode;
 import org.waterwood.waterfunservicecore.entity.post.Category;
 import org.waterwood.waterfunservicecore.entity.post.Tag;
-import org.waterwood.common.exceptions.BusinessException;
+import org.waterwood.common.exceptions.BizException;
 import org.waterwood.waterfunservicecore.infrastructure.persistence.PostRepository;
 import org.waterwood.waterfunservicecore.entity.post.Post;
 import org.waterwood.waterfunservicecore.entity.user.User;
@@ -65,14 +65,14 @@ public class PostServiceImpl implements PostService {
         if(p.getAuthor() == userCoreService.getUserByUid(AuthContextHelper.getCurrentUserUid())){
             postRepository.deleteById(id);
         }else{
-            throw new BusinessException(BaseResponseCode.FORBIDDEN);
+            throw new BizException(BaseResponseCode.FORBIDDEN);
         }
     }
 
     @Override
     public Post getPostById(Long id) {
         return postRepository.findById(id)
-                .orElseThrow(()-> new BusinessException(BaseResponseCode.NOT_FOUND));
+                .orElseThrow(()-> new BizException(BaseResponseCode.NOT_FOUND));
     }
 
     @Override

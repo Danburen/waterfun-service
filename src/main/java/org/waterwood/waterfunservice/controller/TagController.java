@@ -5,9 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.waterwood.api.ApiResponse;
 import org.waterwood.waterfunservicecore.entity.post.Tag;
-import org.waterwood.waterfunservice.dto.request.CreateTagRequest;
-import org.waterwood.waterfunservice.dto.request.UpdateTagRequest;
-import org.waterwood.waterfunservice.dto.response.post.TagResponse;
+import org.waterwood.waterfunservice.api.request.CreateTagRequest;
+import org.waterwood.waterfunservice.api.request.UpdateTagRequest;
+import org.waterwood.waterfunservice.api.response.post.TagResponse;
 import org.waterwood.waterfunservice.infrastructure.mapper.TagMapper;
 import org.waterwood.waterfunservice.service.post.TagService;
 

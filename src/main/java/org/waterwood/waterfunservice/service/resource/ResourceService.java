@@ -6,8 +6,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.waterwood.api.BaseResponseCode;
-import org.waterwood.waterfunservice.dto.response.MiniFileResData;
-import org.waterwood.common.exceptions.BusinessException;
+import org.waterwood.waterfunservice.api.response.MiniFileResData;
+import org.waterwood.common.exceptions.BizException;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -36,7 +36,7 @@ public class ResourceService {
     public MiniFileResData getLegalFileContent(String type, String lang, String fileName) throws IOException {
         String relativePath = "legal/" + type + "/" + lang + "/" + fileName;
         Resource resource = resourceLoader.getResource("classpath:" + relativePath);
-        if (!resource.exists()) throw new BusinessException(BaseResponseCode.NOT_FOUND);
+        if (!resource.exists()) throw new BizException(BaseResponseCode.NOT_FOUND);
 
         String contentType = detectContentType(fileName);
         return new MiniFileResData(resource.getFile().toPath(), contentType);

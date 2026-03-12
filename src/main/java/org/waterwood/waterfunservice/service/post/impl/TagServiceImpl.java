@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.waterwood.api.BaseResponseCode;
 import org.waterwood.waterfunservicecore.entity.post.Tag;
 import org.waterwood.waterfunservicecore.entity.user.User;
-import org.waterwood.common.exceptions.BusinessException;
+import org.waterwood.common.exceptions.BizException;
 import org.waterwood.waterfunservicecore.infrastructure.persistence.TagRepository;
 import org.waterwood.waterfunservice.service.post.TagService;
 import org.waterwood.waterfunservicecore.services.user.UserCoreService;
@@ -38,20 +38,20 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public List<Tag> getTags() {
-        return tagRepository.findAllByCreatorId(AuthContextHelper.getCurrentUserUid());
+        return tagRepository.findAllByCreatorUid(AuthContextHelper.getCurrentUserUid());
     }
 
     @Override
     public Tag getTag(Integer id) {
         return tagRepository.findById(id).orElseThrow(
-                () -> new BusinessException(BaseResponseCode.NOT_FOUND, "Tag ID: " + id)
+                () -> new BizException(BaseResponseCode.NOT_FOUND, "Tag ID: " + id)
         );
     }
 
     @Override
     public void updateTag(Tag tag) {
         Tag t = tagRepository.findById(tag.getId()).orElseThrow(
-                () -> new BusinessException(BaseResponseCode.NOT_FOUND, "Tag ID: " + tag.getId())
+                () -> new BizException(BaseResponseCode.NOT_FOUND, "Tag ID: " + tag.getId())
         );
         if(tag.getName() !=  null){
             t.setName(tag.getName());
@@ -64,11 +64,11 @@ public class TagServiceImpl implements TagService {
     @Override
     public void deleteTag(Integer id) {
         Tag t = tagRepository.findById(id).orElseThrow(
-                () -> new BusinessException(BaseResponseCode.HTTP_NOT_FOUND)
+                () -> new BizException(BaseResponseCode.HTTP_NOT_FOUND)
         );
 
         if(! t.getCreator().getUid().equals(AuthContextHelper.getCurrentUserUid())){
-            throw new BusinessException(BaseResponseCode.FORBIDDEN);
+            throw new BizException(BaseResponseCode.FORBIDDEN);
         }
 
         tagRepository.delete(t);

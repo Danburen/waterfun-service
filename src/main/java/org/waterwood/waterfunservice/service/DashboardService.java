@@ -2,7 +2,7 @@ package org.waterwood.waterfunservice.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.waterwood.waterfunservice.dto.response.SalesDataDTO;
+import org.waterwood.waterfunservice.api.response.SalesDataDTO;
 import org.waterwood.waterfunservice.entity.SalesData;
 import org.waterwood.waterfunservice.infrastructure.persistence.DashboardRepo;
 

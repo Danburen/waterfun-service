@@ -1,14 +1,14 @@
-package org.waterwood.waterfunservice.dto.request;
+package org.waterwood.waterfunservice.api.response.post;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.waterwood.api.enums.PostStatus;
 import org.waterwood.api.enums.PostVisibility;
 import org.waterwood.waterfunservicecore.entity.post.Post;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.Set;
 
 /**
@@ -17,19 +17,22 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PatchUserPostReq implements Serializable {
-    @NotNull
-    @Size(max = 32)
+public class PostResponse implements Serializable {
     private String title;
-    @Size(max = 64)
     private String subtitle;
-    @NotNull
     private String content;
-    @Size(max = 500)
     private String summary;
-    @Size(max = 255)
     private String coverImg;
+    private PostStatus status;
     private PostVisibility visibility;
     private Integer categoryId;
     private Set<Integer> tagIds;
+    private Long viewCount;
+    private Long likeCount;
+    private Long commentCount;
+    private Long collectCount;
+    private String slug;
+    private Instant publishedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
 }

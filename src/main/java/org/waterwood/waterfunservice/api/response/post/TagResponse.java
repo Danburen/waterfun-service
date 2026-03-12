@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.dto.response.post;
+package org.waterwood.waterfunservice.api.response.post;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,9 +1,7 @@
 package org.waterwood.waterfunservice.service.account;
 
 
-import jakarta.validation.Valid;
-import org.waterwood.waterfunservice.dto.request.*;
-import org.waterwood.waterfunservicecore.api.resp.AccountDto;
+import org.waterwood.waterfunservice.api.request.*;
 import org.waterwood.waterfunservicecore.api.resp.auth.CodeResult;
 
 public interface AccountService {
@@ -36,13 +34,6 @@ public interface AccountService {
      * @param dto change email dto
      */
     CodeResult changeEmail(long userUid, String verifyCodeKey, EmailChangeDto dto);
-
-    /**
-     * Get account info
-     * @param userUid user id
-     * @return account info
-     */
-    AccountDto getAccountInfo(long userUid);
 
     /**
      * Bind a email for  user
@@ -82,4 +73,6 @@ public interface AccountService {
      * @param dto                  unbind email dto
      */
     void unbindEmail(long userUid, String channelVerifyCodeKey, EmailBindActivateDto dto);
+
+
 }

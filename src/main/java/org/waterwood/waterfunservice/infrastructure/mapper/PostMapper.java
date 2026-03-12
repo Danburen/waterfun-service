@@ -1,10 +1,10 @@
 package org.waterwood.waterfunservice.infrastructure.mapper;
 
 import org.mapstruct.*;
-import org.waterwood.waterfunservice.dto.request.PatchUserPostReq;
+import org.waterwood.waterfunservice.api.request.PatchUserPostReq;
 import org.waterwood.waterfunservicecore.entity.post.Post;
-import org.waterwood.waterfunservice.dto.response.post.PostResponse;
-import org.waterwood.waterfunservice.dto.request.CreatePostRequest;
+import org.waterwood.waterfunservice.api.response.post.PostResponse;
+import org.waterwood.waterfunservice.api.request.CreatePostRequest;
 import org.waterwood.waterfunservicecore.entity.post.Tag;
 
 import java.util.Collection;

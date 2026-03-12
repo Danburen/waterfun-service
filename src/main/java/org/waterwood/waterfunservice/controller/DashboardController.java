@@ -2,7 +2,7 @@ package org.waterwood.waterfunservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import org.waterwood.waterfunservice.dto.response.SalesDataDTO;
+import org.waterwood.waterfunservice.api.response.SalesDataDTO;
 import org.waterwood.waterfunservice.service.DashboardService;
 
 import java.util.List;

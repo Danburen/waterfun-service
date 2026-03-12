@@ -1,9 +1,8 @@
-package org.waterwood.waterfunservice.dto.response;
+package org.waterwood.waterfunservice.api.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.waterwood.waterfunservicecore.api.resp.CloudResourcePresignedUrlResp;
 
 import java.io.Serializable;
 
@@ -13,8 +12,11 @@ import java.io.Serializable;
 public class UserPublicCardResp implements Serializable {
     private Long userUid;
     private String username;
-    private CloudResourcePresignedUrlResp avatar;
     private String nickname;
     private Byte level;
     private Short visible;
+
+    public UserPublicCardResp(short visible) {
+        this.visible = visible;
+    }
 }

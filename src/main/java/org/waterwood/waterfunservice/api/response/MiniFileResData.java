@@ -1,4 +1,4 @@
-package org.waterwood.waterfunservice.dto.response;
+package org.waterwood.waterfunservice.api.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;

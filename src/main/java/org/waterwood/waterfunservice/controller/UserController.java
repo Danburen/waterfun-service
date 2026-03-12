@@ -10,16 +10,16 @@ import org.waterwood.waterfunservicecore.api.req.user.UpdateUserProfileRequest;
 import org.waterwood.api.ApiResponse;
 import org.waterwood.waterfunservicecore.api.resp.user.UserInfoResponse;
 import org.waterwood.waterfunservicecore.api.resp.user.UserProfileResponse;
-import org.waterwood.waterfunservicecore.api.PostPolicyDto;
-import org.waterwood.waterfunservicecore.api.resp.CloudResourcePresignedUrlResp;
+import org.waterwood.waterfunservicecore.api.resp.PostPolicyResp;
+import org.waterwood.waterfunservicecore.api.resp.CloudResPresignedUrlResp;
 import org.waterwood.waterfunservicecore.entity.Permission;
-import org.waterwood.waterfunservicecore.infrastructure.mapper.UserMapper;
-import org.waterwood.waterfunservicecore.infrastructure.mapper.UserProfileMapper;
+import org.waterwood.waterfunservicecore.infrastructure.mapper.UserCoreMapper;
+import org.waterwood.waterfunservicecore.infrastructure.mapper.UserProfileCoreMapper;
 import org.waterwood.waterfunservicecore.entity.user.User;
 import org.waterwood.waterfunservicecore.entity.user.UserProfile;
 import org.waterwood.waterfunservicecore.infrastructure.security.AuthContextHelper;
 import org.waterwood.waterfunservicecore.infrastructure.utils.context.UserContext;
-import org.waterwood.waterfunservicecore.services.user.UserCoreProfileServiceImpl;
+import org.waterwood.waterfunservicecore.services.user.UserProfileCoreServiceImpl;
 import org.waterwood.waterfunservicecore.services.user.UserCoreService;
 import org.waterwood.waterfunservicecore.services.sys.storage.CloudFileService;
 
@@ -33,16 +33,17 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private final UserCoreService userCoreService;
-    private final UserCoreProfileServiceImpl userProfileService;
-    private final UserMapper userMapper;
-    private final UserProfileMapper userProfileMapper;
+    private final UserProfileCoreServiceImpl userProfileService;
+    private final UserCoreMapper userCoreMapper;
+    private final UserProfileCoreMapper userProfileCoreMapper;
     private final CloudFileService cloudFileService;
 
-    @GetMapping("userInfo")
+    @GetMapping("/userInfo")
     public ApiResponse<UserInfoResponse> getUserInfo(
             @Parameter(hidden = true) @AuthenticationPrincipal UserContext ctx){
         User user = userCoreService.getUserByUid(ctx.getUserUid());
-        UserInfoResponse res = userMapper.toUserInfoResponse(user);
+        UserInfoResponse res = userCoreMapper.toUserInfoResponse(user);
+        res.setAvatar(userProfileService.getUserAvatar(user.getUid()));
         res.setPasswordHash(user.getPasswordHash() != null);
         return ApiResponse.success(res);
     }
@@ -56,22 +57,19 @@ public class UserController {
     @GetMapping("/profile")
     public ApiResponse<UserProfileResponse> getProfile(@Parameter(hidden = true) @AuthenticationPrincipal UserContext ctx){
         UserProfile up = userProfileService.getUserProfile(ctx.getUserUid());
-        UserProfileResponse res = userProfileMapper.toResponse(up);
-        res.setAvatar(
-                userProfileService.getUserAvatar(ctx.getUserUid())
-        );
+        UserProfileResponse res = userProfileCoreMapper.toResponse(up);
         return ApiResponse.success(res);
     }
 
 
     @GetMapping("/avatar/upload")
-    public ApiResponse<PostPolicyDto> updateAvatar(@RequestParam String suffix,
-                                                   @Parameter(hidden = true) @AuthenticationPrincipal UserContext ctx){
+    public ApiResponse<PostPolicyResp> updateAvatar(@RequestParam String suffix,
+                                                    @Parameter(hidden = true) @AuthenticationPrincipal UserContext ctx){
         return ApiResponse.success(userProfileService.getUploadPolicyAndSaveAvatar(ctx.getUserUid(), suffix));
     }
 
     @GetMapping("/avatar")
-    public ApiResponse<CloudResourcePresignedUrlResp> getAvatar(@Parameter(hidden = true) @AuthenticationPrincipal UserContext ctx){
+    public ApiResponse<CloudResPresignedUrlResp> getAvatar(@Parameter(hidden = true) @AuthenticationPrincipal UserContext ctx){
         return ApiResponse.success(
                 userProfileService.getUserAvatar(ctx.getUserUid())
         );
