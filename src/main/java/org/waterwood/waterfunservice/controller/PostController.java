@@ -17,9 +17,9 @@ import org.waterwood.waterfunservicecore.entity.post.Post;
 import org.waterwood.waterfunservice.infrastructure.mapper.PostMapper;
 import org.waterwood.waterfunservice.api.response.post.PostResponse;
 import org.waterwood.waterfunservicecore.infrastructure.persistence.utils.PostSpec;
-import org.waterwood.waterfunservicecore.infrastructure.security.AuthContextHelper;
 import org.waterwood.waterfunservice.service.post.PostService;
 import org.waterwood.waterfunservice.api.request.CreatePostRequest;
+import org.waterwood.waterfunservicecore.infrastructure.utils.context.UserCtxHolder;
 
 import java.util.List;
 
@@ -86,7 +86,7 @@ public class PostController {
     @PatchMapping("/{id}")
     public ApiResponse<Void> updatePost(@PathVariable Long id, @Valid @RequestBody PatchUserPostReq body){
         Post post = postService.getPostById(id);
-        if(! AuthContextHelper.getCurrentUserUid().equals(post.getAuthor().getUid())){
+        if(! UserCtxHolder.getUserUid().equals(post.getAuthor().getUid())){
             return ApiResponse.response(BaseResponseCode.FORBIDDEN);
         }
         Post p = postMapper.partialUpdate(body, post);;

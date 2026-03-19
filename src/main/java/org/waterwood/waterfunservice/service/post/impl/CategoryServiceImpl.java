@@ -11,8 +11,8 @@ import org.waterwood.utils.generator.SlugGenerator;
 import org.waterwood.waterfunservicecore.infrastructure.persistence.user.UserRepository;
 import org.waterwood.waterfunservice.infrastructure.mapper.CategoryMapper;
 import org.waterwood.waterfunservicecore.infrastructure.persistence.CategoryRepository;
-import org.waterwood.waterfunservicecore.infrastructure.security.AuthContextHelper;
 import org.waterwood.waterfunservice.service.post.CategoryService;
+import org.waterwood.waterfunservicecore.infrastructure.utils.context.UserCtxHolder;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class CategoryServiceImpl implements CategoryService {
         categoryRepository.findByName(category.getName()).ifPresent(_->{
             throw new BizException(BaseResponseCode.POST_CATEGORY_EXISTS);
         });
-        User u = userRepository.findUserByUid(AuthContextHelper.getCurrentUserUid()).orElseThrow(
+        User u = userRepository.findUserByUid(UserCtxHolder.getUserUid()).orElseThrow(
                 ()-> new BizException(BaseResponseCode.USER_NOT_FOUND)
         );
         category.setCreator(u);
@@ -44,7 +44,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<Category> getCategories() {
-        Long userUid = AuthContextHelper.getCurrentUserUid();
+        Long userUid = UserCtxHolder.getUserUid();
         return categoryRepository.findAllByCreatorUid(userUid);
     }
 

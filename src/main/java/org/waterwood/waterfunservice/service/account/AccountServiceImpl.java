@@ -22,6 +22,7 @@ import org.waterwood.waterfunservicecore.infrastructure.persistence.user.UserRep
 import org.waterwood.waterfunservicecore.infrastructure.security.EncryptedKeyService;
 import org.waterwood.waterfunservicecore.infrastructure.security.EncryptionDataKey;
 import org.waterwood.waterfunservicecore.infrastructure.security.EncryptionHelper;
+import org.waterwood.waterfunservicecore.infrastructure.utils.context.UserCtxHolder;
 import org.waterwood.waterfunservicecore.services.auth.code.VerificationService;
 import org.waterwood.waterfunservicecore.services.email.ResendEmailService;
 import org.waterwood.waterfunservicecore.services.user.UserCoreService;
@@ -51,11 +52,12 @@ public class AccountServiceImpl implements AccountService {
     @Value("${expire.email.verify}")
     private Long expireDuration;
     @Override
-    public void changePwd(long userUid, String verifyCodeKey, ResetPasswordDto dto) {
+    public void changePwd(String verifyCodeKey, ResetPasswordDto dto) {
+        long userUid = UserCtxHolder.getUserUid();
         verificationService.verifyAuthorizedCode(
                 verifyCodeKey,
                 dto.getVerify(),
-                getTargetOfChannel(userUid, dto.getVerify().getChannel()),
+                getTargetOfChannel(dto.getVerify().getChannel()),
                 VerifyScene.RESET_PASSWORD
         );
         User user = userCoreService.getUser(userUid);
@@ -69,10 +71,11 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void setPassword(long userUid, String verifyCodeKey, SetPasswordDto dto) {
+    public void setPassword(String verifyCodeKey, SetPasswordDto dto) {
+        long userUid = UserCtxHolder.getUserUid();
         verificationService.verifyAuthorizedCode(
                 verifyCodeKey,
-                dto.getVerify(), getTargetOfChannel(userUid, dto.getVerify().getChannel()),
+                dto.getVerify(), getTargetOfChannel(dto.getVerify().getChannel()),
                 VerifyScene.SET_PASSWORD
         );
         User user = userRepository.findById(userUid).orElseThrow(() -> new BizException(BaseResponseCode.USER_NOT_FOUND));
@@ -88,11 +91,12 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public void activateEmail(long userUid, String verifyCodeKey, EmailBindActivateDto dto) {
+    public void activateEmail(String verifyCodeKey, EmailBindActivateDto dto) {
+        long userUid = UserCtxHolder.getUserUid();
         verificationService.verifyAuthorizedCodeWithChannel(
                 verifyCodeKey,
                 dto.getVerify(),
-                getTargetOfChannel(userUid, dto.getVerify().getChannel()),
+                getTargetOfChannel(dto.getVerify().getChannel()),
                 VerifyScene.ACTIVATE,
                 VerifyChannel.EMAIL
         );
@@ -102,13 +106,14 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public CodeResult changeEmail(long userUid, String verifyCodeKey, EmailChangeDto dto) {
+    public CodeResult changeEmail(String verifyCodeKey, EmailChangeDto dto) {
+        long userUid = UserCtxHolder.getUserUid();
         // Check scene and verify code
         VerifyChannel channel = dto.getVerify().getChannel();
         verificationService.verifyAuthorizedCode(
                 verifyCodeKey,
                 dto.getVerify(),
-                getTargetOfChannel(userUid, channel),
+                getTargetOfChannel(channel),
                 VerifyScene.CHANGE_EMAIL
         );
         // TODO: ADD MOVE VERIFICATION FOR EMAIL CHANGE AND AUDIT LOG
@@ -118,11 +123,12 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public CodeResult bindEmail(long userUid, String verifyCodeKey, EmailBindActivateDto dto) {
+    public CodeResult bindEmail(String verifyCodeKey, EmailBindActivateDto dto) {
+        long userUid = UserCtxHolder.getUserUid();
         verificationService.verifyAuthorizedCode(
                 verifyCodeKey,
                 dto.getVerify(),
-                getTargetOfChannel(userUid, dto.getVerify().getChannel()),
+                getTargetOfChannel(dto.getVerify().getChannel()),
                 VerifyScene.BIND_EMAIL
         );
         // TODO: ADD MOVE VERIFICATION FOR EMAIL BIND AND AUDIT LOG
@@ -144,11 +150,12 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public CodeResult changePhone(long userUid, String channelVerifyCodeKey, PhoneChangeActivateDto dto) {
+    public CodeResult changePhone(String channelVerifyCodeKey, PhoneChangeActivateDto dto) {
+        long userUid = UserCtxHolder.getUserUid();
         verificationService.verifyAuthorizedCodeWithChannel(
                 channelVerifyCodeKey,
                 dto.getVerify(),
-                getTargetOfChannel(userUid, dto.getVerify().getChannel()),
+                getTargetOfChannel(dto.getVerify().getChannel()),
                 VerifyScene.CHANGE_PHONE,
                 VerifyChannel.SMS
         );
@@ -159,12 +166,13 @@ public class AccountServiceImpl implements AccountService {
     /**
      * Activate phone forced to bind phone while not changing old phone in db.
      * so we use the request body's phone as phone number target.
-     * @param userUid user id
+     *
      * @param verifyCodeKey cached verify code key
-     * @param dto change phone number dto
+     * @param dto           change phone number dto
      */
     @Override
-    public void activatePhone(long userUid, String verifyCodeKey, PhoneChangeActivateDto dto) {
+    public void activatePhone(String verifyCodeKey, PhoneChangeActivateDto dto) {
+        long userUid = UserCtxHolder.getUserUid();
         verificationService.verifyAuthorizedCodeWithChannel(
                 verifyCodeKey,
                 dto.getVerify(),
@@ -177,11 +185,12 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void unbindEmail(long userUid, String channelVerifyCodeKey, EmailBindActivateDto dto) {
+    public void unbindEmail(String channelVerifyCodeKey, EmailBindActivateDto dto) {
+        long userUid = UserCtxHolder.getUserUid();
         verificationService.verifyAuthorizedCodeWithChannel(
                 channelVerifyCodeKey,
                 dto.getVerify(),
-                getTargetOfChannel(userUid, dto.getVerify().getChannel()),
+                getTargetOfChannel(dto.getVerify().getChannel()),
                 VerifyScene.UNBIND,
                 VerifyChannel.EMAIL
         );
@@ -202,7 +211,8 @@ public class AccountServiceImpl implements AccountService {
         userDatumRepo.save(ud);
     }
 
-    private @NotNull String getTargetOfChannel(long userUid, VerifyChannel channel) {
+    private @NotNull String getTargetOfChannel(VerifyChannel channel) {
+        long userUid = UserCtxHolder.getUserUid();
         EncryptionDataKey aesKey = encryptedKeyService.getAesKey();
         UserDatum ud = userDatumRepo.findUserDatumByUserUid(userUid)
                 .orElseThrow(() -> new BizException(BaseResponseCode.USER_NOT_FOUND));

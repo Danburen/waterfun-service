@@ -17,8 +17,7 @@ import org.waterwood.waterfunservicecore.infrastructure.mapper.UserCoreMapper;
 import org.waterwood.waterfunservicecore.infrastructure.mapper.UserProfileCoreMapper;
 import org.waterwood.waterfunservicecore.entity.user.User;
 import org.waterwood.waterfunservicecore.entity.user.UserProfile;
-import org.waterwood.waterfunservicecore.infrastructure.security.AuthContextHelper;
-import org.waterwood.waterfunservicecore.infrastructure.utils.context.UserContext;
+import org.waterwood.waterfunservicecore.infrastructure.utils.context.UserCtxHolder;
 import org.waterwood.waterfunservicecore.services.user.UserProfileCoreServiceImpl;
 import org.waterwood.waterfunservicecore.services.user.UserCoreService;
 import org.waterwood.waterfunservicecore.services.sys.storage.CloudFileService;
@@ -39,46 +38,43 @@ public class UserController {
     private final CloudFileService cloudFileService;
 
     @GetMapping("/userInfo")
-    public ApiResponse<UserInfoResponse> getUserInfo(
-            @Parameter(hidden = true) @AuthenticationPrincipal UserContext ctx){
-        User user = userCoreService.getUserByUid(ctx.getUserUid());
+    public ApiResponse<UserInfoResponse> getUserInfo(){
+        User user = userCoreService.getUserByUid(UserCtxHolder.getUserUid());
         UserInfoResponse res = userCoreMapper.toUserInfoResponse(user);
         res.setAvatar(userProfileService.getUserAvatar(user.getUid()));
         res.setPasswordHash(user.getPasswordHash() != null);
         return ApiResponse.success(res);
     }
     @PutMapping("/updateProfile")
-    public ApiResponse<Void> updateProfile(@RequestBody @Valid UpdateUserProfileRequest body,
-                                           @Parameter(hidden = true) @AuthenticationPrincipal UserContext ctx){
-        userProfileService.updateProfileByDto(ctx.getUserUid(), body);
+    public ApiResponse<Void> updateProfile(@RequestBody @Valid UpdateUserProfileRequest body){
+        userProfileService.updateProfileByDto(body);
         return ApiResponse.success();
     }
 
     @GetMapping("/profile")
-    public ApiResponse<UserProfileResponse> getProfile(@Parameter(hidden = true) @AuthenticationPrincipal UserContext ctx){
-        UserProfile up = userProfileService.getUserProfile(ctx.getUserUid());
+    public ApiResponse<UserProfileResponse> getProfile(){
+        UserProfile up = userProfileService.getUserProfile(UserCtxHolder.getUserUid());
         UserProfileResponse res = userProfileCoreMapper.toResponse(up);
         return ApiResponse.success(res);
     }
 
 
     @GetMapping("/avatar/upload")
-    public ApiResponse<PostPolicyResp> updateAvatar(@RequestParam String suffix,
-                                                    @Parameter(hidden = true) @AuthenticationPrincipal UserContext ctx){
-        return ApiResponse.success(userProfileService.getUploadPolicyAndSaveAvatar(ctx.getUserUid(), suffix));
+    public ApiResponse<PostPolicyResp> updateAvatar(@RequestParam String suffix){
+        return ApiResponse.success(userProfileService.getUploadPolicyAndSaveAvatar(UserCtxHolder.getUserUid(), suffix));
     }
 
     @GetMapping("/avatar")
-    public ApiResponse<CloudResPresignedUrlResp> getAvatar(@Parameter(hidden = true) @AuthenticationPrincipal UserContext ctx){
+    public ApiResponse<CloudResPresignedUrlResp> getAvatar(){
         return ApiResponse.success(
-                userProfileService.getUserAvatar(ctx.getUserUid())
+                userProfileService.getUserAvatar(UserCtxHolder.getUserUid())
         );
     }
 
 
     @GetMapping("/permissions")
     public ApiResponse<Set<String>> getPermissions(){
-        long userUid = AuthContextHelper.getCurrentUserUid();
+        long userUid = UserCtxHolder.getUserUid();
         Set<String> permCodes = userCoreService.getUserPermissions(userUid)
                 .stream().map(Permission::getCode)
                 .collect(Collectors.toSet());
