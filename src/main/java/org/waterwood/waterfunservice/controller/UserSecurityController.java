@@ -24,7 +24,7 @@ import org.waterwood.waterfunservicecore.services.auth.LoginService;
 import org.waterwood.waterfunservicecore.services.auth.code.VerificationService;
 
 @RestController
-@RequestMapping("/api/auth/security")
+@RequestMapping("/api/user/security")
 @RequiredArgsConstructor
 public class UserSecurityController {
     private final VerificationService verificationService;

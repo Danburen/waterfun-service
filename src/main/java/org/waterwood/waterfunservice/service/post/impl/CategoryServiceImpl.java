@@ -12,6 +12,7 @@ import org.waterwood.waterfunservicecore.infrastructure.persistence.user.UserRep
 import org.waterwood.waterfunservice.infrastructure.mapper.CategoryMapper;
 import org.waterwood.waterfunservicecore.infrastructure.persistence.CategoryRepository;
 import org.waterwood.waterfunservice.service.post.CategoryService;
+import org.waterwood.waterfunservicecore.infrastructure.security.AuthContextHelper;
 import org.waterwood.waterfunservicecore.infrastructure.utils.context.UserCtxHolder;
 
 import java.util.List;
