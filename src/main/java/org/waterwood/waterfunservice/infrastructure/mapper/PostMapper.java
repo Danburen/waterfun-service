@@ -42,5 +42,5 @@ public interface PostMapper {
     default Set<Integer> tagsToTagIds(Collection<Tag> tags) {
         return tags.stream().map(Tag::getId).collect(Collectors.toSet());
     }
-
+    
 }

@@ -19,7 +19,7 @@ import org.waterwood.waterfunservice.service.post.PostService;
 import org.waterwood.waterfunservice.service.post.TagService;
 import org.waterwood.waterfunservicecore.infrastructure.utils.context.UserCtxHolder;
 import org.waterwood.waterfunservicecore.services.user.UserCoreService;
-import org.waterwood.utils.generator.SlugGenerator;
+import org.waterwood.utils.generator.IdentifierGenerator;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -28,15 +28,15 @@ import java.util.Set;
 public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
-    private final SlugGenerator slugGenerator;
+    private final IdentifierGenerator identifierGenerator;
     private final UserCoreService userCoreService;
     private final TagRepository tagRepository;
     private final TagService tagService;
     private final CategoryService categoryService;
 
-    public PostServiceImpl(PostRepository postRepository, SlugGenerator slugGenerator, UserRepository userRepository, UserCoreService userCoreService, TagRepository tagRepository, TagService tagService, CategoryService categoryService) {
+    public PostServiceImpl(PostRepository postRepository, IdentifierGenerator identifierGenerator, UserRepository userRepository, UserCoreService userCoreService, TagRepository tagRepository, TagService tagService, CategoryService categoryService) {
         this.postRepository = postRepository;
-        this.slugGenerator = slugGenerator;
+        this.identifierGenerator = identifierGenerator;
         this.userCoreService = userCoreService;
         this.tagRepository = tagRepository;
         this.tagService = tagService;
@@ -48,7 +48,7 @@ public class PostServiceImpl implements PostService {
         Set<Tag> tags = new HashSet<>(tagRepository.findAllById(tagIds));
         User u = userCoreService.getUserByUid(UserCtxHolder.getUserUid());
         post.setAuthor(u);
-        post.setSlug(slugGenerator.generateSlug(post.getTitle(), postRepository));
+        post.setSlug(identifierGenerator.generateSlug(post.getTitle(), postRepository));
         post.setTags(tags);
         postRepository.save(post);
     }
@@ -82,7 +82,7 @@ public class PostServiceImpl implements PostService {
         User u = userCoreService.getUserByUid(UserCtxHolder.getUserUid());
         post.setCategory(category);
         post.setAuthor(u);
-        post.setSlug(slugGenerator.generateSlug(post.getTitle(), postRepository));
+        post.setSlug(identifierGenerator.generateSlug(post.getTitle(), postRepository));
         post.setTags(tags);
         postRepository.save(post);
     }

@@ -10,7 +10,7 @@ import org.waterwood.waterfunservicecore.infrastructure.persistence.TagRepositor
 import org.waterwood.waterfunservice.service.post.TagService;
 import org.waterwood.waterfunservicecore.infrastructure.utils.context.UserCtxHolder;
 import org.waterwood.waterfunservicecore.services.user.UserCoreService;
-import org.waterwood.utils.generator.SlugGenerator;
+import org.waterwood.utils.generator.IdentifierGenerator;
 
 import java.util.HashSet;
 import java.util.List;
@@ -21,7 +21,7 @@ import java.util.Set;
 public class TagServiceImpl implements TagService {
 
     private final TagRepository tagRepository;
-    private final SlugGenerator slugGenerator;
+    private final IdentifierGenerator slugGenerator;
     private final UserCoreService userCoreService;
 
     @Override

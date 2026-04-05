@@ -7,7 +7,7 @@ import org.waterwood.api.BaseResponseCode;
 import org.waterwood.waterfunservicecore.entity.user.User;
 import org.waterwood.waterfunservicecore.entity.post.Category;
 import org.waterwood.common.exceptions.BizException;
-import org.waterwood.utils.generator.SlugGenerator;
+import org.waterwood.utils.generator.IdentifierGenerator;
 import org.waterwood.waterfunservicecore.infrastructure.persistence.user.UserRepository;
 import org.waterwood.waterfunservice.infrastructure.mapper.CategoryMapper;
 import org.waterwood.waterfunservicecore.infrastructure.persistence.CategoryRepository;
@@ -23,7 +23,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final CategoryMapper categoryMapper;
-    private final SlugGenerator slugGenerator;
+    private final IdentifierGenerator identifierGenerator;
 
     @Transactional
     @Override
@@ -37,7 +37,7 @@ public class CategoryServiceImpl implements CategoryService {
         category.setCreator(u);
         category.setSortOrder(category.getSortOrder());
         category.setName(category.getName());
-        category.setSlug(slugGenerator.generateSlug(category.getName(), categoryRepository));
+        category.setSlug(identifierGenerator.generateSlug(category.getName(), categoryRepository));
         category.setDescription(category.getDescription());
         category.setIsActive(category.getIsActive() == null || category.getIsActive());
         categoryRepository.save(category);

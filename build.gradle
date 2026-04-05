@@ -26,6 +26,7 @@ repositories {
 dependencies {
     implementation project(":waterfun-common-lib")
     implementation project(":waterfun-service-core")
+    implementation 'io.github.danburen:spring-launch-monitor:0.0.1'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
@@ -40,7 +41,7 @@ dependencies {
     implementation 'cn.hutool:hutool-captcha:5.8.26'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
-    implementation 'io.jsonwebtoken:jjwt-impl:0.12.5'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.12.6'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.12.6'
     implementation 'org.jetbrains:annotations:26.0.2'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
